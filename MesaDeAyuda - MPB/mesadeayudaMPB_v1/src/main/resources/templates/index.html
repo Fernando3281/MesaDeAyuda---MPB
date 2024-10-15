@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<!--
+Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
+Click nbfs://nbhost/SystemFileSystem/Templates/Other/html.html to edit this template
+-->
+
+<html xmlns="http://www.w3.org/1999/xhtml" 
+      xmlns:th="http://www.thymeleaf.org">
+    <head th:replace="~{layout/plantilla :: head}">
+        <title>Mesa de Ayuda</title>
+    </head>
+    <body>
+        <div class="wrapper">
+            <!-- Incluye el sidebar -->
+            <div th:replace="~{layout/plantilla :: sidebar}"></div>
+
+            <div class="main-content">
+                <div th:replace="~{layout/plantilla :: header}"></div>
+
+                <!-- Incluye el navbar -->
+                <div th:replace="~{layout/plantilla :: navbar}"></div>
+
+                <!-- Contenido principal -->
+                <main class="home-section">
+                    <div class="content-wrapper">
+                        <section class="profile-section">
+                            <h2>Mi Perfil</h2>
+                            <div class="profile-card">
+                                <div class="profile-header">
+                                    <img src="https://i0.wp.com/lamiradafotografia.es/wp-content/uploads/2014/07/foto-perfil-psicologo-180x180.jpg?resize=180%2C180"
+                                         alt="Brians Fernando">
+                                    <div class="profile-info">
+                                        <p>Support Staff</p>
+                                        <div>
+                                            <h3 style="display: inline;">Brians Fernando Vargas Camacho</h3>
+                                            <p style="display: inline;">ID#208324</p>
+                                        </div>
+                                        <p>Ocupación: Asistente de TI</p>
+                                        <p>Último Acceso al Sistema: 06/07/2024</p>
+                                    </div>
+                                    <button class="btn-update">Actualizar Perfil</button>
+                                </div>
+                                <div class="profile-details">
+                                    <div class="detail-row">
+                                        <div class="detail-column">
+                                            <label>Provincia / Ciudad</label>
+                                            <input type="text" value="Heredia" readonly>
+                                        </div>
+                                        <div class="detail-column">
+                                            <label>Dirección</label>
+                                            <input type="text" value="Calle Los Pollos, Barva, Costa Rica" readonly>
+                                        </div>
+                                    </div>
+                                    <div class="detail-row">
+                                        <div class="detail-column">
+                                            <label>Número de Teléfono</label>
+                                            <input type="text" value="+506 8975 0909" readonly>
+                                        </div>
+                                        <div class="detail-column">
+                                            <label>Correo Electrónico</label>
+                                            <input type="text" value="fercvargas70499@outlook.com" readonly>
+                                        </div>
+                                    </div>
+                                    <div class="detail-row">
+                                        <div class="detail-column">
+                                            <label>Ocupación o Departamento</label>
+                                            <input type="text" value="Asistente de TI" readonly>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </section>
+
+                        <section class="tickets-section">
+                            <h2>Historial de Tickets</h2>
+                            <div class="tickets-history">
+                                <div class="profile-card">
+                                    <h1>Título</h1>
+                                    <p>Contenido</p>
+                                    <p>Contenido</p>
+                                    <p>Contenido</p>
+                                </div>
+                                <div class="profile-card">
+                                    <h1>Título</h1>
+                                    <p>Contenido</p>
+                                    <p>Contenido</p>
+                                    <p>Contenido</p>
+                                </div>
+                                <div class="profile-card">
+                                    <h1>Título</h1>
+                                    <p>Contenido</p>
+                                    <p>Contenido</p>
+                                    <p>Contenido</p>
+                                </div>
+                            </div>
+                        </section>
+                    </div>
+                </main>
+            </div>
+        </div>
+    </body>
+</html>

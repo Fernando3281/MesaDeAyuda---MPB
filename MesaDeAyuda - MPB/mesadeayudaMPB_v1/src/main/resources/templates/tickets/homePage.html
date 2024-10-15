@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<!--
+Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
+Click nbfs://nbhost/SystemFileSystem/Templates/Other/html.html to edit this template
+-->
+
+<html lang="en" dir="ltr">
+    <head th:replace="~{layout/plantilla :: head}">
+        <title>Mesa de Ayuda</title>
+    </head>
+    <body>
+        <div class="wrapper">
+            <!-- Incluye el sidebar -->
+            <div th:replace="~{layout/plantilla :: sidebar}"></div>
+
+            <div class="main-content">
+                <div th:replace="~{layout/plantilla :: header}"></div>
+
+                <!-- Incluye el navbar -->
+                <div th:replace="~{layout/plantilla :: navbar}"></div>
+
+                <!-- Contenido principal -->
+                <main class="home-section">
+                    <div class="content-wrapper">
+                        <div class="welcome-section">
+                            <h1>Bienvenido a su Mesa de Ayuda</h1>
+                            <p style="margin-bottom: 20px">Nuestro equipo está aquí para ofrecerle el mejor soporte y apoyo posible.</p>
+                            <a th:href="@{/tickets/nuevoTicket}" class="btn btn-link">Crear Ticket</a>
+                        </div>
+                        <h2>Nuestros Servicios</h2>
+                        <div class="services-grid">
+                            <div class="service-card">
+                                <i class="fas fa-plus-circle service-icon"></i>
+                                <h3>Solicitud de Soporte</h3>
+                                <p>Solicite soporte personalizado con nuestro equipo y manténgase en contacto continuo para resolver sus consultas o inconvenientes</p>
+                            </div>
+                            <div class="service-card">
+                                <i class="fas fa-ticket-alt service-icon"></i>
+                                <h3>Gestion de Tickets</h3>
+                                <p>Administre y realice un seguimiento continuo sobre sus tickets de soporte desde nuestro sistema.</p>
+                            </div>
+                            <div class="service-card">
+                                <i class="fas fa-history service-icon"></i>
+                                <h3>Historial de Estado</h3>
+                                <p>Obtenga información sobre operaciones anteriores de soporte con su historial y análisis detallados</p>
+                            </div>
+                        </div>
+                    </div>
+                </main>
+            </div>
+        </div>
+    </body>
+</html>
+
+
+
+<style>
+
+    :root {
+        --primary-color: #3b5998;
+        --secondary-color: #f0f4f8;
+        --text-color: #333;
+        --text-light: #666;
+        --white: #ffffff;
+        --shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+
+    .content-wrapper {
+        max-width: 100%;
+        padding: 2rem;
+    }
+
+    .welcome-section {
+        background-color: var(--white);
+        border-radius: 15px;
+        padding: 3rem 2rem;
+        text-align: center;
+        margin-bottom: 3rem;
+        box-shadow: var(--shadow);
+        position: relative;
+        overflow: hidden;
+    }
+
+    h1 {
+        font-size: 2.5rem;
+        font-weight: 700;
+        color: var(--text-color);
+        margin-bottom: 0.5rem;
+    }
+
+    p {
+        font-size: 1.1rem;
+        color: var(--text-light);
+        max-width: 600px;
+        margin-left: auto;
+        margin-right: auto;
+    }
+
+    .btn {
+        padding: 10px 20px;
+        border: 2px solid #11214D; /* Color del borde */
+        background-color: transparent; /* Fondo transparente */
+        border-radius: 5px; /* Bordes redondeados */
+        cursor: pointer;
+        transition: background-color 0.3s ease, color 0.3s ease; /* Añadir transición para el color */
+    }
+
+    .btn-link {
+        text-decoration: none; /* Sin subrayado en el enlace */
+        color: #000; /* Color del texto en negro */
+        font-size: 16px; /* Tamaño del texto */
+        display: block; /* Para que el enlace cubra todo el botón */
+        max-width: 200px;
+        margin-left: auto;
+        margin-right: auto;
+        text-align: center; /* Centrar el texto dentro del botón */
+    }
+
+    /* Hover para el botón */
+    .btn:hover {
+        background-color: #11214D; /* Cambia el color de fondo al hacer hover */
+    }
+
+    /* Hover para el enlace dentro del botón */
+    .btn:hover .btn-link {
+        color: #fff; /* Cambia el color del texto a blanco al hacer hover */
+    }
+
+    /* Asegurarse que el texto es visible en estado normal */
+    .btn-link {
+        color: #000; /* Color negro */
+    }
+
+    /* Hover adicional en el botón */
+    .btn:hover {
+        color: #fff; /* Asegura que el botón también cambie el texto a blanco */
+    }
+
+
+    h2 {
+        text-align: center;
+        color: var(--text-color);
+        margin-bottom: 2rem;
+        font-size: 2rem;
+        font-weight: 600;
+    }
+
+    .services-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 2rem;
+    }
+
+    .service-card {
+        background-color: var(--white);
+        border-radius: 15px;
+        padding: 35px;
+        text-align: center;
+        box-shadow: var(--shadow);
+        transition: box-shadow 0.3s ease;
+    }
+
+    .service-card:hover {
+        box-shadow: var(--hover-shadow);
+    }
+
+    .service-icon {
+        font-size: 3rem;
+        color: #11214D;
+        margin-bottom: 15px;
+    }
+
+    .service-card h3 {
+        font-size: 1.3rem;
+        color: var(--text-color);
+        margin-bottom: 10px;
+        font-weight: 600;
+    }
+
+    .service-card p {
+        font-size: 0.95rem;
+        color: var(--text-light);
+        line-height: 1.6;
+    }
+
+    @media (max-width: 768px) {
+        .content-wrapper {
+            padding: 1rem;
+        }
+
+        .welcome-section {
+            padding: 2rem 1rem;
+        }
+
+        h1 {
+            font-size: 2rem;
+        }
+
+        .services-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>

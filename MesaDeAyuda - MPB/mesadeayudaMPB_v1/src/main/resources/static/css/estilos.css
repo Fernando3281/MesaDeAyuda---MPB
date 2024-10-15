@@ -1,0 +1,679 @@
+/*
+Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
+Click nbfs://nbhost/SystemFileSystem/Templates/Other/CascadeStyleSheet.css to edit this template
+*/
+/* 
+    Created on : Aug 18, 2024, 10:41:53 AM
+    Author     : ferva
+*/
+
+/* Normalización y estilos base */
+
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+html {
+    font-family: 'Poppins', sans-serif; /* Aplicando Poppins como fuente predeterminada */
+    line-height: 1.15;
+    -webkit-text-size-adjust: 100%; /* Ajuste de tamaño de texto para navegadores WebKit */
+    -moz-osx-font-smoothing: grayscale; /* Suavizado de fuentes para Firefox en Mac */
+    -webkit-font-smoothing: antialiased; /* Suavizado de fuentes para WebKit */
+    text-rendering: optimizeLegibility; /* Mejora de legibilidad en navegadores compatibles */
+}
+
+body, html {
+    font-size: 0.95em; /* Puedes ajustar esto según tus preferencias */
+    margin: 0;
+    padding: 0;
+}
+
+
+
+/*Estilos de Sidebar*/
+
+.sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 100%;
+    width: 200px;
+    background: #11101d;
+    z-index: 1002;
+}
+
+.sidebar.close {
+    width: 68px;
+}
+
+.sidebar .logo-details {
+    height: 85px;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    align-items: center;
+    justify-content: center;
+}
+
+.sidebar .logo-details img {
+    height: 70px;
+    width: auto;
+    max-width: 100%;
+    text-align: center;
+    line-height: 50px;
+}
+
+.sidebar .nav-links {
+    height: 100%;
+    padding: 5px 0 150px 0;
+    overflow: auto;
+}
+
+.sidebar.close .nav-links {
+    overflow: visible;
+}
+
+.sidebar .nav-links::-webkit-scrollbar {
+    display: none;
+}
+
+.sidebar .nav-links li {
+    position: relative;
+    list-style: none;
+}
+
+.sidebar .nav-links li:hover {
+    background: #1d1b31;
+}
+
+.sidebar .nav-links li .iocn-link {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    cursor: pointer;
+}
+
+.sidebar.close .nav-links li .iocn-link {
+    display: block;
+}
+
+.sidebar .nav-links li i {
+    height: 50px;
+    min-width: 68px;
+    text-align: center;
+    line-height: 50px;
+    color: #fff;
+    font-size: 20px;
+    cursor: pointer;
+}
+
+.sidebar .nav-links li a {
+    display: flex;
+    align-items: center;
+    text-decoration: none;
+}
+
+.sidebar .nav-links li a .link_name {
+    font-size: 16px;
+    font-weight: 400;
+    color: #fff;
+}
+
+.sidebar.close .nav-links li a .link_name {
+    opacity: 0;
+    pointer-events: none;
+}
+
+.sidebar .nav-links li .sub-menu {
+    margin-top: -10px;
+    background: #1d1b31;
+    display: none;
+}
+
+.sidebar .nav-links li.showMenu .sub-menu {
+    display: block;
+    margin-top: 0px;
+    padding: 10px;
+    padding-left: 70px;
+}
+
+.sidebar .nav-links li .sub-menu a {
+    color: #fff;
+    font-size: 14px;
+    padding: 4px 0;
+    white-space: nowrap;
+    opacity: 0.6;
+    transition: all 0.3s ease;
+}
+
+.sidebar .nav-links li .sub-menu a:hover {
+    opacity: 1;
+}
+
+.sidebar.close .nav-links li .sub-menu {
+    position: absolute;
+    left: 100%;
+    top: -10px;
+    margin-top: 0;
+    padding: 10px 20px;
+    border-radius: 0 6px 6px 0;
+    opacity: 0;
+    display: block;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+}
+
+.sidebar.close .nav-links li:hover .sub-menu {
+    top: 0;
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.sidebar .nav-links li .sub-menu .link_name {
+    display: none;
+}
+
+.sidebar.close .nav-links li .sub-menu .link_name {
+    font-size: 16px;
+    opacity: 1;
+    display: block;
+}
+
+.sidebar .nav-links li .sub-menu.blank {
+    padding: 12px 20px 10px 16px;
+    margin-top: 0;
+    background: #1d1b31;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(-3px);
+    transition: opacity 0.2s ease, transform 0.3s ease, visibility 0.3s ease;
+}
+
+.sidebar .nav-links li:hover .sub-menu.blank {
+    opacity: 1;
+    visibility: visible;
+    transform: translateX(0);
+}
+
+.sidebar .profile-details {
+    position: fixed;
+    bottom: 0;
+    width: 260px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: #1d1b31;
+    padding: 12px 0;
+}
+
+.sidebar.close .profile-details {
+    background: none;
+}
+
+.sidebar.close .profile-details {
+    width: 68px;
+}
+
+.sidebar .profile-details .profile-content {
+    display: flex;
+    align-items: center;
+}
+
+.sidebar .profile-details img {
+    height: 52px;
+    width: 52px;
+    object-fit: cover;
+    border-radius: 16px;
+    margin: 0 14px 0 12px;
+    background: #1d1b31;
+}
+
+.sidebar.close .profile-details img {
+    padding: 10px;
+}
+
+.sidebar .profile-details .name-job {
+    display: flex;
+    flex-direction: column;
+}
+
+.sidebar .profile-details .profile_name {
+    font-size: 18px;
+    font-weight: 400;
+    color: #fff;
+    white-space: nowrap;
+}
+
+.sidebar .profile-details .job {
+    font-size: 12px;
+    color: #fff;
+    white-space: nowrap;
+}
+
+.sidebar .profile-details i {
+    font-size: 20px;
+    color: #fff;
+    margin-right: 12px;
+    cursor: pointer;
+}
+
+.sidebar.close .profile-details i,
+.sidebar.close .profile-details .job,
+.sidebar.close .profile-details .profile_name,
+.sidebar.close .nav-links li .arrow {
+    display: none;
+
+}
+
+/* Asegúrate de que otros elementos también tengan un z-index menor si es necesario */
+.home-section {
+    padding: 20px; /* Añade algo de padding interno */
+    background: #d9e1f2; /* Un fondo ligero para distinguir del header/breadcrumb */
+    min-height: 100vh;
+    width: calc(100%);
+}
+
+.sidebar.close ~ .home-section {
+    left: 68px;
+    width: calc(100% - 68px);
+}
+
+.sidebar.close ~ .main-content {
+    margin-left: 60px;
+}
+
+.sidebar.close ~ .main-content .header {
+    left: 68px;
+}
+
+.sidebar.close ~ .main-content .breadcrumb-container {
+    left: 68px;
+}
+
+.home-section .home-content {
+    height: 60px;
+    display: flex;
+    align-items: center;
+}
+
+.home-section .home-content .bx-menu,
+.home-section .home-content .text {
+    color: #11101d;
+    font-size: 35px;
+}
+
+.home-section .home-content .bx-menu {
+    margin: 0 15px;
+    cursor: pointer;
+}
+
+.home-section .home-content .text {
+    font-size: 26px;
+    font-weight: 600;
+}
+
+.sidebar-toggle {
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 10px;
+    /* Opcional, para hacer el área de clic más grande */
+}
+
+/* Estilo del botón para alternar la visibilidad del sidebar */
+.sidebar .sidebar-toggle {
+    position: absolute;
+    bottom: 0;
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    background: #1d1b31;
+    padding: 12px 0;
+}
+
+.sidebar .sidebar-toggle .arrow-toggle {
+    font-size: 20px;
+    color: #fff;
+    cursor: pointer;
+}
+
+
+
+
+
+
+
+
+
+/* navbar (Breadcrumb) */
+.breadcrumb-container {
+    position: fixed;
+    top: 50px; /* Justo debajo del header */
+    right: 0;
+    left: 200px; /* Alineado con el header */
+    height: 35px; /* Altura fija para el breadcrumb */
+    z-index: 1000;
+    background-color: rgba(255, 255, 255, 0.7);
+    backdrop-filter: blur(10px);
+    padding: 8px 20px;
+    display: flex;
+    align-items: center;
+}
+
+
+
+.breadcrumb-item {
+    display: inline;
+    font-size: 14px;
+    color: rgba(0, 0, 0, 0.7);
+}
+
+.breadcrumb-item+.breadcrumb-item::before {
+    content: "/";
+    padding: 0 5px;
+    color: rgba(0, 0, 0, 0.5);
+}
+
+.breadcrumb-item a {
+    color: rgba(0, 123, 255, 0.8);
+    text-decoration: none;
+    font-size: 13px;
+}
+
+.breadcrumb-item.active {
+    font-size: 13px;
+    color: rgba(0, 0, 0, 0.6);
+}
+
+
+
+
+
+
+/* Estilos de la barra de navegación */
+.header {
+    position: fixed;
+    left: 240px; /* Same as sidebar width */
+    right: 0;
+    z-index: 1001;
+    background-color: #fff;
+    padding: 10px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.header-left {
+    display: flex;
+    align-items: center;
+}
+
+.header h1 {
+    font-size: 18px;
+    margin-bottom: 0;
+    font-weight: 500;
+    color: #333333;
+}
+
+.header-right {
+    display: flex;
+    align-items: center;
+}
+
+.btn-new {
+    background-color: #4CAF50;
+    color: #fff;
+    padding: 6px 12px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    margin-right: 10px;
+    font-size: 14px;
+}
+
+.search-bar {
+    display: flex;
+    background-color: #f5f5f5;
+    border-radius: 4px;
+    padding: 4px 8px;
+    margin-right: 15px;
+}
+
+.search-bar input[type="text"] {
+    background-color: transparent;
+    border: none;
+    outline: none;
+    padding: 4px 6px;
+    font-size: 14px;
+    width: 200px;
+    color: #333333;
+}
+
+.search-bar button {
+    border: none;
+    background-color: transparent;
+    cursor: pointer;
+}
+
+.notifications {
+    margin-right: 15px;
+    cursor: pointer;
+    color: #666666;
+}
+
+.user-profile {
+    display: flex;
+    align-items: center;
+    position: relative;
+    cursor: pointer;
+}
+
+.user-profile img {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    margin-right: 3px;
+}
+
+.user-profile span {
+    font-size: 14px;
+    color: #333333;
+}
+
+
+
+
+
+/* User profile y dropdown estilos*/
+
+.user-profile-content {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.9rem;
+    cursor: pointer; /* Añadido para hacer más evidente que es clickeable */
+}
+
+.dropdown-menu {
+    position: absolute;
+    top: calc(100% + 10px);
+    right: 0;
+    background-color: white;
+    border: 1px solid #dee2e6;
+    border-radius: 6px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    display: none;
+    min-width: 180px;
+    z-index: 1000;
+    font-size: 0.85rem;
+    margin-right: 5px;
+}
+
+/* Triángulo para la flecha del menú desplegable */
+.dropdown-menu::before {
+    content: '';
+    position: absolute;
+    top: -6px;
+    right: 20px;
+    width: 10px;
+    height: 10px;
+    background-color: white;
+    border-left: 1px solid #dee2e6;
+    border-top: 1px solid #dee2e6;
+    transform: rotate(45deg);
+}
+
+.dropdown-menu a {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.6rem 1rem;
+    color: #333;
+    text-decoration: none;
+    transition: background-color 0.2s;
+}
+
+
+.dropdown-menu a:first-child {
+    border-top-left-radius: 6px;
+    border-top-right-radius: 6px;
+}
+
+.dropdown-menu a:last-child {
+    border-bottom-left-radius: 6px;
+    border-bottom-right-radius: 6px;
+}
+
+.dropdown-menu a:hover {
+    background-color: #f8f9fa;
+}
+
+.user-profile:focus-within .dropdown-menu,
+.user-profile-content:focus + .dropdown-menu {
+    display: block;
+}
+
+.dropdown-menu i {
+    width: 16px;
+    font-size: 0.9rem;
+}
+
+
+/* Divider */
+.dropdown-divider {
+    height: 1px;
+    background-color: #dee2e6;
+    margin: 0.25rem 0;
+}
+
+
+
+/*Contenido principal*/
+
+
+.content-wrapper {
+    margin-top: 70px;
+    padding: 20px;
+    overflow-y: auto;
+}
+
+/* Mobile toggle button styles */
+.mobile-toggle {
+    display: none;
+    background: none;
+    border: none;
+    color: #333;
+    font-size: 20px;
+    cursor: pointer;
+    margin-right: 15px;
+    padding: 5px;
+}
+
+/* Base styles update */
+.main-content {
+    margin-left: 200px; /* Default state - sidebar open */
+}
+
+.header, .breadcrumb-container {
+    left: 200px; /* Default state - sidebar open */
+}
+
+/* Media query for screens <= 840px */
+@media screen and (max-width: 840px) {
+    /* Sidebar styles */
+    .sidebar {
+        transform: translateX(-100%);
+    }
+
+    .sidebar.show {
+        transform: translateX(0);
+    }
+
+    /* Main content styles */
+    .main-content {
+        margin-left: 0 !important;
+        width: 100% !important;
+    }
+
+    /* Header and breadcrumb styles */
+    .header, .breadcrumb-container {
+        left: 0 !important;
+        width: 100% !important;
+    }
+
+    /* Add a hamburger menu button for mobile */
+    .mobile-toggle {
+        display: block;
+    }
+
+    .header-left {
+        display: flex;
+        align-items: center;
+    }
+
+    /* Adjust header for mobile */
+    .header {
+        left: 0 !important;
+        padding: 10px;
+    }
+
+    /* You might want to adjust other header elements for mobile */
+    .header-right .search-bar,
+    .header-right .notifications,
+    .header-right .user-profile span {
+        display: none;
+    }
+
+    .header-right {
+        gap: 10px;
+    }
+}
+
+/* Media query for screens > 840px */
+@media screen and (min-width: 841px) {
+    .sidebar {
+        transform: none;
+    }
+
+    .mobile-toggle {
+        display: none;
+    }
+
+    /* Adjustments for sidebar closed state */
+    .sidebar.close ~ .main-content {
+        margin-left: 68px;
+    }
+
+    .sidebar.close ~ .header,
+    .sidebar.close ~ .breadcrumb-container {
+        left: 68px;
+    }
+}
+
+
+
