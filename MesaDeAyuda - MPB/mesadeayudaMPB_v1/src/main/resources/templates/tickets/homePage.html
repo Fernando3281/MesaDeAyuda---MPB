@@ -57,28 +57,29 @@ Click nbfs://nbhost/SystemFileSystem/Templates/Other/html.html to edit this temp
 <style>
 
     :root {
-        --primary-color: #3b5998;
-        --secondary-color: #f0f4f8;
-        --text-color: #333;
-        --text-light: #666;
         --white: #ffffff;
-        --shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
     }
 
     .content-wrapper {
         max-width: 100%;
         padding: 2rem;
     }
-
     .welcome-section {
-        background-color: var(--white);
-        border-radius: 15px;
+        background-image: url('../img/Imagen3home.jpeg'); /* Ruta a la imagen */
+        background-size: cover; /* Ajusta la imagen para que cubra toda la sección */
+        background-position: center; /* Centra la imagen */
+        background-repeat: no-repeat; /* Evita que la imagen se repita */
+        border-radius: 12px;
         padding: 3rem 2rem;
         text-align: center;
         margin-bottom: 3rem;
-        box-shadow: var(--shadow);
         position: relative;
         overflow: hidden;
+
+    }
+
+    .welcome-section h1, .welcome-section p {
+        color: black; /* Cambia el color del texto para que contraste con la imagen de fondo */
     }
 
     h1 {
@@ -98,12 +99,15 @@ Click nbfs://nbhost/SystemFileSystem/Templates/Other/html.html to edit this temp
 
     .btn {
         padding: 10px 20px;
-        border: 2px solid #11214D; /* Color del borde */
-        background-color: transparent; /* Fondo transparente */
+        border: 2px solid #A9B2CA; /* Color del borde */
+        background-color: rgba(203, 209, 235, 0.1); /* Opacidad al fondo */
         border-radius: 5px; /* Bordes redondeados */
         cursor: pointer;
         transition: background-color 0.3s ease, color 0.3s ease; /* Añadir transición para el color */
+        backdrop-filter: blur(3px); /* Aplicar desenfoque */
+
     }
+
 
     .btn-link {
         text-decoration: none; /* Sin subrayado en el enlace */
@@ -119,6 +123,8 @@ Click nbfs://nbhost/SystemFileSystem/Templates/Other/html.html to edit this temp
     /* Hover para el botón */
     .btn:hover {
         background-color: #11214D; /* Cambia el color de fondo al hacer hover */
+        border: 2px solid #11214D; /* Color del borde */
+        opacity: 1.0;
     }
 
     /* Hover para el enlace dentro del botón */
@@ -128,7 +134,7 @@ Click nbfs://nbhost/SystemFileSystem/Templates/Other/html.html to edit this temp
 
     /* Asegurarse que el texto es visible en estado normal */
     .btn-link {
-        color: #000; /* Color negro */
+        color: #11214D; /* Color negro */
     }
 
     /* Hover adicional en el botón */
@@ -156,12 +162,12 @@ Click nbfs://nbhost/SystemFileSystem/Templates/Other/html.html to edit this temp
         border-radius: 15px;
         padding: 35px;
         text-align: center;
-        box-shadow: var(--shadow);
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
         transition: box-shadow 0.3s ease;
     }
 
     .service-card:hover {
-        box-shadow: var(--hover-shadow);
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.0);
     }
 
     .service-icon {

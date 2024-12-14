@@ -8,6 +8,12 @@ document.addEventListener('DOMContentLoaded', () => {
     const header = document.querySelector(".header");
     const breadcrumbContainer = document.querySelector(".breadcrumb-container");
 
+    // Si no hay sidebar, detiene la ejecución del script
+    if (!sidebar) {
+        console.warn('Sidebar no encontrado. Se detiene la ejecución del script.');
+        return;
+    }
+
     const isMobile = () => window.innerWidth <= 840;
 
     const adjustMainContent = () => {
@@ -112,6 +118,12 @@ document.addEventListener('DOMContentLoaded', () => {
 document.addEventListener('DOMContentLoaded', function() {
   const userProfile = document.querySelector('.user-profile');
   const dropdownMenu = document.querySelector('.dropdown-menu');
+  
+  // Si no hay Dropdown, detiene la ejecución del script
+    if (!userProfile) {
+        console.warn('Dropdown no encontrado. Se detiene la ejecución del script.');
+        return;
+    }
 
   // Toggle al hacer clic en el perfil de usuario
   userProfile.addEventListener('click', function(event) {

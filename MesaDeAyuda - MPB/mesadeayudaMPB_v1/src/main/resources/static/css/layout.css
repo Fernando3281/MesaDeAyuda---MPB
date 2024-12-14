@@ -18,7 +18,7 @@ Click nbfs://nbhost/SystemFileSystem/Templates/Other/CascadeStyleSheet.css to ed
 }
 
 html {
-    font-family: 'Poppins', sans-serif; /* Aplicando Poppins como fuente predeterminada */
+    font-family: 'Poppins', sans-serif;
     line-height: 1.15;
     -webkit-text-size-adjust: 100%; /* Ajuste de tamaño de texto para navegadores WebKit */
     -moz-osx-font-smoothing: grayscale; /* Suavizado de fuentes para Firefox en Mac */
@@ -32,7 +32,17 @@ body, html {
     padding: 0;
 }
 
-
+footer {
+    background-color: #11101D;
+    opacity: 0.95;
+    width: 100%;
+    text-align: center;
+    padding: 1rem 0;
+    font-size: 0.8rem;
+    color: white;
+    position: fixed;
+    bottom: 0;
+}
 
 /*Estilos de Sidebar*/
 
@@ -272,7 +282,7 @@ body, html {
 /* Asegúrate de que otros elementos también tengan un z-index menor si es necesario */
 .home-section {
     padding: 20px; /* Añade algo de padding interno */
-    background: #d9e1f2; /* Un fondo ligero para distinguir del header/breadcrumb */
+    background: #e1e7f7; /* Un fondo ligero para distinguir del header/breadcrumb */
     min-height: 100vh;
     width: calc(100%);
 }
@@ -357,7 +367,7 @@ body, html {
     right: 0;
     left: 200px; /* Alineado con el header */
     height: 35px; /* Altura fija para el breadcrumb */
-    z-index: 1000;
+    z-index: 999;
     background-color: rgba(255, 255, 255, 0.7);
     backdrop-filter: blur(10px);
     padding: 8px 20px;
@@ -436,30 +446,6 @@ body, html {
     font-size: 14px;
 }
 
-.search-bar {
-    display: flex;
-    background-color: #f5f5f5;
-    border-radius: 4px;
-    padding: 4px 8px;
-    margin-right: 15px;
-}
-
-.search-bar input[type="text"] {
-    background-color: transparent;
-    border: none;
-    outline: none;
-    padding: 4px 6px;
-    font-size: 14px;
-    width: 200px;
-    color: #333333;
-}
-
-.search-bar button {
-    border: none;
-    background-color: transparent;
-    cursor: pointer;
-}
-
 .notifications {
     margin-right: 15px;
     cursor: pointer;
@@ -503,16 +489,27 @@ body, html {
     position: absolute;
     top: calc(100% + 10px);
     right: 0;
-    background-color: white;
-    border: 1px solid #dee2e6;
-    border-radius: 6px;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    background-color: rgba(255, 255, 255, 1); /* Color base blanco */
+    background-image: linear-gradient(
+        139deg,
+        rgba(255, 255, 255, 1) 0%,
+        rgba(245, 245, 245, 1) 50%,
+        rgba(232, 232, 232, 1) 100%
+    ); /* Gradiente en tonos blancos */
+    border: 1px solid #e0e0e0;
+    border-radius: 10px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
     display: none;
-    min-width: 180px;
+    min-width: 200px;
     z-index: 1000;
     font-size: 0.85rem;
+    padding: 3px 0px;
     margin-right: 5px;
+    flex-direction: column;
+    gap: 10px;
+    color: #7e8590; /* Mantén el texto visible con el fondo claro */
 }
+
 
 /* Triángulo para la flecha del menú desplegable */
 .dropdown-menu::before {
@@ -523,53 +520,71 @@ body, html {
     width: 10px;
     height: 10px;
     background-color: white;
-    border-left: 1px solid #dee2e6;
-    border-top: 1px solid #dee2e6;
+    border-left: 1px solid #e0e0e0;
+    border-top: 1px solid #e0e0e0;
     transform: rotate(45deg);
 }
 
-.dropdown-menu a {
+.dropdown-menu .separator {
+    border-top: 1.5px solid #e1e1e1;
+}
+
+.dropdown-menu .label {
+    font-size: 15px; /* Ajusta el tamaño según sea necesario */
+    text-align: left; /* Alinea el texto a la izquierda */
+    margin-left: 0px; /* Opcional: ajusta el espacio si es necesario */
+}
+
+.dropdown-menu .list {
+  list-style-type: none;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 5px 8px;
+}
+
+.dropdown-menu .list .element {
     display: flex;
     align-items: center;
-    gap: 0.75rem;
-    padding: 0.6rem 1rem;
-    color: #333;
-    text-decoration: none;
-    transition: background-color 0.2s;
+    color: #666;
+    gap: 8px;
+    transition: all 0.3s ease-out;
+    padding: 8px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: 600;
 }
 
-
-.dropdown-menu a:first-child {
-    border-top-left-radius: 6px;
-    border-top-right-radius: 6px;
+.dropdown-menu .list .element svg {
+    width: 19px;
+    height: 19px;
+    transition: all 0.3s ease-out;
+    stroke: #666;
 }
 
-.dropdown-menu a:last-child {
-    border-bottom-left-radius: 6px;
-    border-bottom-right-radius: 6px;
+.dropdown-menu .list .element .label {
+    font-weight: 600;
 }
 
-.dropdown-menu a:hover {
-    background-color: #f8f9fa;
+.dropdown-menu .list .element:hover {
+    background-color: #f0f0f0;
+    color: #666;
+    transform: translate(1px, -1px);
 }
 
-.user-profile:focus-within .dropdown-menu,
-.user-profile-content:focus + .dropdown-menu {
-    display: block;
+.dropdown-menu .list .delete:hover {
+    background-color: #db4343;
+    color: #fff;
 }
 
-.dropdown-menu i {
-    width: 16px;
-    font-size: 0.9rem;
+.dropdown-menu .list .delete:hover svg {
+    stroke: #fff;
 }
 
-
-/* Divider */
-.dropdown-divider {
-    height: 1px;
-    background-color: #dee2e6;
-    margin: 0.25rem 0;
+.dropdown-menu .list .element:active {
+    transform: scale(0.98);
 }
+
 
 
 
@@ -643,7 +658,6 @@ body, html {
     }
 
     /* You might want to adjust other header elements for mobile */
-    .header-right .search-bar,
     .header-right .notifications,
     .header-right .user-profile span {
         display: none;

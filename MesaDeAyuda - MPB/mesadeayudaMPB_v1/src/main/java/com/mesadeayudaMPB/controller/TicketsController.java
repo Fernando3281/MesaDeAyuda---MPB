@@ -29,4 +29,29 @@ public class TicketsController {
     public String prueba1() {
         return "tickets/prueba1";
     }
+    
+    @GetMapping("/tickets/historial")
+    public String prueba2() {
+        return "tickets/historial";
+    }
+    
+    @GetMapping("/tickets/detallesTicket")
+    public String prueba3() {
+        return "tickets/detallesTicket";
+    }
+    
+    @GetMapping("/tickets/login")
+    public String login() {
+        return "tickets/login";
+    }
+    
+    @GetMapping("/tickets/registro")
+    public String registro() {
+        return "tickets/registro";
+    }
+    
+    @GetMapping("/tickets/verificacionRegistro")
+    public String verificacionRegistro() {
+        return "tickets/verificacionRegistro";
+    }
 }

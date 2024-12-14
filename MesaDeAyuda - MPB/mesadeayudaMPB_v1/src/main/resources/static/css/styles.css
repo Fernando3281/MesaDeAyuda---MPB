@@ -1,0 +1,425 @@
+/*
+Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
+Click nbfs://nbhost/SystemFileSystem/Templates/Other/CascadeStyleSheet.css to edit this template
+*/
+/* 
+    Created on : Oct 4, 2024, 1:25:37 PM
+    Author     : ferva
+*/
+
+/* //////////////////// Panel Login //////////////////// */
+
+.body-login {
+    background-image: url("../img/loginBackground.webp");
+    background-size: cover;
+    background-position: center;
+}
+
+.login-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    padding: 20px;
+    box-sizing: border-box;
+}
+
+.login-form {
+    background-color: rgba(255, 255, 255, 0.8);
+    backdrop-filter: blur(10px);
+    padding: 2rem;
+    border-radius: 10px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    width: 100%;
+    max-width: 520px;
+    text-align: center;
+    margin-bottom: 40px;
+    margin-top: 30px;
+}
+
+.h1-login {
+    color: #333;
+    margin-bottom: 1rem;
+    font-weight: 600;
+}
+
+.shield-login {
+    background-image: url('../img/escudo-barva.webp');
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+    width: 100px;
+    height: 100px;
+    margin: 0 auto 1rem;
+}
+
+.form-elements-login {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.input-group-login {
+    text-align: left;
+}
+
+#password, #email {
+    font-family: 'Poppins', sans-serif;
+    width: 100%;
+    padding: 0.45rem;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    box-sizing: border-box;
+}
+
+#label-login {
+    display: block;
+    margin-bottom: 0.25rem;
+    font-size: 0.9rem;
+    color: #666;
+}
+
+#button-login {
+    font-family: 'Poppins', sans-serif;
+    background-color: #000;
+    color: white;
+    border: none;
+    padding: 0.5rem;
+    border-radius: 20px;
+    cursor: pointer;
+    font-size: 1rem;
+    font-weight: 500;
+    margin-top: 0.5rem;
+}
+
+#button-register {
+    font-family: 'Poppins', sans-serif;
+    background-color: #fff;
+    padding: 0.5rem;
+    margin-top: 0.5rem;
+    border: 1px solid #ccc;
+    border-radius: 20px;
+    text-decoration: none;
+    font-size: 1rem;
+    font-weight: 500;
+    cursor: pointer;
+}
+
+#button-login:hover {
+    background-color: #333;
+}
+
+#button-register:hover {
+    background-color: #f3f3f3;
+}
+
+.forgot-password-login {
+    display: block;
+    margin-top: 1rem;
+    color: #666;
+    font-size: 0.9rem;
+}
+
+.forgot-password-login:hover {
+    color: #007bff;
+}
+
+.checkbox-group {
+    margin-top: 1rem;
+    font-size: 0.9rem;
+}
+
+@media (max-width: 480px) {
+    .login-form {
+        padding: 1.5rem;
+    }
+}
+
+
+
+/* //////////////////// Panel Registro //////////////////// */
+.body-registro {
+    background-image: url("../img/loginBackground.webp");
+    background-size: cover;
+    background-position: center;
+    margin: 0;
+    padding: 0;
+}
+
+.registro-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+    box-sizing: border-box;
+    margin-bottom: 40px;
+}
+
+.registro-form {
+    background-color: rgba(255, 255, 255, 0.8);
+    backdrop-filter: blur(10px);
+    border-radius: 10px;
+    width: 100%;
+    max-width: 1040px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    display: flex;
+}
+
+.registro-left {
+    flex: 0.6;
+    padding: 30px;
+    background-color: #f0f0f0;
+    border-radius: 10px 0 0 10px;
+}
+
+.registro-right {
+    flex: 1;
+    padding: 30px;
+    border-radius: 0 10px 10px 0;
+}
+
+.h1-registro {
+    color: #333;
+    margin-bottom: 5px;
+    font-size: 24px;
+}
+
+.p-registro {
+    color: #666;
+    margin-bottom: 20px;
+    font-size: 14px;
+}
+
+.registro-illustration {
+    background-image: url('../img/customer.png');
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+    height: 200px;
+    margin-top: 80px;
+}
+
+.registro-description {
+    color: #666;
+    font-size: 14px;
+    line-height: 1.5;
+    text-align: center;
+}
+
+.municipalidad-logo {
+    background-image: url('../img/escudo-barva.webp');
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: right top;
+    height: 50px;
+    margin-bottom: 5px;
+}
+
+.form-elements-registro {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.input-group-registro label {
+    display: block;
+    margin-bottom: 5px;
+    color: #333;
+    font-size: 14px;
+}
+
+.input-group-registro input,
+.input-group-registro select {
+    width: 100%;
+    padding: 8px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 14px;
+}
+
+.btn-crear-cuenta {
+    background-color: #000;
+    color: white;
+    border: none;
+    padding: 10px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 16px;
+    margin-top: 5px;
+    width: 100%;
+}
+
+.btn-crear-cuenta:hover {
+    background-color: #11214D;
+}
+
+.link-ya-tengo-cuenta {
+    display: block;
+    text-align: center;
+    margin-top: 5px;
+    color: #666;
+    text-decoration: none;
+    font-size: 14px;
+}
+
+.link-ya-tengo-cuenta:hover {
+    text-decoration: underline;
+}
+
+@media (max-width: 768px) {
+    .registro-form {
+        flex-direction: column;
+    }
+    .registro-left, .registro-right {
+        border-radius: 10px;
+    }
+}
+
+
+/* Verification Code Panel Styles */
+.verification-body {
+    background-image: url("../img/loginBackground.webp");
+    background-size: cover;
+    background-position: center;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+}
+
+.verification-container {
+    width: 100%;
+    max-width: 760px;
+    padding: 20px;
+}
+
+.verification-form {
+    background: rgba(255, 255, 255, 0.8);
+    backdrop-filter: blur(10px);
+    border-radius: 10px;
+    padding: 30px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    position: relative;
+}
+
+.close-button {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    background: none;
+    border: none;
+    font-size: 24px;
+    cursor: pointer;
+}
+
+.verification-title {
+    font-size: 24px;
+    margin-bottom: 10px;
+    text-align: center;
+}
+
+.verification-subtitle {
+    font-size: 14px;
+    color: #666;
+    margin-bottom: 20px;
+    text-align: center;
+}
+
+.verification-input {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    font-size: 16px;
+    margin-bottom: 20px;
+}
+
+.verification-button {
+    width: 100%;
+    padding: 10px;
+    background-color: #000;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    font-size: 16px;
+    cursor: pointer;
+}
+
+.verification-button:hover {
+    background-color: #333;
+}
+
+.verification-info {
+    font-size: 12px;
+    color: #666;
+    text-align: center;
+    margin-top: 20px;
+}
+
+
+/* //////////////////// Panel Perfil //////////////////// */
+
+.profile-card {
+    margin-top: 10px;
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    margin-bottom: 20px;
+}
+
+.profile-header {
+    display: flex;
+    padding: 20px;
+    align-items: center;
+    border-bottom: 1px solid #e9ecef;
+}
+
+.profile-header img {
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    margin-right: 20px;
+}
+
+.profile-info {
+    flex-grow: 1;
+}
+
+.btn-update {
+    background-color: #007bff;
+    color: white;
+    border: none;
+    padding: 10px 15px;
+    border-radius: 4px;
+    cursor: pointer;
+    margin-bottom: 50px;
+}
+
+.profile-details {
+    padding: 20px;
+}
+
+.detail-row {
+    display: flex;
+    margin-bottom: 15px;
+}
+
+.detail-column {
+    flex: 1;
+    margin-right: 15px;
+}
+
+.detail-column label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: bold;
+}
+
+.detail-column input {
+    width: 100%;
+    padding: 8px;
+    border: 1px solid #ced4da;
+    border-radius: 4px;
+}
