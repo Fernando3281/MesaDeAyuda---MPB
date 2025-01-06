@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" 
+      xmlns:th="http://www.thymeleaf.org">
+    <head th:replace="~{layout/plantilla :: head}">
+        <title>Mesa de Ayuda</title>
+        <meta charset="UTF-8"/>
+    </head>
+    <th:block th:append="head">
+        <link rel="stylesheet" th:href="@{/css/perfil_layout_principal.css}">
+    </th:block>
+
+    <body>
+        <div class="wrapper">
+            <aside th:replace="~{layout/plantilla :: sidebar}"></aside>
+
+            <div class="main-content">
+                <header th:replace="~{layout/plantilla :: header}"></header>
+
+                <!-- Incluye el navbar -->
+                <nav th:replace="~{layout/plantilla :: navbar}"></nav>
+
+                <main class="home-section">
+                    <div class="content-wrapper">
+
+                        <section th:replace="~{usuario/segmentos-perfil-info :: perfil-section}"></section>
+                        <section th:replace="~{usuario/segmentos-perfil-info :: tickets-section}"></section>
+
+                    </div>
+                </main>
+            </div>
+        </div>
+    </body>
+</html>

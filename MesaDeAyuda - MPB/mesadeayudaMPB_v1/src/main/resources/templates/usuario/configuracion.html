@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" 
+      xmlns:th="http://www.thymeleaf.org">
+    <head th:replace="~{layout/plantilla :: head}">
+        <title>Mesa de Ayuda</title>
+    </head>
+    <th:block th:append="head">
+        <link rel="stylesheet" th:href="@{/css/configuracion_layout_principal.css}">
+    </th:block>
+    <body>
+        <div class="wrapper">
+            <!-- Incluye el sidebar -->
+            <div th:replace="~{layout/plantilla :: sidebar}"></div>
+
+            <div class="main-content">
+                <div th:replace="~{layout/plantilla :: header}"></div>
+
+                <!-- Incluye el navbar -->
+                <div th:replace="~{layout/plantilla :: navbar}"></div>
+
+                <!-- Contenido principal -->
+                <main class="home-section">
+                    <div class="content-wrapper">
+                        <div class="container">
+                            <h2 class="mb-4" id="Title">Ajustes Generales</h2>
+                            <div class="settings-list">
+                                <!-- Actualizar Información -->
+                                <div class="settings-item">
+                                    <a href="#" class="settings-link">
+                                        <div class="settings-content">
+                                            <div class="settings-text">
+                                                <h3>Actualizar Información de Perfil</h3>
+                                                <p class="text-muted">Actualice su información personal</p>
+                                            </div>
+                                            <i class="fas fa-chevron-right"></i>
+                                        </div>
+                                    </a>
+                                </div>
+
+                                <!-- Actividad de Tickets -->
+                                <div class="settings-item">
+                                    <a href="#" class="settings-link">
+                                        <div class="settings-content">
+                                            <div class="settings-text">
+                                                <h3>Actividad de Tickets</h3>
+                                                <p class="text-muted">Ver y gestionar la actividad de tickets actualizados</p>
+                                            </div>
+                                            <i class="fas fa-chevron-right"></i>
+                                        </div>
+                                    </a>
+                                </div>
+
+                                <!-- Gestión de Categorías -->
+                                <div class="settings-item">
+                                    <a href="#" class="settings-link">
+                                        <div class="settings-content">
+                                            <div class="settings-text">
+                                                <h3>Gestion de Categorias</h3>
+                                                <p class="text-muted">Agregar o Eliminar categorías de Tickets</p>
+                                            </div>
+                                            <i class="fas fa-chevron-right"></i>
+                                        </div>
+                                    </a>
+                                </div>
+
+                                <!-- Administrar Colaboradores -->
+                                <div class="settings-item">
+                                    <a href="#" class="settings-link">
+                                        <div class="settings-content">
+                                            <div class="settings-text">
+                                                <h3>Administrar Colaboradores</h3>
+                                                <p class="text-muted">Administre los colaboradores de la Mesa de Ayuda</p>
+                                            </div>
+                                            <i class="fas fa-chevron-right"></i>
+                                        </div>
+                                    </a>
+                                </div>
+
+                                <!-- Cerrar Sesión -->
+                                <div class="settings-item">
+                                    <a href="#" class="settings-link text-danger">
+                                        <div class="settings-content">
+                                            <div class="settings-text" id="opcionCerrarSesion">
+                                                <h3>Cerrar Sesion</h3>
+                                            </div>
+                                            <i class="fas fa-chevron-right"></i>
+                                        </div>
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </main>
+            </div>
+        </div>
+    </body>
+</html>

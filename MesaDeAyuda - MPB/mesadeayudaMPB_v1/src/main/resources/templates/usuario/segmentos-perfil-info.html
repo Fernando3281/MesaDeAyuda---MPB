@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" 
+      xmlns:th="http://www.thymeleaf.org">
+    <head th:replace="~{layout/plantilla :: head}">
+        <title>Mesa de Ayuda</title>
+    </head>
+    <th:block th:append="head">
+        <link rel="stylesheet" th:href="@{/css/perfil_layout_principal.css}">
+    </th:block>
+    <body>
+        <div class="wrapper">
+            <!-- Incluye el sidebar -->
+            <div th:replace="~{layout/plantilla :: sidebar}"></div>
+
+            <div class="main-content">
+                <div th:replace="~{layout/plantilla :: header}"></div>
+
+                <!-- Incluye el navbar -->
+                <div th:replace="~{layout/plantilla :: navbar}"></div>
+
+                <!-- Contenido principal -->
+                <main class="home-section">
+                    <div class="content-wrapper">
+                        <section th:fragment="perfil-section">
+                            <h2 id="Title">Mi Perfil</h2>
+                            <div class="profile-card">
+                                <div class="profile-header">
+                                    <img src="https://www.afondochile.cl/site/wp-content/uploads/2018/06/jose-vaisman-e1529942487664.jpg"
+                                         alt="Brians Fernando">
+                                        <div class="profile-info">
+                                            <p id="infoUsuario">Support Staff</p>
+                                            <div id="infoUsuario">
+                                                <h3 style="display: inline;">Brians Fernando Vargas Camacho</h3>
+                                                <p style="display: inline;">ID#208324</p>
+                                            </div>
+                                            <p id="infoUsuario"><b>Departamento:</b> Asistente de TI</p>
+                                            <p id="infoUsuario"><b>Último Acceso al Sistema:</b> 06/07/2024</p>
+                                        </div>
+                                        <button class="btn-update" style="font-family: 'Poppins', sans-serif;" onclick="window.location.href = '/tickets/modificarPerfil'">
+                                            <i class="fa-regular fa-pen-to-square"></i> Actualizar Perfil</button>
+                                </div>
+                                <div class="profile-details">
+                                    <div class="detail-row">
+                                        <div class="detail-column">
+                                            <label>Provincia / Ciudad</label>
+                                            <input type="text" value="Heredia" readonly>
+                                        </div>
+                                        <div class="detail-column">
+                                            <label>Dirección</label>
+                                            <textarea class="form-control" style="height: 140%;" readonly>Calle Los Pollos, Barva, Costa Rica</textarea>
+                                        </div>
+                                    </div>
+                                    <div class="detail-row">
+                                        <div class="detail-column" id="columnaTelefono">
+                                            <label>Número de Teléfono</label>
+                                            <input type="text" id="inputTelefono" value="+506 8975 0909" readonly>
+                                        </div>
+                                    </div>
+                                    <div class="detail-row" style="margin-bottom: 0rem;">
+                                        <div class="detail-column">
+                                            <label>Ocupación o Departamento</label>
+                                            <input type="text" value="Asistente de TI" readonly>
+                                        </div>
+                                        <div class="detail-column">
+                                            <label>Correo Electrónico</label>
+                                            <input type="text" value="fercvargas70499@outlook.com" readonly>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </section>
+
+                        <section th:fragment="tickets-section">
+
+                            <h2 class="h4 mb-3">Tickets Recientes</h2>
+
+                            <div class="row g-4">
+                                <div class="col-12">
+                                    <div class="card card-ticket status-abierto">
+                                        <div class="card-body">
+                                            <div class="d-flex justify-content-between align-items-center">
+                                                <span class="text-muted small">#TIC001</span>
+                                                <span class="badge bg-warning text-dark badge-status">Abierto</span>
+                                            </div>
+                                            <h3 class="h5 mb-2">Problema con el sistema de Facturación</h3>
+                                            <div class="text-muted small">
+                                                <p class="mb-1">Prioridad: Baja</p>
+                                                <p class="mb-1">Categoría: Hardware</p>
+                                                <p class="mb-0">Fecha: 23-08-2024</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-12">
+                                    <div class="card card-ticket status-en-progreso">
+                                        <div class="card-body">
+                                            <div class="d-flex justify-content-between align-items-center">
+                                                <span class="text-muted small">#TIC002</span>
+                                                <span class="badge bg-primary badge-status">En progreso</span>
+                                            </div>
+                                            <h3 class="h5 mb-2">Actualización de software requerida</h3>
+                                            <div class="text-muted small">
+                                                <p class="mb-1">Prioridad: Media</p>
+                                                <p class="mb-1">Categoría: Software</p>
+                                                <p class="mb-0">Fecha: 22-08-2024</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-12">
+                                    <div class="card card-ticket status-completado">
+                                        <div class="card-body">
+                                            <div class="d-flex justify-content-between align-items-center">
+                                                <span class="text-muted small">#TIC003</span>
+                                                <span class="badge bg-success badge-status">Completado</span>
+                                            </div>
+                                            <h3 class="h5 mb-2">Solicitud de nuevo equipo</h3>
+                                            <div class="text-muted small">
+                                                <p class="mb-1">Prioridad: Alta</p>
+                                                <p class="mb-1">Categoría: Hardware</p>
+                                                <p class="mb-0">Fecha: 21-08-2024</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </section>
+                    </div>
+                </main>
+            </div>
+        </div>
+    </body>
+</html>
+
+

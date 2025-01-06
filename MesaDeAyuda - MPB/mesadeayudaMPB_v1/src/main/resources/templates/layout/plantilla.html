@@ -5,8 +5,8 @@
         <title>Mesa de Ayuda</title>
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <link th:href="@{/css/layout.css}" rel="stylesheet" type="text/css" />
-        <link th:href="@{/css/styles.css}" rel="stylesheet" type="text/css" />
+        <link th:href="@{/css/layout_default.css}" rel="stylesheet" type="text/css" />
+        <link th:href="@{/css/styles_default.css}" rel="stylesheet" type="text/css" />
         <link th:href="@{/webjars/font-awesome/css/all.css}" rel="stylesheet" />
         <script th:src="@{/webjars/jquery/jquery.min.js}"></script>
         <script th:src="@{/webjars/popper.js/umd/popper.min.js}"></script>
@@ -26,9 +26,9 @@
                 <a th:href="@{/tickets/nuevoTicket}">
                     <button class="btn-new">Nuevo Ticket +</button>
                 </a>
-                <div class="notifications">
+                <button class="notifications-button">
                     <i class="fas fa-bell"></i>
-                </div>
+                </button>
                 <div class="user-profile">
                     <div class="user-profile-content">
                         <img src="https://www.afondochile.cl/site/wp-content/uploads/2018/06/jose-vaisman-e1529942487664.jpg" alt="User" />
@@ -37,7 +37,7 @@
                     </div>
                     <div class="dropdown-menu">
                         <ul class="list">
-                            <li class="element" th:onclick="|window.location.href='@{/index}'|">
+                            <li class="element" th:onclick="|window.location.href='@{/usuario/perfil}'|">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="25" height="25" viewBox="0 0 24 24" fill="none" stroke="#7e8590" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-user">
                                     <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
                                     <circle cx="12" cy="7" r="4"></circle>
@@ -45,15 +45,13 @@
                                 <p class="label">Mi Perfil</p>
                             </li>
 
-                        </ul>
-                       
-                        <ul class="list">
-                            <li class="element">
+
+                            <li class="element" th:onclick="|window.location.href='@{/tickets/configuracion}'|">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#7e8590" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-settings">
                                     <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"></path>
                                     <circle r="3" cy="12" cx="12"></circle>
                                 </svg>
-                                <p class="label">Configuración</p>
+                                <p class="label">Ajustes</p>
                             </li>
                         </ul>
                         <div class="separator"></div>
@@ -93,12 +91,12 @@
                 <sidebar>
                     <ul class="nav-links">
                         <li>
-                            <a th:href="@{/tickets/homePage}">
+                            <a th:href="@{/index}">
                                 <i class="fas fa-home"></i>
                                 <span class="link_name">Inicio</span>
                             </a>
                             <ul class="sub-menu blank">
-                                <li><a class="link_name" th:href="@{/tickets/homePage}">Inicio</a></li>
+                                <li><a class="link_name" th:href="@{/index}">Inicio</a></li>
                             </ul>
                         </li>
                         <li>
@@ -112,7 +110,7 @@
                             <ul class="sub-menu">
                                 <li><a class="link_name">Tickets</a></li>
                                 <li><a th:href="@{/tickets/nuevoTicket}">Nuevo Ticket</a></li>
-                                <li><a th:href="@{/tickets/prueba1}">Mis Tickets</a></li>
+                                <li><a th:href="@{/tickets/listado}">Mis Tickets</a></li>
                                 <li><a th:href="@{/tickets/historial}">Historial</a></li>
                             </ul>
                         </li>
@@ -129,7 +127,7 @@
                             </ul>
                         </li>
                         <li>
-                            <a href="#">
+                            <a th:href="@{/tickets/reporte-manager}">
                                 <i class="fas fa-file-alt"></i>
                                 <span class="link_name">Reportes</span>
                             </a>
@@ -138,12 +136,12 @@
                             </ul>
                         </li>
                         <li>
-                            <a href="#">
+                            <a th:href="@{/tickets/configuracion}">
                                 <i class="fas fa-cog"></i>
                                 <span class="link_name">Ajustes</span>
                             </a>
                             <ul class="sub-menu blank">
-                                <li><a class="link_name" href="#">Ajustes</a></li>
+                                <li><a class="link_name" th:href="@{/tickets/configuracion}">Ajustes</a></li>
                             </ul>
                         </li>
                     </ul>
@@ -151,9 +149,14 @@
                 <div class="sidebar-toggle">
                     <div class="circle-icon">
                         <i class="fa-solid fa-chevron-left arrow-toggle"></i>
-                    </div>
+                    </div>  
                 </div>
             </aside>
+        </div>
+        
+        <div th:fragment="scripts">
+            <script th:src="@{/js/tickets-table.js}"></script>
+            <script th:src="@{/js/tickets-functions.js}"></script>
         </div>
     </body>
 </html>

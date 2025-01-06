@@ -7,6 +7,14 @@ Click nbfs://nbhost/SystemFileSystem/Templates/Other/CascadeStyleSheet.css to ed
     Author     : ferva
 */
 
+
+#Title {
+    margin-bottom: 20px;
+    font-size: 30px;
+    color: #3a3a3a;
+}
+
+
 /* //////////////////// Panel Login //////////////////// */
 
 .body-login {
@@ -144,15 +152,24 @@ Click nbfs://nbhost/SystemFileSystem/Templates/Other/CascadeStyleSheet.css to ed
     background-position: center;
     margin: 0;
     padding: 0;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
 }
 
 .registro-container {
+    flex: 1;
     display: flex;
     justify-content: center;
     align-items: center;
-    padding: 20px;
+    padding: 40px 12px;
     box-sizing: border-box;
-    margin-bottom: 40px;
+    margin-bottom: 25px;
+}
+
+.form-control,
+select.form-control, #confirm-password {
+    font-family: 'Poppins', sans-serif;
 }
 
 .registro-form {
@@ -167,14 +184,14 @@ Click nbfs://nbhost/SystemFileSystem/Templates/Other/CascadeStyleSheet.css to ed
 
 .registro-left {
     flex: 0.6;
-    padding: 30px;
+    padding: 25px;
     background-color: #f0f0f0;
     border-radius: 10px 0 0 10px;
 }
 
 .registro-right {
     flex: 1;
-    padding: 30px;
+    padding: 25px;
     border-radius: 0 10px 10px 0;
 }
 
@@ -196,7 +213,7 @@ Click nbfs://nbhost/SystemFileSystem/Templates/Other/CascadeStyleSheet.css to ed
     background-repeat: no-repeat;
     background-position: center;
     height: 200px;
-    margin-top: 80px;
+    margin-top: 100px;
 }
 
 .registro-description {
@@ -225,26 +242,28 @@ Click nbfs://nbhost/SystemFileSystem/Templates/Other/CascadeStyleSheet.css to ed
     display: block;
     margin-bottom: 5px;
     color: #333;
-    font-size: 14px;
+    font-size: 13px;
 }
 
 .input-group-registro input,
 .input-group-registro select {
+    font-family: 'Poppins', sans-serif;
     width: 100%;
-    padding: 8px;
+    padding: 6px;
     border: 1px solid #ccc;
     border-radius: 4px;
-    font-size: 14px;
+    font-size: 13px;
 }
 
 .btn-crear-cuenta {
+    font-family: 'Poppins', sans-serif;
     background-color: #000;
     color: white;
     border: none;
-    padding: 10px;
-    border-radius: 4px;
+    padding: 7px;
+    border-radius: 20px;
     cursor: pointer;
-    font-size: 16px;
+    font-size: 15px;
     margin-top: 5px;
     width: 100%;
 }
@@ -256,27 +275,35 @@ Click nbfs://nbhost/SystemFileSystem/Templates/Other/CascadeStyleSheet.css to ed
 .link-ya-tengo-cuenta {
     display: block;
     text-align: center;
-    margin-top: 5px;
+    margin-top: 3px;
     color: #666;
     text-decoration: none;
     font-size: 14px;
 }
 
 .link-ya-tengo-cuenta:hover {
+    color: #007bff;
     text-decoration: underline;
 }
 
 @media (max-width: 768px) {
+    .registro-container {
+        padding: 20px 15px;
+    }
+
     .registro-form {
         flex-direction: column;
+        margin: 20px auto;
     }
-    .registro-left, .registro-right {
+
+    .registro-left,
+    .registro-right {
         border-radius: 10px;
     }
 }
 
 
-/* Verification Code Panel Styles */
+/* //////////////////// Panel de Verificacion de Registro //////////////////// */
 .verification-body {
     background-image: url("../img/loginBackground.webp");
     background-size: cover;
@@ -291,7 +318,7 @@ Click nbfs://nbhost/SystemFileSystem/Templates/Other/CascadeStyleSheet.css to ed
 
 .verification-container {
     width: 100%;
-    max-width: 760px;
+    max-width: 860px;
     padding: 20px;
 }
 
@@ -299,9 +326,16 @@ Click nbfs://nbhost/SystemFileSystem/Templates/Other/CascadeStyleSheet.css to ed
     background: rgba(255, 255, 255, 0.8);
     backdrop-filter: blur(10px);
     border-radius: 10px;
-    padding: 30px;
+    padding: 20px;
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
     position: relative;
+}
+.verification-form-container {
+
+    padding-top: 0px;
+    padding-bottom: 20px;
+    padding-left: 70px;
+    padding-right: 70px;
 }
 
 .close-button {
@@ -328,15 +362,17 @@ Click nbfs://nbhost/SystemFileSystem/Templates/Other/CascadeStyleSheet.css to ed
 }
 
 .verification-input {
+    font-family: 'Poppins', sans-serif;
     width: 100%;
     padding: 10px;
     border: 1px solid #ccc;
     border-radius: 5px;
     font-size: 16px;
-    margin-bottom: 20px;
+    margin-bottom: 15px;
 }
 
 .verification-button {
+    font-family: 'Poppins', sans-serif;
     width: 100%;
     padding: 10px;
     background-color: #000;
@@ -358,68 +394,3 @@ Click nbfs://nbhost/SystemFileSystem/Templates/Other/CascadeStyleSheet.css to ed
     margin-top: 20px;
 }
 
-
-/* //////////////////// Panel Perfil //////////////////// */
-
-.profile-card {
-    margin-top: 10px;
-    background: white;
-    border-radius: 8px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-    margin-bottom: 20px;
-}
-
-.profile-header {
-    display: flex;
-    padding: 20px;
-    align-items: center;
-    border-bottom: 1px solid #e9ecef;
-}
-
-.profile-header img {
-    width: 100px;
-    height: 100px;
-    border-radius: 50%;
-    margin-right: 20px;
-}
-
-.profile-info {
-    flex-grow: 1;
-}
-
-.btn-update {
-    background-color: #007bff;
-    color: white;
-    border: none;
-    padding: 10px 15px;
-    border-radius: 4px;
-    cursor: pointer;
-    margin-bottom: 50px;
-}
-
-.profile-details {
-    padding: 20px;
-}
-
-.detail-row {
-    display: flex;
-    margin-bottom: 15px;
-}
-
-.detail-column {
-    flex: 1;
-    margin-right: 15px;
-}
-
-.detail-column label {
-    display: block;
-    margin-bottom: 5px;
-    font-weight: bold;
-}
-
-.detail-column input {
-    width: 100%;
-    padding: 8px;
-    border: 1px solid #ced4da;
-    border-radius: 4px;
-}

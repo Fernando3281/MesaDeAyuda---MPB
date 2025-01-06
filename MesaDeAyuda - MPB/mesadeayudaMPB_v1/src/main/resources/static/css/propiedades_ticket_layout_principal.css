@@ -1,0 +1,167 @@
+/* 
+    Created on : Oct 4, 2024, 1:25:37 PM
+    Author     : ferva
+*/
+
+/* //////////////////// Panel Prropiedades Ticket //////////////////// */
+
+
+.form-control,
+select.form-control {
+    font-family: 'Poppins', sans-serif;
+}
+
+.btn {
+    padding: 8px 16px;
+    font-size: 14px;
+    cursor: pointer;
+    text-decoration: none;
+}
+
+.btn-dark {
+    background-color: #333;
+    color: #fff;
+}
+
+.btn-secondary {
+    background-color: #6c757d;
+    color: #fff;
+}
+
+.btn-outline {
+    background-color: #fff;
+    border: 1px solid #ced4da;
+    color: #333;
+}
+
+#infoUsuario {
+    border: 1px solid #ced4da;
+    background-color: #f8f9fa;
+    border-top-left-radius: 0;
+    border-bottom-left-radius: 0;
+    border-top-right-radius: 5px;
+    border-bottom-right-radius: 5px;
+    font-size: 1.2rem;
+}
+
+#infoUsuario:hover {
+    background-color: #e2e6ea;
+}
+
+.btn-link {
+    background: none;
+    color: #333;
+    padding-left: 0;
+    border-radius: 0;
+}
+
+.btn-link i {
+    margin-right: 5px;
+}
+
+.back-button {
+    width: 45px; /* Ancho cuadrado */
+    height: 45px; /* Alto cuadrado */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border-radius: 8px; /* Bordes ligeramente redondeados */
+    border: 1px solid #ced4da;
+    background-color: #f8f9fa;
+    cursor: pointer;
+    border: 2px solid #ced4da;
+}
+
+.back-button i {
+    color: #333; /* Color del ícono */
+    font-size: 1.5rem; /* Tamaño del ícono */
+}
+
+.back-button:hover {
+    background-color: #e2e6ea; /* Color al pasar el ratón */
+}
+
+.card {
+    background-color: #fff;
+    border-radius: 8px;
+    border: 2px solid #ced4da;
+    margin-bottom: 50px;
+    padding: 20px;
+    font-size: 13px;
+}
+
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: bold;
+}
+
+.form-control {
+    width: 100%;
+    padding: 8px;
+    border: 1px solid #ced4da;
+    border-radius: 4px;
+    font-size: 13px;
+}
+
+.form-control:read-only {
+    background-color: #e9ecef;
+}
+
+.input-group {
+    display: flex;
+}
+
+.input-group .form-control {
+    flex: 1;
+    border-top-right-radius: 0;
+    border-bottom-right-radius: 0;
+}
+
+.input-group-text {
+    display: flex;
+    align-items: center;
+    padding: 0 10px;
+    background-color: #e9ecef;
+    border: 1px solid #ced4da;
+    border-left: none;
+    border-top-right-radius: 4px;
+    border-bottom-right-radius: 4px;
+}
+
+.grid {
+    display: grid;
+    gap: 20px;
+}
+
+.grid-2 {
+    grid-template-columns: 1fr 1fr;
+}
+
+.grid-3 {
+    grid-template-columns: 1fr 1fr 1fr;
+}
+
+textarea.form-control {
+    min-height: 100px;
+    resize: vertical;
+}
+
+.btn-group {
+    display: flex;
+    gap: 10px;
+}
+
+.full-width {
+    width: 100%;
+}
+
+@media (max-width: 768px) {
+    .grid-2, .grid-3 {
+        grid-template-columns: 1fr;
+    }
+}

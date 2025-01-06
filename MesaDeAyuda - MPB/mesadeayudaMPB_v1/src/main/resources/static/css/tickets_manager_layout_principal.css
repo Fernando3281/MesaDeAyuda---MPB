@@ -1,0 +1,661 @@
+/* 
+    Created on : Oct 4, 2024, 1:25:37 PM
+    Author     : ferva
+*/
+
+/* //////////////////// Panel Perfil //////////////////// */
+
+
+.clear-filters-btn {
+    width: 24px;
+    height: 24px;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #6B7280;
+    border-radius: 50%;
+    transition: all 0.2s ease;
+}
+
+.clear-filters-btn:hover {
+    background-color: #E5E7EB;
+    color: #374151;
+}
+
+.clear-filters-btn i {
+    font-size: 14px;
+}
+
+/* Asegura que la primera columna del filter row tenga el espacio adecuado */
+.filter-row th:first-child {
+    width: 40px;
+    min-width: 40px;
+    text-align: center;
+}
+
+
+.wrapper {
+    height: 100vh; /* Asegura que ocupe el 100% de la altura del viewport */
+    overflow: hidden; /* Evita scroll innecesario */
+}
+
+.main-content {
+    height: calc(100vh - Xpx); /* Ajusta X según la altura de header/sidebar */
+    overflow-y: auto; /* Permite scroll solo en la dirección necesaria */
+}
+
+/* Estilos mejorados para la tabla redimensionable */
+.table-resizable {
+    position: relative;
+    width: 100%; /* La tabla se adapta al contenedor */
+    border-collapse: collapse; /* Mejora la estética de la tabla */
+    table-layout: fixed; /* Asegura que las columnas respeten sus anchos */
+}
+
+/* Estilos para el encabezado ordenable */
+.header-content {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    position: relative;
+    padding-right: 20px; /* Espacio para el icono */
+}
+
+.header-text {
+    flex: 1;
+    text-overflow: ellipsis;
+    overflow: hidden;
+    white-space: nowrap;
+}
+
+.sort-icons {
+    position: absolute;
+    right: 20px; /* Ajustar según el ancho del resizer */
+    display: flex;
+    align-items: center;
+}
+
+/* Estilos para los iconos de ordenamiento */
+.sort-icons i {
+    font-size: 12px;
+    color: #6B7280;
+    transition: color 0.2s;
+}
+
+/* Estilos para el estado activo */
+.fa-sort-up,
+.fa-sort-down {
+    color: #2563EB !important;
+}
+
+.table-resizable th {
+    cursor: pointer;
+    user-select: none;
+    position: relative;
+    background: #f8f9fa;
+    border: 1px solid #dee2e6;
+    padding: 12px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    min-width: 100px;
+}
+
+/* Excepción para la columna de checkbox */
+.table-resizable th:first-child {
+    cursor: default;
+}
+
+/* Efecto hover */
+.table-resizable th:hover .sort-icons i {
+    color: #4B5563;
+}
+
+
+.table-resizable th, .table-resizable td {
+    white-space: nowrap; /* Evita que el contenido se desborde */
+    overflow: hidden; /* Esconde el contenido extra */
+    text-overflow: ellipsis; /* Agrega puntos suspensivos al contenido truncado */
+}
+
+.table-resizable td {
+    border: 1px solid #dee2e6;
+    padding: 12px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* Anchos específicos para cada columna */
+
+.table-resizable th:nth-child(2),
+.table-resizable td:nth-child(2) {
+    width: 120px;
+    text-align: center;
+}
+
+.table-resizable th:nth-child(3),
+.table-resizable td:nth-child(3) {
+    width: 100px;
+    text-align: center;
+}
+
+.table-resizable th:nth-child(4),
+.table-resizable td:nth-child(4) {
+    width: 450px;
+}
+
+.table-resizable th:nth-child(5),
+.table-resizable td:nth-child(5) {
+    width: 150px;
+    text-align: center;
+}
+
+.table-resizable th:nth-child(6),
+.table-resizable td:nth-child(6) {
+    width: 100px;
+    text-align: center;
+}
+
+.table-resizable th:nth-child(7),
+.table-resizable td:nth-child(7) {
+    width: 100px;
+    text-align: center;
+}
+
+.table-resizable th:nth-child(8),
+.table-resizable td:nth-child(8) {
+    width: 100px;
+    text-align: center;
+}
+
+.table-resizable th:nth-child(9),
+.table-resizable td:nth-child(9) {
+    min-width: 150px;
+    text-align: center;
+}
+
+.table-resizable th:nth-child(10),
+.table-resizable td:nth-child(10) {
+    min-width: 100px;
+    text-align: center;
+}
+
+.table-resizable th .resizer {
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 5px;
+    cursor: col-resize;
+    user-select: none;
+    height: 100%;
+    background-color: #dee2e6;
+    opacity: 0;
+    transition: opacity 0.3s;
+}
+
+.table-resizable th .resizer:hover,
+.table-resizable th .resizer.active {
+    opacity: 1;
+    background-color: #0d6efd;
+}
+
+.table-resizable th:hover .resizer {
+    opacity: 0.5;
+}
+
+.fixed {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 1000;
+    background-color: white; /* Asegura que el fondo sea visible */
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.table-container::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.3s;
+}
+
+.table-container.resizing::after {
+    opacity: 1;
+    pointer-events: all;
+}
+
+.search-section {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+    gap: 10px;
+}
+
+.search-container {
+    flex-grow: 1;
+    position: relative;
+    max-width: 600px;
+}
+
+.search-input {
+    width: 100%;
+    padding: 8px 35px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 14px;
+}
+
+.search-icon {
+    position: absolute;
+    left: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #666;
+}
+
+.action-buttons {
+    display: flex;
+    gap: 10px;
+}
+
+.btn {
+    padding: 8px 16px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    background: white;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 14px;
+    color: #333;
+}
+
+.btn:hover {
+    background: #f5f5f5;
+}
+
+.table-header {
+    background: #6B7280;
+    color: white;
+    padding: 8px 15px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-radius: 4px 4px 0 0;
+    font-size: 13px;
+    gap: 15px;
+}
+
+.pagination-left {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    white-space: nowrap;
+}
+
+.records-select {
+    background: white;
+    border: 1px solid #dee2e6;
+    border-radius: 4px;
+    padding: 4px 8px;
+    color: #374151;
+    font-size: 13px;
+    cursor: pointer;
+}
+
+.pagination-center {
+    flex: 1;
+    text-align: center;
+    white-space: nowrap;
+}
+
+.pagination-controls {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.pagination-btn {
+    background: transparent;
+    border: 1px solid rgba(255, 255, 255, 0.5);
+    color: white;
+    padding: 4px 8px;
+    border-radius: 4px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+}
+
+.pagination-btn:hover:not(:disabled) {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.pagination-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.page-numbers {
+    display: flex;
+    gap: 4px;
+    align-items: center;
+}
+
+.page-number {
+    background: transparent;
+    border: 1px solid rgba(255, 255, 255, 0.5);
+    color: white;
+    min-width: 28px;
+    height: 28px;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.page-number:hover:not(.active) {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.page-number.active {
+    background: white;
+    color: #374151;
+    border-color: white;
+    cursor: default;
+}
+
+
+.table-container {
+    max-height: calc(100vh - 200px); /* Ajusta según el tamaño del search bar y otros elementos */
+    display: block; /* Asegura el comportamiento esperado del contenedor */
+    width: 100%; /* El contenedor ocupará todo el ancho disponible */
+    overflow-x: auto; /* Agrega scroll horizontal si es necesario */
+    max-width: 100%; /* Limita el ancho al contenedor padre */
+    border: 1px solid #ddd;
+    border-top: none;
+    border-radius: 0 0 4px 4px;
+}
+
+.tickets-table {
+    width: 100%;
+    border-collapse: collapse;
+    white-space: nowrap;
+    background: white;
+    margin-top: -1px;
+}
+
+.filter-row {
+    position: sticky; /* Fija la posición del encabezado */
+    top: 30.50px; /* Fija al principio de la tabla */
+    z-index: 11; /* Asegura que esté por encima del contenido */
+    display: table-header-group; /* Para que se comporte como parte de thead */
+}
+
+.filter-row input {
+    width: 90%; /* Asegura que los inputs sean proporcionales */
+    padding: 5px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 14px;
+    box-sizing: border-box; /* Asegura que no se salga del contenedor */
+    opacity: 70%;
+}
+
+
+.tickets-table thead tr {
+    position: sticky;
+    top: 0px;
+    z-index: 10;
+    background-color: #e2e5e9;
+}
+
+.tickets-table thead th {
+    border: 2px solid #e2e5e9; /* Elige el color que desees */
+}
+
+.tickets-table th,
+.tickets-table td {
+    padding: 6px;
+    text-align: left;
+    border-bottom: 1px solid #ddd;
+    font-size: 12px;
+}
+
+.table-resizable th:first-child,
+.table-resizable td:first-child {
+    width: 40px;
+    min-width: 40px;
+}
+
+.table-resizable th:first-child .resizer {
+    display: none;
+}
+
+.tickets-table th {
+    background: #f8f9fa;
+    font-weight: 700;
+    color: #374151;
+}
+
+.tickets-table tr:hover {
+    background: #f8f9fa;
+}
+
+.badge {
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 500;
+}
+
+.badge-alto {
+    background: #DC2626;
+    color: white;
+}
+
+.badge-medio {
+    background: #F59E0B;
+    color: white;
+}
+
+.badge-bajo {
+    background: #10B981;
+    color: white;
+}
+
+.badge-critico {
+    background: #7C3AED;
+    color: white;
+}
+
+.checkbox-custom {
+    width: 16px;
+    height: 16px;
+    cursor: pointer;
+    margin-left: 6px;
+}
+
+.ticket-link {
+    color: #2563EB; /* Cambia el color del enlace */
+    text-decoration: none; /* Quita el subrayado */
+    font-weight: bold; /* Hace el texto más visible */
+}
+
+.ticket-link:hover {
+    text-decoration: underline; /* Agrega un subrayado al pasar el cursor */
+}
+
+.filter-row input {
+    width: 90%;
+    padding: 5px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 14px;
+}
+
+
+@media (max-width: 768px) {
+    .table-header {
+        flex-direction: column;
+        gap: 10px;
+        padding: 10px;
+    }
+
+    .pagination-center {
+        order: -1;
+    }
+
+    .page-numbers {
+        display: none;
+    }
+
+    .search-section {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .search-container {
+        max-width: 100%;
+    }
+
+    .action-buttons {
+        justify-content: stretch;
+    }
+
+    .btn {
+        flex: 1;
+    }
+
+    .filter-row {
+        position: fixed; /* Fija la posición en pantallas pequeñas */
+        width: 100%; /* Asegura que ocupe todo el ancho */
+        left: 0;
+        top: 0;
+    }
+}
+
+
+
+
+/* PARTE 2 (CONSIDERAR LA DEPURACION DEL CSS PARA EVITAR REPLICADOS) */
+
+
+
+/* Estilos para el componente de exportación */
+.export-container {
+    position: relative;
+    display: inline-block;
+}
+
+.export-btn {
+    background-color: #2563EB;
+    color: white;
+    border: none;
+    transition: background-color 0.3s;
+}
+
+.export-btn:hover {
+    background-color: #1D4ED8;
+}
+
+.export-menu {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    background: white;
+    border: 1px solid #E5E7EB;
+    border-radius: 6px;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    width: 200px;
+    display: none;
+    z-index: 1000;
+    margin-top: 5px;
+}
+
+.export-menu.show {
+    display: block;
+}
+
+.export-item {
+    padding: 10px 15px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    transition: background-color 0.2s;
+}
+
+.export-item:hover {
+    background-color: #F3F4F6;
+}
+
+.export-item i {
+    width: 20px;
+    text-align: center;
+    color: #6B7280;
+}
+
+/* Estilo para el spinner de carga */
+.loading-spinner {
+    display: inline-block;
+    width: 16px;
+    height: 16px;
+    border: 2px solid #f3f3f3;
+    border-top: 2px solid #3498db;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin-right: 8px;
+    display: none;
+}
+
+@keyframes spin {
+    0% {
+        transform: rotate(0deg);
+    }
+    100% {
+        transform: rotate(360deg);
+    }
+}
+
+/* Estilo para el mensaje de notificación */
+.notification {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    padding: 15px 25px;
+    border-radius: 6px;
+    color: white;
+    font-size: 14px;
+    opacity: 0;
+    transition: opacity 0.3s;
+    z-index: 1100;
+}
+
+.notification.success {
+    background-color: #10B981;
+}
+
+.notification.error {
+    background-color: #EF4444;
+}
+
+.notification.show {
+    opacity: 1;
+}

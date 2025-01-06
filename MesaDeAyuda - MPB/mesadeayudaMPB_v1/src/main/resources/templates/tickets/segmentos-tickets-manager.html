@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" 
+      xmlns:th="http://www.thymeleaf.org">
+    <head th:replace="~{layout/plantilla :: head}">
+        <title>Mesa de Ayuda</title>
+    </head>
+    <th:block th:append="head">
+        <link rel="stylesheet" th:href="@{/css/propiedades_ticket_layout_principal.css}">
+    </th:block>
+    <body>
+        <div class="wrapper">
+            <!-- Incluye el sidebar -->
+            <div th:replace="~{layout/plantilla :: sidebar}"></div>
+
+            <div class="main-content">
+                <div th:replace="~{layout/plantilla :: header}"></div>
+
+                <!-- Incluye el navbar -->
+                <div th:replace="~{layout/plantilla :: navbar}"></div>
+
+                <!-- Contenido principal -->
+                <main class="home-section">
+                    <div class="content-wrapper">
+                        <section class="properties-section">
+
+                            <h1 id="Title">Propiedades del Ticket</h1>
+
+                            <div class="back-button-container" style="margin-bottom: 15px;">
+                                <a href="javascript:void(0);" onclick="window.history.back();" class="btn btn-outline-secondary back-button">
+                                    <i class="fa-solid fa-arrow-left"></i>
+                                </a>
+                            </div>
+
+                            <div class="card">
+                                <form>
+                                    <div class="grid grid-2">
+                                        <div class="form-group">
+                                            <label for="solicitante" class="form-label">Solicitante</label>
+                                            <div class="input-group">
+                                                <input type="text" class="form-control" id="solicitante" value="Juan Pablo Hernandez" readonly>
+                                                    <button type="button" id="infoUsuario" class="btn btn-outline-secondary">
+                                                        <i class="fa-solid fa-id-badge"></i>
+                                                    </button>
+                                            </div>
+
+                                        </div>
+                                        <div class="grid grid-2">
+                                            <div class="form-group">
+                                                <label for="codigo" class="form-label">Código</label>
+                                                <input type="text" class="form-control" id="codigo" value="TIC00000001" readonly>
+                                            </div>
+                                            <div class="form-group">
+                                                <label for="impacto" class="form-label">Impacto</label>
+                                                <input type="text" class="form-control" id="impacto" value="Medio" readonly>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="grid grid-2">
+                                        <div class="form-group">
+                                            <label for="fechaApertura" class="form-label">Fecha de Apertura</label>
+                                            <input type="text" class="form-control" id="fechaApertura" value="24 de Agosto del 2024 - 13:45:12" readonly>
+                                        </div>
+                                        <div class="grid grid-2">
+                                            <div class="form-group">
+                                                <label for="prioridad" class="form-label">Prioridad</label>
+                                                <input type="text" class="form-control" id="prioridad" value="Sin Asignar" readonly>
+                                            </div>
+                                            <div class="form-group">
+                                                <label for="estado" class="form-label">Estado</label>
+                                                <select class="form-control" id="estado">
+                                                    <option selected>Abierto</option>
+                                                    <option>En Progreso</option>
+                                                    <option>Cerrado</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="grid grid-2">
+                                        <div class="form-group">
+                                            <label for="asignadoPara" class="form-label">Asignado para</label>
+                                            <input type="text" class="form-control" id="asignadoPara" value="Andres Roberto Calderon Rodriguez" readonly>
+                                        </div>
+                                        <div class="grid grid-2">
+                                            <div class="form-group">
+                                                <label for="ultimaActualizacion" class="form-label">Última Fecha de Actualización</label>
+                                                <input type="text" class="form-control" id="ultimaActualizacion" value="25 de Agosto del 2024 - 07:38:20" readonly>
+                                            </div>
+                                            <div class="form-group">
+                                                <label for="actualizadoPor" class="form-label">Actualizado por</label>
+                                                <input type="text" class="form-control" id="actualizadoPor" value="Andres Roberto Calderon Rodriguez" readonly>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="form-group">
+                                        <label for="breveDescripcion" class="form-label">Breve Descripción</label>
+                                        <input type="text" class="form-control" id="breveDescripcion" value="No me funciona el sistema de facturación" readonly>
+                                    </div>
+
+                                    <div class="form-group">
+                                        <label for="descripcion" class="form-label">Descripción</label>
+                                        <textarea class="form-control" id="descripcion" readonly>Estoy experimentando problemas con el sistema de facturación que están afectando mi capacidad para realizar mis tareas diarias. Al intentar generar facturas, el sistema me muestra errores y no permite completar el proceso. Esto está causando retrasos en la emisión de las facturas que los contribuyentes necesitan. Además, he notado que algunos de los montos que aparecen en las facturas no coinciden con los valores correctos, lo que está provocando confusión y errores en los registros.</textarea>
+                                    </div>
+
+                                    <div class="form-group">
+                                        <label class="form-label">Archivos adjuntos</label>
+                                        <div class="btn-group">
+                                            <button type="button" class="btn btn-outline">
+                                                <i class="fas fa-paperclip"></i> Imagen1.jpg
+                                            </button>
+                                            <button type="button" class="btn btn-outline">
+                                                <i class="fas fa-paperclip"></i> Imagen2.jpg
+                                            </button>
+                                        </div>
+                                    </div>
+                                </form>
+                            </div>
+
+                            <div class="card">
+                                <h2 style="margin-bottom: 10px;">Asigne la prioridad estimada según el valor de cada celda</h2>
+                                <p style="margin-bottom: 20px; color: #6c757d;">Una vez se actualice la prioridad del ticket, el usuario será notificado de inmediato y el estado del ticket cambiará automáticamente a "En Progreso" para iniciar su respectiva resolución</p>
+
+                                <div class="grid grid-3" style="margin-bottom: 20px;">
+                                    <div class="form-group">
+                                        <label for="categoria" class="form-label">Categoría</label>
+                                        <input type="text" class="form-control" id="categoria" value="Hardware" readonly>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="impactoEstimado" class="form-label">Impacto</label>
+                                        <input type="text" class="form-control" id="impactoEstimado" value="Medio" readonly>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="prioridadEstimada" class="form-label">Prioridad</label>
+                                        <select class="form-control" id="prioridadEstimada">
+                                            <option>Alto</option>
+                                            <option selected>Medio</option>
+                                            <option>Bajo</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <div class="btn-group" style="flex-direction: column;">
+                                    <button type="button" class="btn btn-dark full-width" style="margin-bottom: 10px;">Actualizar Estado</button>
+                                    <button type="button" class="btn btn-secondary full-width">Cerrar Ticket</button>
+                                </div>
+                            </div>
+
+                        </section>
+                    </div>
+                </main>
+            </div>
+        </div>
+    </body>
+</html>

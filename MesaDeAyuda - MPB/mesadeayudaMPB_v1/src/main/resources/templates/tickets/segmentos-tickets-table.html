@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" 
+      xmlns:th="http://www.thymeleaf.org">
+    <head th:replace="~{layout/plantilla :: head}">
+        <title>Mesa de Ayuda</title>
+        <meta charset="UTF-8"/>
+    </head>
+    <body>
+
+        <section th:fragment="metodosTickets">
+            <div class="search-section">
+                <div class="search-container">
+                    <i class="fas fa-search search-icon"></i>
+                    <input type="text" class="search-input" placeholder="Buscar Ticket..." id="searchInput">
+                </div>
+                <div class="action-buttons">
+                    <div class="export-container">
+                        <button class="btn export-btn" id="exportBtn">
+                            <i class="fas fa-download"></i> Exportar
+                        </button>
+                        <div class="export-menu" id="exportMenu">
+                            <div class="export-item" data-format="json">
+                                <i class="fas fa-file-code"></i> JSON
+                            </div>
+                            <div class="export-item" data-format="xml">
+                                <i class="fas fa-file-code"></i> XML
+                            </div>
+                            <div class="export-item" data-format="csv">
+                                <i class="fas fa-file-csv"></i> CSV
+                            </div>
+                            <div class="export-item" data-format="txt">
+                                <i class="fas fa-file-alt"></i> TXT
+                            </div>
+                            <div class="export-item" data-format="sql">
+                                <i class="fas fa-database"></i> SQL
+                            </div>
+                            <div class="export-item" data-format="excel">
+                                <i class="fas fa-file-excel"></i> MS-Excel
+                            </div>
+                        </div>
+                    </div>
+                    <button class="btn" id="filterBtn">
+                        <i class="fas fa-filter"></i> Filtrar
+                    </button>
+                    <button class="btn" id="deleteBtn">
+                        <i class="fas fa-trash"></i> Eliminar
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <section th:fragment="listadoTickets">
+            <div class="table-header">
+                <div class="pagination-left">
+                    <span>Mostrar</span>
+                    <select id="recordsPerPage" class="records-select">
+                        <option value="10">10</option>
+                        <option value="20">20</option>
+                        <option value="50">50</option>
+                        <option value="100">100</option>
+                    </select>
+                    <span>registros por página</span>
+                </div>
+                <div class="pagination-center">
+                    <span id="pageInfo">Mostrando 1 a 10 de 57 registros</span>
+                </div>
+                <div class="pagination-controls">
+                    <button class="pagination-btn" id="firstPage" title="Primera página">
+                        <i class="fas fa-angle-double-left"></i>
+                    </button>
+                    <button class="pagination-btn" id="prevPage" title="Página anterior">
+                        <i class="fas fa-angle-left"></i>
+                    </button>
+                    <div class="page-numbers" id="pageNumbers">
+                        <button class="page-number active">1</button>
+                        <button class="page-number">2</button>
+                        <button class="page-number">3</button>
+                        <button class="page-number">4</button>
+                        <button class="page-number">5</button>
+                        <button class="page-number">6</button>
+                    </div>
+                    <button class="pagination-btn" id="nextPage" title="Página siguiente">
+                        <i class="fas fa-angle-right"></i>
+                    </button>
+                    <button class="pagination-btn" id="lastPage" title="Última página">
+                        <i class="fas fa-angle-double-right"></i>
+                    </button>
+                </div>
+            </div>
+
+            <div class="table-container">
+                <table class="tickets-table table-resizable">
+                    <thead>
+                        <tr>
+                            <th>
+                                <input type="checkbox" class="checkbox-custom" id="selectAll">
+                                    <div class="resizer"></div>
+                            </th>
+                            <th>
+                                Código
+                                <div class="resizer"></div>
+                            </th>
+                            <th>
+                                Apertura
+                                <div class="resizer"></div>
+                            </th>
+                            <th style="text-align: center;">
+                                Breve Descripción
+                                <div class="resizer"></div>
+                            </th>
+                            <th>
+                                Solicitante
+                                <div class="resizer"></div>
+                            </th>
+                            <th>
+                                Prioridad
+                                <div class="resizer"></div>
+                            </th>
+                            <th>
+                                Estado
+                                <div class="resizer"></div>
+                            </th>
+                            <th>
+                                Categoría
+                                <div class="resizer"></div>
+                            </th>
+                            <th>
+                                Asignado para
+                                <div class="resizer"></div>
+                            </th>
+                            <th>
+                                Actualizado
+                                <div class="resizer"></div>
+                            </th>
+                        </tr>
+                    </thead>
+                    <thead id="filterRow" class="filter-row" style="display: none;">
+                        <tr>
+                            <th>
+                                <button id="clearFilters" class="clear-filters-btn">
+                                    <i class="fas fa-arrow-rotate-right"></i>
+                                </button>
+                            </th>
+                            <th><input type="text" placeholder="Buscar..."></th>
+                            <th><input type="text" placeholder="Buscar..."></th>
+                            <th><input type="text" placeholder="Buscar..."></th>
+                            <th><input type="text" placeholder="Buscar..."></th>
+                            <th><input type="text" placeholder="Buscar..."></th>
+                            <th><input type="text" placeholder="Buscar..."></th>
+                            <th><input type="text" placeholder="Buscar..."></th>
+                            <th><input type="text" placeholder="Buscar..."></th>
+                            <th><input type="text" placeholder="Buscar..."></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><input type="checkbox" class="checkbox-custom"></td>
+                            <td>
+                                <a th:href="@{/tickets/propiedadesTicket}" class="ticket-link">TIC00000001</a>
+                            </td>
+                            <td>04/11/2024<br>08:45:15</td>
+                            <td>No me funciona la impresora</td>
+                            <td>Juan Pablo</td>
+                            <td><span class="badge badge-alto">Alto</span></td>
+                            <td>Abierto</td>
+                            <td>Hardware</td>
+                            <td>Andres Roberto</td>
+                            <td>05/11/2024<br>11:20:06</td>
+                        </tr>
+                        <tr>
+                            <td><input type="checkbox" class="checkbox-custom"></td>
+                            <td>TIC00000002</td>
+                            <td>04/11/2024<br>09:30:22</td>
+                            <td>Error en sistema de facturación</td>
+                            <td>María García</td>
+                            <td><span class="badge badge-critico">Critico</span></td>
+                            <td>En Progreso</td>
+                            <td>Sistemas</td>
+                            <td>Carlos Mendoza</td>
+                            <td>05/11/2024<br>10:15:30</td>
+                        </tr>
+                        <tr>
+                            <td><input type="checkbox" class="checkbox-custom"></td>
+                            <td>TIC00000003</td>
+                            <td>04/11/2024<br>10:15:00</td>
+                            <td>Actualización de software necesaria</td>
+                            <td>Pedro Sánchez</td>
+                            <td><span class="badge badge-medio">Medio</span></td>
+                            <td>Pendiente</td>
+                            <td>Software</td>
+                            <td>Laura Jiménez</td>
+                            <td>05/11/2024<br>09:45:12</td>
+                        </tr>
+                        <tr>
+                            <td><input type="checkbox" class="checkbox-custom"></td>
+                            <td>TIC00000004</td>
+                            <td>04/11/2024<br>11:20:33</td>
+                            <td>Problema de acceso a red</td>
+                            <td>Ana Martínez</td>
+                            <td><span class="badge badge-alto">Alto</span></td>
+                            <td>Abierto</td>
+                            <td>Redes</td>
+                            <td>Roberto Díaz</td>
+                            <td>05/11/2024<br>13:10:45</td>
+                        </tr>
+                        <tr>
+                            <td><input type="checkbox" class="checkbox-custom"></td>
+                            <td>TIC00000005</td>
+                            <td>04/11/2024<br>13:45:18</td>
+                            <td>Backup fallido</td>
+                            <td>Luis Torres</td>
+                            <td><span class="badge badge-critico">Critico</span></td>
+                            <td>En Progreso</td>
+                            <td>Sistemas</td>
+                            <td>Patricia López</td>
+                            <td>05/11/2024<br>14:30:20</td>
+                        </tr>
+                        <tr>
+                            <td><input type="checkbox" class="checkbox-custom"></td>
+                            <td>TIC00000005</td>
+                            <td>04/11/2024<br>13:45:18</td>
+                            <td>Backup fallido</td>
+                            <td>Luis Torres</td>
+                            <td><span class="badge badge-critico">Critico</span></td>
+                            <td>En Progreso</td>
+                            <td>Sistemas</td>
+                            <td>Patricia López</td>
+                            <td>05/11/2024<br>14:30:20</td>
+                        </tr>
+                        <tr>
+                            <td><input type="checkbox" class="checkbox-custom"></td>
+                            <td>TIC00000005</td>
+                            <td>04/11/2024<br>13:45:18</td>
+                            <td>Backup fallido</td>
+                            <td>Luis Torres</td>
+                            <td><span class="badge badge-critico">Critico</span></td>
+                            <td>En Progreso</td>
+                            <td>Sistemas</td>
+                            <td>Patricia López</td>
+                            <td>05/11/2024<br>14:30:20</td>
+                        </tr>
+                        <tr>
+                            <td><input type="checkbox" class="checkbox-custom"></td>
+                            <td>TIC00000005</td>
+                            <td>04/11/2024<br>13:45:18</td>
+                            <td>Backup fallido</td>
+                            <td>Luis Torres</td>
+                            <td><span class="badge badge-critico">Critico</span></td>
+                            <td>En Progreso</td>
+                            <td>Sistemas</td>
+                            <td>Patricia López</td>
+                            <td>05/11/2024<br>14:30:20</td>
+                        </tr>
+                        <tr>
+                            <td><input type="checkbox" class="checkbox-custom"></td>
+                            <td>TIC00000005</td>
+                            <td>04/11/2024<br>13:45:18</td>
+                            <td>Backup fallido</td>
+                            <td>Luis Torres</td>
+                            <td><span class="badge badge-critico">Critico</span></td>
+                            <td>En Progreso</td>
+                            <td>Sistemas</td>
+                            <td>Patricia López</td>
+                            <td>05/11/2024<br>14:30:20</td>
+                        </tr>
+                        <tr>
+                            <td><input type="checkbox" class="checkbox-custom"></td>
+                            <td>TIC00000005</td>
+                            <td>04/11/2024<br>13:45:18</td>
+                            <td>Backup fallido</td>
+                            <td>Luis Torres</td>
+                            <td><span class="badge badge-critico">Critico</span></td>
+                            <td>En Progreso</td>
+                            <td>Sistemas</td>
+                            <td>Patricia López</td>
+                            <td>05/11/2024<br>14:30:20</td>
+                        </tr>
+                        <tr>
+                            <td><input type="checkbox" class="checkbox-custom"></td>
+                            <td>TIC00000005</td>
+                            <td>04/11/2024<br>13:45:18</td>
+                            <td>Backup fallido</td>
+                            <td>Luis Torres</td>
+                            <td><span class="badge badge-critico">Critico</span></td>
+                            <td>En Progreso</td>
+                            <td>Sistemas</td>
+                            <td>Patricia López</td>
+                            <td>05/11/2024<br>14:30:20</td>
+                        </tr>
+                        <tr>
+                            <td><input type="checkbox" class="checkbox-custom"></td>
+                            <td>TIC00000005</td>
+                            <td>04/11/2024<br>13:45:18</td>
+                            <td>Backup fallido</td>
+                            <td>Luis Torres</td>
+                            <td><span class="badge badge-critico">Critico</span></td>
+                            <td>En Progreso</td>
+                            <td>Sistemas</td>
+                            <td>Patricia López</td>
+                            <td>05/11/2024<br>14:30:20</td>
+                        </tr>
+                        <tr>
+                            <td><input type="checkbox" class="checkbox-custom"></td>
+                            <td>TIC00000005</td>
+                            <td>04/11/2024<br>13:45:18</td>
+                            <td>Backup fallido</td>
+                            <td>Luis Torres</td>
+                            <td><span class="badge badge-critico">Critico</span></td>
+                            <td>En Progreso</td>
+                            <td>Sistemas</td>
+                            <td>Patricia López</td>
+                            <td>05/11/2024<br>14:30:20</td>
+                        </tr>
+                        <tr>
+                            <td><input type="checkbox" class="checkbox-custom"></td>
+                            <td>TIC00000005</td>
+                            <td>04/11/2024<br>13:45:18</td>
+                            <td>Backup fallido</td>
+                            <td>Luis Torres</td>
+                            <td><span class="badge badge-critico">Critico</span></td>
+                            <td>En Progreso</td>
+                            <td>Sistemas</td>
+                            <td>Patricia López</td>
+                            <td>05/11/2024<br>14:30:20</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+        </div>
+        </main>
+        </div>
+        </div>
+    </body>
+</body>
+</html>

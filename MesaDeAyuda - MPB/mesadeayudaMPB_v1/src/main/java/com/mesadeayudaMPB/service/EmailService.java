@@ -1,0 +1,173 @@
+package com.mesadeayudaMPB.service;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.mail.javamail.MimeMessageHelper;
+import org.springframework.stereotype.Service;
+
+import jakarta.mail.MessagingException;
+import jakarta.mail.internet.MimeMessage;
+
+@Service
+public class EmailService {
+
+    @Autowired
+    private JavaMailSender emailSender;
+
+    @Value("${spring.mail.username}")
+    private String fromEmail;
+
+    public void sendVerificationCode(String to, String code) {
+        try {
+            MimeMessage message = emailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
+
+            helper.setFrom(fromEmail);
+            helper.setTo(to);
+            helper.setSubject("Verificación de cuenta");
+
+            String htmlContent = String.format("""
+            <!DOCTYPE html>
+                                            <html>
+                                            <head>
+                                                <meta charset="UTF-8">
+                                                <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+                                                <style>
+                                                    * {
+                                                        margin: 0;
+                                                        padding: 0;
+                                                        box-sizing: border-box;
+                                                    }
+                                                    
+                                                    body {
+                                                        font-family: 'Poppins', sans-serif;
+                                                        color: #18181b;
+                                                        line-height: 1.5;
+                                                        -webkit-font-smoothing: antialiased;
+                                                    }
+                                                    
+                                                    .container {
+                                                        max-width: 600px;
+                                                        margin: 24px auto;
+                                                        background: white;
+                                                        border-radius: 12px;
+                                                        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+                                                        border: 2px solid #cfcfec;
+                                                    }
+                                                    
+                                                    .header {
+                                                        padding: 24px 32px;
+                                                        background-color: #f6f6f6;
+                                                        border-top-left-radius: 12px;
+                                                        border-top-right-radius: 12px;
+                                                    }
+                                                    
+                                                    .header h1 {
+                                                        font-size: 20px;
+                                                        font-weight: 600;
+                                                        color: #18181b;
+                                                        margin-bottom: 4px;
+                                                    }
+                                                    
+                                                    .header p {
+                                                        font-size: 14px;
+                                                        color: #71717a;
+                                                    }
+                                                    
+                                                    .content {
+                                                        padding: 32px;
+                                                    }
+                                                    
+                                                    .title {
+                                                        font-size: 24px;
+                                                        font-weight: 600;
+                                                        color: #18181b;
+                                                        margin-bottom: 16px;
+                                                    }
+                                                    
+                                                    .message {
+                                                        color: #3f3f46;
+                                                        font-size: 16px;
+                                                        margin-bottom: 24px;
+                                                    }
+                                                    
+                                                    .verification-code {
+                                                        background-color: #f0f4ff;
+                                                        padding: 24px;
+                                                        border-radius: 8px;
+                                                        text-align: center;
+                                                        margin-bottom: 24px;
+                                                    }
+                                                    
+                                                    .code {
+                                                        font-size: 32px;
+                                                        font-weight: 600;
+                                                        color: #2563eb;
+                                                        letter-spacing: 2px;
+                                                    }
+                                                    
+                                                    .instructions {
+                                                        color: #3f3f46;
+                                                        font-size: 16px;
+                                                        margin-bottom: 24px;
+                                                    }
+                                                    
+                                                    .footer {
+                                                        padding: 24px 32px;
+                                                        background-color: #f6f6f6;
+                                                        border-bottom-left-radius: 12px;
+                                                        border-bottom-right-radius: 12px;
+                                                    }
+                                                    
+                                                    .footer p {
+                                                        color: #71717a;
+                                                        font-size: 14px;
+                                                        margin-bottom: 8px;
+                                                    }
+                                                    
+                                                    .footer p:last-child {
+                                                        margin-bottom: 0;
+                                                    }
+                                                </style>
+                                            </head>
+                                            <body>
+                                                <div class="container">
+                                                    <div class="header">
+                                                        <h1>Verificación de Cuenta</h1>
+                                                        <p>alcaldia@munibarva.go.cr</p>
+                                                    </div>
+                                                    
+                                                    <div class="content">
+                                                        <h2 class="title">Codigo de Ingreso</h2>
+                                                        
+                                                        <p class="message">Gracias por registrarte. Para completar la verificación de tu cuenta, por favor utiliza el siguiente código:</p>
+                                                        
+                                                        <div class="verification-code">
+                                                            <div class="code">%s</div>
+                                                        </div>
+                                                        
+                                                        <p class="instructions">Ingresa este código en la página de verificación para activar tu cuenta. Si no solicitaste esta verificación, puedes ignorar este correo.</p>
+                                                        
+                                                    </div>
+                                                    
+                                                    <div class="footer">
+                                                        <p>Este es un correo electrónico automático, por favor no respondas.</p>
+                                                        <p>© %d Municipalidad de Barva. Todos los derechos reservados.</p>
+                                                    </div>
+                                                </div>
+                                            </body>
+                                            </html>
+                """,
+                    code,
+                    java.time.Year.now().getValue()
+            );
+
+            helper.setText(htmlContent, true);
+            emailSender.send(message);
+
+        } catch (MessagingException e) {
+            throw new RuntimeException("Error al enviar el correo de verificación", e);
+        }
+    }
+}

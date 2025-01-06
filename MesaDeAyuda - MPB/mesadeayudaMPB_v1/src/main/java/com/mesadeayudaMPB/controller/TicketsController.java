@@ -5,7 +5,9 @@
 package com.mesadeayudaMPB.controller;
 
 import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
 
 /**
  *
@@ -13,9 +15,23 @@ import org.springframework.web.bind.annotation.GetMapping;
  */
 
 @Controller
+@RequestMapping("/tickets")
 public class TicketsController {
+    
+    
+    @GetMapping("/listado")
+    public String listado(Model model) {
+        
+        return "/tickets/listado";
+    }
+    
+    
+    
+    
+    
+    //// BASE DE RUTAS
 
-    @GetMapping("/tickets/nuevoTicket")
+    /*@GetMapping("/tickets/nuevoTicket")
     public String nuevoTicket() {
         return "tickets/nuevoTicket"; // Esto debe coincidir con la ubicación de nuevoTicket.html
     }
@@ -25,9 +41,9 @@ public class TicketsController {
         return "tickets/homePage";
     }
     
-    @GetMapping("/tickets/prueba1")
-    public String prueba1() {
-        return "tickets/prueba1";
+    @GetMapping("/tickets/tickets-manager")
+    public String ticketsManager() {
+        return "tickets/tickets-manager";
     }
     
     @GetMapping("/tickets/historial")
@@ -54,4 +70,29 @@ public class TicketsController {
     public String verificacionRegistro() {
         return "tickets/verificacionRegistro";
     }
+    
+    @GetMapping("/tickets/propiedadesTicket")
+    public String PropiedadesTicket() {
+        return "tickets/propiedadesTicket";
+    }
+    
+    @GetMapping("/tickets/configuracion")
+    public String Configuracion() {
+        return "tickets/configuracion";
+    }
+    
+    @GetMapping("/tickets/modificarPerfil")
+    public String ModificarPerfil() {
+        return "tickets/modificarPerfil";
+    }
+    
+    @GetMapping("/tickets/perfil")
+    public String perfil() {
+        return "tickets/perfil";
+    }
+    
+    @GetMapping("/tickets/reporte-manager")
+    public String Reporte() {
+        return "tickets/reporte-manager";
+    }*/
 }
