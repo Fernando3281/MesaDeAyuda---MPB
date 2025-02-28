@@ -3,75 +3,283 @@
       xmlns:th="http://www.thymeleaf.org">
     <head th:replace="~{layout/plantilla :: head}">
         <title>Mesa de Ayuda</title>
+        <meta charset="UTF-8"/>
     </head>
-    <th:block th:append="head">
-        <link rel="stylesheet" th:href="@{/css/propiedades_ticket_layout_principal.css}">
-    </th:block>
+
     <body>
-        <div class="wrapper">
-            <!-- Incluye el sidebar -->
-            <div th:replace="~{layout/plantilla :: sidebar}"></div>
+        <section th:fragment="properties-section">
+            <div class="modal-viewer" id="imageViewer">
+                <button class="close-viewer" onclick="closeViewer()">&times;</button>
+                <button class="image-nav prev-image" onclick="changeImage(-1)">&#10094;</button>
+                <div class="modal-content-viewer">
+                    <img src="" alt="Vista previa" class="modal-image-viewer" id="currentImage">
+                        <div class="image-counter" id="imageCounter"></div>
+                        <div class="thumbnail-container" id="thumbnailContainer"></div>
+                </div>
+                <button class="image-nav next-image" onclick="changeImage(1)">&#10095;</button>
+            </div>
 
-            <div class="main-content">
-                <div th:replace="~{layout/plantilla :: header}"></div>
+            <script>
+                let currentIndex = 0;
+                let imageUrls = [];
 
-                <!-- Incluye el navbar -->
-                <div th:replace="~{layout/plantilla :: navbar}"></div>
+                function showImageViewer(ticketId) {
+                    const viewer = document.getElementById('imageViewer');
+                    const counter = document.getElementById('imageCounter');
+                    const thumbnailContainer = document.getElementById('thumbnailContainer');
 
-                <!-- Contenido principal -->
-                <main class="home-section">
-                    <div class="content-wrapper">
-                        <section class="properties-section">
+                    // Limpiar contenedores
+                    thumbnailContainer.innerHTML = '';
+                    imageUrls = [];
 
-                            <h1 id="Title">Propiedades del Ticket</h1>
+                    // Obtener la cantidad de imágenes
+                    fetch(`/tickets/imagen/${ticketId}/0`)
+                            .then(response => {
+                                if (!response.ok)
+                                    throw new Error('No images found');
+                                return response.blob();
+                            })
+                            .then(blob => {
+                                // Primera imagen encontrada, buscar más
+                                imageUrls.push(URL.createObjectURL(blob));
+                                return fetch(`/tickets/imagen/${ticketId}/1`);
+                            })
+                            .then(response => {
+                                if (!response.ok)
+                                    throw new Error('Only one image');
+                                return response.blob();
+                            })
+                            .then(blob => {
+                                imageUrls.push(URL.createObjectURL(blob));
+                                initializeViewer();
+                            })
+                            .catch(error => {
+                                if (imageUrls.length > 0) {
+                                    initializeViewer();
+                                } else {
+                                    console.error('No images available');
+                                }
+                            });
 
-                            <div class="back-button-container" style="margin-bottom: 15px;">
-                                <a href="javascript:void(0);" onclick="window.history.back();" class="btn btn-outline-secondary back-button">
-                                    <i class="fa-solid fa-arrow-left"></i>
-                                </a>
-                            </div>
+                    function initializeViewer() {
+                        currentIndex = 0;
+                        updateImage();
+                        createThumbnails();
+                        viewer.classList.add('active');
+                        document.body.style.overflow = 'hidden';
+                    }
+                }
 
-                            <div class="card">
+                function updateImage() {
+                    const mainImage = document.getElementById('currentImage');
+                    const counter = document.getElementById('imageCounter');
+
+                    mainImage.src = imageUrls[currentIndex];
+                    counter.textContent = `${currentIndex + 1} / ${imageUrls.length}`;
+
+                    // Actualizar miniaturas activas
+                    document.querySelectorAll('.thumbnail').forEach((thumb, idx) => {
+                        thumb.classList.toggle('active', idx === currentIndex);
+                    });
+                }
+
+                function createThumbnails() {
+                    const container = document.getElementById('thumbnailContainer');
+                    container.innerHTML = '';
+
+                    imageUrls.forEach((url, idx) => {
+                        const thumb = document.createElement('img');
+                        thumb.src = url;
+                        thumb.classList.add('thumbnail');
+                        if (idx === currentIndex)
+                            thumb.classList.add('active');
+                        thumb.onclick = () => {
+                            currentIndex = idx;
+                            updateImage();
+                        };
+                        container.appendChild(thumb);
+                    });
+                }
+
+                function changeImage(direction) {
+                    currentIndex = (currentIndex + direction + imageUrls.length) % imageUrls.length;
+                    updateImage();
+                }
+
+                function closeViewer() {
+                    const viewer = document.getElementById('imageViewer');
+                    viewer.classList.remove('active');
+                    document.body.style.overflow = 'auto';
+
+                    // Limpiar URLs de objeto
+                    imageUrls.forEach(url => URL.revokeObjectURL(url));
+                    imageUrls = [];
+                }
+
+                // Eventos de teclado
+                document.addEventListener('keydown', function (e) {
+                    if (!document.getElementById('imageViewer').classList.contains('active'))
+                        return;
+
+                    switch (e.key) {
+                        case 'ArrowLeft':
+                            changeImage(-1);
+                            break;
+                        case 'ArrowRight':
+                            changeImage(1);
+                            break;
+                        case 'Escape':
+                            closeViewer();
+                            break;
+                    }
+                });
+
+                // Cerrar al hacer clic fuera de la imagen
+                document.getElementById('imageViewer').addEventListener('click', function (e) {
+                    if (e.target === this) {
+                        closeViewer();
+                    }
+                });
+            </script>
+
+
+
+            <div class="back-button-container">
+                <a href="javascript:void(0);" onclick="window.history.back();" class="btn btn-outline-secondary back-button">
+                    <i class="fa-solid fa-arrow-left"></i>
+                </a>
+
+                <div class="btn-group">
+                    <button type="button" class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#elevateTicketModal">
+                        <i class="fa-solid fa-pen"></i> Actualizar Ticket
+                    </button>
+
+                    <button type="button" class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#elevateTicketModal">
+                        <i class="fa-solid fa-user-plus"></i> Asignar Ticket
+                    </button>
+
+                    <button type="button" class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#elevateTicketModal">
+                        <i class="fa-solid fa-user-pen"></i> Reasignar Ticket
+                    </button>
+                    <button type="button" class="btn btn-outline-success" data-bs-toggle="modal" data-bs-target="#resolveTicketModal">
+                        <i class="fa-regular fa-circle-check"></i> Cerrar Ticket
+                    </button>
+
+                    <button type="button" class="btn btn-outline-success" data-bs-toggle="modal" data-bs-target="#resolveTicketModal">
+                        <i class="fa-solid fa-ban"></i> Desactivar Ticket
+                    </button>
+                </div>
+            </div>
+
+            <div class="container">
+                <!-- Sidebar -->
+                <div class="ticket-summary card">
+                    <h2 class="ticket-title">Resumen del Ticket</h2>
+                    <div class="info-row">
+                        <span class="info-label">Estado</span>
+                        <span class="status-badge">Abierto</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Prioridad</span>
+                        <span class="priority-badge">MEDIA</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Nivel de Soporte</span>
+                        <span class="info-value">Nivel 1</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Tiempo de Respuesta SLA</span>
+                        <span class="info-value">4 horas</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Tiempo Transcurrido</span>
+                        <span class="info-value">2 horas 15 minutos</span>
+                    </div>
+                    <button class="action-button">
+                        <i class="fa-solid fa-arrow-turn-up"></i>
+                        Elevar Ticket
+                    </button>
+                    <button class="action-button">
+                        <i class="fa-solid fa-people-arrows"></i> Heredar Ticket
+                    </button>
+                    <button class="action-button">
+                        <i class="far fa-clock"></i>
+                        Programar Seguimiento
+                    </button>
+                </div>
+
+                <!-- Main Content -->
+                <div class="ticket-details">
+                    <div class="tabs">
+                        <button class="tab-button active" data-tab="tab1">Detalles del Ticket</button>
+                        <button class="tab-button" data-tab="tab2">
+                            <i class="fas fa-list"></i>
+                            Respuestas
+                            <span class="counter">3</span>
+                        </button>
+                        <button class="tab-button" data-tab="tab3">Auditoria</button>
+                    </div>
+                    <div class="tab-content">
+                        <div id="tab1" class="tab-pane active">
+                            <div class="card" id="card-tabs">
                                 <form>
                                     <div class="grid grid-2">
                                         <div class="form-group">
                                             <label for="solicitante" class="form-label">Solicitante</label>
                                             <div class="input-group">
-                                                <input type="text" class="form-control" id="solicitante" value="Juan Pablo Hernandez" readonly>
-                                                    <button type="button" id="infoUsuario" class="btn btn-outline-secondary">
+                                                <input type="text" class="form-control" id="solicitante" 
+                                                       th:value="${ticket.solicitante != null ? ticket.solicitante.nombre + ' ' + ticket.solicitante.apellido : 'Sin asignar'}" 
+                                                       readonly>
+                                                    <button type="button" 
+                                                            id="infoUsuario" 
+                                                            class="btn btn-outline-secondary popover-btn" 
+                                                            data-popover="Ver Perfil del Solicitante"
+                                                            th:onclick="viewSolicitanteProfile([[${ticket.solicitante.idUsuario}]], [[${session.usuarioId}]])">
                                                         <i class="fa-solid fa-id-badge"></i>
                                                     </button>
                                             </div>
-
                                         </div>
+
+                                        <script>
+                                            
+                                        </script>
+
                                         <div class="grid grid-2">
                                             <div class="form-group">
                                                 <label for="codigo" class="form-label">Código</label>
-                                                <input type="text" class="form-control" id="codigo" value="TIC00000001" readonly>
+                                                <input type="text" class="form-control" id="codigo" th:value="${ticket.codigo}" readonly>
                                             </div>
                                             <div class="form-group">
                                                 <label for="impacto" class="form-label">Impacto</label>
-                                                <input type="text" class="form-control" id="impacto" value="Medio" readonly>
+                                                <input type="text" class="form-control" id="impacto" th:value="${#strings.isEmpty(ticket.impacto) ? 'Sin Asignar' : ticket.impacto}" readonly>
                                             </div>
                                         </div>
                                     </div>
 
                                     <div class="grid grid-2">
-                                        <div class="form-group">
-                                            <label for="fechaApertura" class="form-label">Fecha de Apertura</label>
-                                            <input type="text" class="form-control" id="fechaApertura" value="24 de Agosto del 2024 - 13:45:12" readonly>
+                                        <div class="grid grid-2">
+                                            <div class="form-group">
+                                                <label for="fechaApertura" class="form-label">Fecha de Apertura</label>
+                                                <input type="text" class="form-control" id="fechaApertura" 
+                                                       th:value="${#dates.format(ticket.fechaApertura, 'dd')} + ' de ' + ${#dates.format(ticket.fechaApertura, 'MMMM')} + ' del ' + ${#dates.format(ticket.fechaApertura, 'yyyy')} + ' - ' + ${#dates.format(ticket.fechaApertura, 'HH:mm:ss')}" 
+                                                       readonly>
+                                            </div>
+                                            <div class="form-group">
+                                                <label for="categoria" class="form-label">Categoría</label>
+                                                <input type="text" class="form-control" id="categoria" th:value="${ticket.categoria}" readonly>
+                                            </div>
                                         </div>
                                         <div class="grid grid-2">
                                             <div class="form-group">
                                                 <label for="prioridad" class="form-label">Prioridad</label>
-                                                <input type="text" class="form-control" id="prioridad" value="Sin Asignar" readonly>
+                                                <input type="text" class="form-control" id="prioridad" th:value="${ticket.prioridad}" readonly>
                                             </div>
                                             <div class="form-group">
                                                 <label for="estado" class="form-label">Estado</label>
                                                 <select class="form-control" id="estado">
-                                                    <option selected>Abierto</option>
-                                                    <option>En Progreso</option>
-                                                    <option>Cerrado</option>
+                                                    <option th:selected="${ticket.estado == 'Abierto'}">Abierto</option>
+                                                    <option th:selected="${ticket.estado == 'En Progreso'}">En Progreso</option>
+                                                    <option th:selected="${ticket.estado == 'Cerrado'}">Cerrado</option>
                                                 </select>
                                             </div>
                                         </div>
@@ -80,77 +288,278 @@
                                     <div class="grid grid-2">
                                         <div class="form-group">
                                             <label for="asignadoPara" class="form-label">Asignado para</label>
-                                            <input type="text" class="form-control" id="asignadoPara" value="Andres Roberto Calderon Rodriguez" readonly>
+                                            <div class="input-group">
+                                                <input type="text" class="form-control" id="asignadoPara" 
+                                                       th:value="${ticket.asignadoPara != null ? ticket.asignadoPara.nombre + ' ' + ticket.asignadoPara.apellido : 'Sin asignar'}" 
+                                                       readonly>
+                                                    <button type="button" id="asignarTicket" class="btn btn-outline-secondary popover-btn" data-popover="Asignar Ticket">
+                                                        <i class="fa-solid fa-user-plus"></i>
+                                                    </button>
+                                            </div>
                                         </div>
                                         <div class="grid grid-2">
                                             <div class="form-group">
                                                 <label for="ultimaActualizacion" class="form-label">Última Fecha de Actualización</label>
-                                                <input type="text" class="form-control" id="ultimaActualizacion" value="25 de Agosto del 2024 - 07:38:20" readonly>
+                                                <input type="text" class="form-control" id="ultimaActualizacion" 
+                                                       th:value="${#dates.format(ticket.fechaActualizacion, 'dd')} + ' de ' + ${#dates.format(ticket.fechaActualizacion, 'MMMM')} + ' del ' + ${#dates.format(ticket.fechaActualizacion, 'yyyy')} + ' - ' + ${#dates.format(ticket.fechaActualizacion, 'HH:mm:ss')}" 
+                                                       readonly>
                                             </div>
                                             <div class="form-group">
                                                 <label for="actualizadoPor" class="form-label">Actualizado por</label>
-                                                <input type="text" class="form-control" id="actualizadoPor" value="Andres Roberto Calderon Rodriguez" readonly>
+                                                <input type="text" class="form-control" id="actualizadoPor" 
+                                                       th:value="${ticket.asignadoPara != null ? ticket.asignadoPara.nombre + ' ' + ticket.asignadoPara.apellido : 'Sin asignar'}" 
+                                                       readonly>
                                             </div>
                                         </div>
                                     </div>
 
                                     <div class="form-group">
                                         <label for="breveDescripcion" class="form-label">Breve Descripción</label>
-                                        <input type="text" class="form-control" id="breveDescripcion" value="No me funciona el sistema de facturación" readonly>
+                                        <input type="text" class="form-control" id="breveDescripcion" th:value="${ticket.titulo}" readonly>
                                     </div>
 
                                     <div class="form-group">
                                         <label for="descripcion" class="form-label">Descripción</label>
-                                        <textarea class="form-control" id="descripcion" readonly>Estoy experimentando problemas con el sistema de facturación que están afectando mi capacidad para realizar mis tareas diarias. Al intentar generar facturas, el sistema me muestra errores y no permite completar el proceso. Esto está causando retrasos en la emisión de las facturas que los contribuyentes necesitan. Además, he notado que algunos de los montos que aparecen en las facturas no coinciden con los valores correctos, lo que está provocando confusión y errores en los registros.</textarea>
+                                        <textarea class="form-control" id="descripcion" readonly th:text="${ticket.descripcion}"></textarea>
                                     </div>
 
                                     <div class="form-group">
                                         <label class="form-label">Archivos adjuntos</label>
-                                        <div class="btn-group">
-                                            <button type="button" class="btn btn-outline">
-                                                <i class="fas fa-paperclip"></i> Imagen1.jpg
-                                            </button>
-                                            <button type="button" class="btn btn-outline">
-                                                <i class="fas fa-paperclip"></i> Imagen2.jpg
+                                        <div class="btn-group" th:if="${ticket.imagenes != null and not #lists.isEmpty(ticket.imagenes)}">
+                                            <button type="button" class="btn btn-outline" th:onclick="'showImageViewer(' + ${ticket.idTicket} + ')'">
+                                                <i class="fas fa-paperclip"></i> Ver Imágenes
                                             </button>
                                         </div>
+                                        <p th:if="${ticket.imagenes == null or #lists.isEmpty(ticket.imagenes)}" class="text-muted">
+                                            No hay imágenes adjuntas.
+                                        </p>
                                     </div>
+
                                 </form>
                             </div>
+                        </div>
 
-                            <div class="card">
-                                <h2 style="margin-bottom: 10px;">Asigne la prioridad estimada según el valor de cada celda</h2>
-                                <p style="margin-bottom: 20px; color: #6c757d;">Una vez se actualice la prioridad del ticket, el usuario será notificado de inmediato y el estado del ticket cambiará automáticamente a "En Progreso" para iniciar su respectiva resolución</p>
+                        <div id="tab2" class="tab-pane">
+                            <!-- Contenido de la pestaña Respuestas -->
+                            <div class="card" id="card-tabs" style="margin-bottom: 30px;">
 
-                                <div class="grid grid-3" style="margin-bottom: 20px;">
-                                    <div class="form-group">
-                                        <label for="categoria" class="form-label">Categoría</label>
-                                        <input type="text" class="form-control" id="categoria" value="Hardware" readonly>
+                                <div class="chat-header">
+                                    <h2>Chat de Soporte</h2>
+                                </div>
+                                <div class="chat-messages">
+                                    <div class="message">
+                                        <div class="message-header">
+                                            <span class="user-name">Juan Pablo Hernandez</span>
+                                            <span class="message-time">2/16/2025, 10:35:53 PM</span>
+                                        </div>
+                                        <div class="message-content">
+                                            Hola esto es una prueba
+                                        </div>
                                     </div>
-                                    <div class="form-group">
-                                        <label for="impactoEstimado" class="form-label">Impacto</label>
-                                        <input type="text" class="form-control" id="impactoEstimado" value="Medio" readonly>
+                                    <div class="message">
+                                        <div class="message-header">
+                                            <span class="user-name">Soporte Técnico</span>
+                                            <span class="message-time">2/16/2025, 10:36:16 PM</span>
+                                        </div>
+                                        <div class="message-content">
+                                            Hola esto es una prueba sobre una nota interna
+                                        </div>
                                     </div>
-                                    <div class="form-group">
-                                        <label for="prioridadEstimada" class="form-label">Prioridad</label>
-                                        <select class="form-control" id="prioridadEstimada">
-                                            <option>Alto</option>
-                                            <option selected>Medio</option>
-                                            <option>Bajo</option>
-                                        </select>
+                                    <div class="message internal-note">
+                                        <div class="message-header">
+                                            <span class="user-name">Nota Interna</span>
+                                        </div>
+                                        <div class="message-content">
+                                            Esta es una nota interna.
+                                        </div>
+                                    </div>
+                                    <div class="message">
+                                        <div class="message-header">
+                                            <span class="user-name">Soporte Técnico</span>
+                                            <span class="message-time">2/16/2025, 10:36:16 PM</span>
+                                        </div>
+                                        <div class="message-content">
+                                            Hola esto es una prueba sobre una nota interna
+                                        </div>
+                                    </div>
+                                    <div class="message">
+                                        <div class="message-header">
+                                            <span class="user-name">Soporte Técnico</span>
+                                            <span class="message-time">2/16/2025, 10:36:16 PM</span>
+                                        </div>
+                                        <div class="message-content">
+                                            Hola esto es una prueba sobre una nota interna
+                                        </div>
+                                    </div>
+                                    <div class="message">
+                                        <div class="message-header">
+                                            <span class="user-name">Soporte Técnico</span>
+                                            <span class="message-time">2/16/2025, 10:36:16 PM</span>
+                                        </div>
+                                        <div class="message-content">
+                                            Hola esto es una prueba sobre una nota interna
+                                        </div>
+                                    </div>
+                                    <div class="message">
+                                        <div class="message-header">
+                                            <span class="user-name">Soporte Técnico</span>
+                                            <span class="message-time">2/16/2025, 10:36:16 PM</span>
+                                        </div>
+                                        <div class="message-content">
+                                            Hola esto es una prueba sobre una nota interna
+                                        </div>
+                                    </div>
+                                    <div class="message">
+                                        <div class="message-header">
+                                            <span class="user-name">Soporte Técnico</span>
+                                            <span class="message-time">2/16/2025, 10:36:16 PM</span>
+                                        </div>
+                                        <div class="message-content">
+                                            Hola esto es una prueba sobre una nota interna
+                                        </div>
                                     </div>
                                 </div>
+                                <div class="chat-input">
+                                    <textarea placeholder="Escribe tu mensaje..."></textarea>
+                                    <button class="btn btn-primary">Enviar</button>
+                                </div>
 
-                                <div class="btn-group" style="flex-direction: column;">
-                                    <button type="button" class="btn btn-dark full-width" style="margin-bottom: 10px;">Actualizar Estado</button>
-                                    <button type="button" class="btn btn-secondary full-width">Cerrar Ticket</button>
+                            </div>
+                        </div>
+
+                        <div id="tab3" class="tab-pane">
+                            <div class="card" id="card-tabs">
+                                <div class="audit-container">
+                                    <div class="audit-header">
+                                        <h2>Historial de Auditoría</h2>
+                                        <div class="audit-filters">
+                                            <select class="form-control">
+                                                <option>Todas las acciones</option>
+                                                <option>Cambios de estado</option>
+                                                <option>Asignaciones</option>
+                                                <option>Actualizaciones</option>
+                                            </select>
+                                        </div>
+                                    </div>
+
+                                    <div class="audit-timeline">
+                                        <div class="audit-item">
+                                            <div class="audit-item-badge">
+                                                <i class="fas fa-plus-circle"></i>
+                                            </div>
+                                            <div class="audit-item-content">
+                                                <div class="audit-item-header">
+                                                    <span class="audit-item-title">Ticket creado</span>
+                                                    <span class="audit-item-time">2/17/2025, 10:49:49 AM</span>
+                                                </div>
+                                                <div class="audit-item-user">Unknown</div>
+                                            </div>
+                                        </div>
+
+                                        <div class="audit-item">
+                                            <div class="audit-item-badge">
+                                                <i class="fas fa-user-plus"></i>
+                                            </div>
+                                            <div class="audit-item-content">
+                                                <div class="audit-item-header">
+                                                    <span class="audit-item-title">Asignado a Unknown</span>
+                                                    <span class="audit-item-time">2/17/2025, 10:49:49 AM</span>
+                                                </div>
+                                                <div class="audit-item-user">Unknown</div>
+                                            </div>
+                                        </div>
+
+                                        <div class="audit-item">
+                                            <div class="audit-item-badge">
+                                                <i class="fas fa-comment"></i>
+                                            </div>
+                                            <div class="audit-item-content">
+                                                <div class="audit-item-header">
+                                                    <span class="audit-item-title">Respuesta pública añadida</span>
+                                                    <span class="audit-item-time">2/17/2025, 10:50:33 AM</span>
+                                                </div>
+                                                <div class="audit-item-user">Soporte Técnico</div>
+                                            </div>
+                                        </div>
+
+                                        <div class="audit-item">
+                                            <div class="audit-item-badge">
+                                                <i class="fas fa-sticky-note"></i>
+                                            </div>
+                                            <div class="audit-item-content">
+                                                <div class="audit-item-header">
+                                                    <span class="audit-item-title">Nota interna añadida</span>
+                                                    <span class="audit-item-time">2/17/2025, 10:50:50 AM</span>
+                                                </div>
+                                                <div class="audit-item-user">Soporte Técnico</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="card" id="card-message-manager">
+                            <div class="response-header">
+                                <h2>Responder Ticket</h2>
+                                <button class="response-type" id="responseType">Respuesta Pública</button>
+                            </div>
+                            <textarea 
+                                class="response-textarea" 
+                                placeholder="Escribe tu respuesta pública..."
+                                id="responseText"
+                                disabled
+                                ></textarea>
+                            <div class="response-actions">
+                                <div class="action-buttons">
+                                    <button class="btn">
+                                        <i class="fas fa-paperclip"></i>
+                                        Adjuntar archivo
+                                    </button>
+                                    <button class="btn">
+                                        <i class="fas fa-file-alt"></i>
+                                        Usar plantilla
+                                    </button>
+                                </div>
+                                <button class="btn btn-primary" id="sendResponse" disabled>
+                                    <i class="fas fa-paper-plane"></i>
+                                    Enviar Respuesta
+                                </button>
+                            </div>
+                        </div>
+
+                        <!--
+                        <div class="card" id="card-asignacion-prioridad">
+                            <h2 style="margin-bottom: 10px;">Asigne la prioridad estimada según el valor de cada celda</h2>
+                            <p style="margin-bottom: 20px; color: #6c757d;">Una vez se actualice la prioridad del ticket, el usuario será notificado de inmediato y el estado del ticket cambiará automáticamente a "En Progreso" para iniciar su respectiva resolución</p>
+
+                            <div class="grid grid-3" style="margin-bottom: 10px;">
+                                <div class="form-group">
+                                    <label for="categoria" class="form-label">Categoría</label>
+                                    <input type="text" class="form-control" id="categoria" value="Hardware" readonly>
+                                </div>
+                                <div class="form-group">
+                                    <label for="impactoEstimado" class="form-label">Impacto</label>
+                                    <input type="text" class="form-control" id="impactoEstimado" value="Medio" readonly>
+                                </div>
+                                <div class="form-group">
+                                    <label for="prioridadEstimada" class="form-label">Prioridad</label>
+                                    <select class="form-control" id="prioridadEstimada">
+                                        <option>Alto</option>
+                                        <option selected>Medio</option>
+                                        <option>Bajo</option>
+                                    </select>
                                 </div>
                             </div>
 
-                        </section>
+                            <div class="btn-group" style="flex-direction: column;">
+                                <button type="button" class="btn btn-dark full-width" style="margin-bottom: 10px;">Actualizar Estado</button>
+                                <button type="button" class="btn btn-secondary full-width">Cerrar Ticket</button>
+                            </div>
+                        </div>
+                        -->
                     </div>
-                </main>
-            </div>
-        </div>
+                </div>
+        </section>
     </body>
 </html>

@@ -121,15 +121,21 @@ Click nbfs://nbhost/SystemFileSystem/Templates/Other/CascadeStyleSheet.css to ed
     background-color: #f3f3f3;
 }
 
-.forgot-password-login {
-    display: block;
+.forgot-password {
+    text-align: center;
     margin-top: 1rem;
+}
+
+.forgot-password-login {
+    display: inline-block;
     color: #666;
     font-size: 0.9rem;
+    text-decoration: none;
 }
 
 .forgot-password-login:hover {
     color: #007bff;
+    text-decoration: underline;
 }
 
 .checkbox-group {
@@ -299,6 +305,11 @@ select.form-control, #confirm-password {
     .registro-left,
     .registro-right {
         border-radius: 10px;
+        padding: 25px;
+    }
+    
+    .registro-illustration{
+        margin-top: 0px;
     }
 }
 

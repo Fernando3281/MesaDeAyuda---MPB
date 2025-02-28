@@ -4,419 +4,198 @@
     <head th:replace="~{layout/plantilla :: head}">
         <title>Mesa de Ayuda</title>
     </head>
-    <th:block th:append="head">
-        <link rel="stylesheet" th:href="@{/css/historial_layout_principal.css}">
-    </th:block>
+    
     <body>
-        <div class="wrapper">
-            <!-- Incluye el sidebar -->
-            <div th:replace="~{layout/plantilla :: sidebar}"></div>
+        <section th:fragment="historial">
+            <div class="ticket-list-container">
+                <div class="ticket-list-header">
+                    <div class="header-left">
+                        <h2>Historial de Tickets</h2>
+                        <div class="ticket-counter">
+                            <span class="counter-number" id="ticketCounter">0</span>
+                            <span class="counter-label">tickets disponibles</span>
+                        </div>
+                    </div>
+                    <div class="search-filter">
+                        <div class="search-box">
+                            <i class="fas fa-search search-icon"></i>
+                            <input type="text" id="searchInput" placeholder="Buscar por título, ID o descripción...">
+                        </div>
+                    </div>
+                </div>
 
-            <div class="main-content">
-                <div th:replace="~{layout/plantilla :: header}"></div>
+                <div class="active-filters" id="activeFilters">
+                    <!-- Filtros Activos -->
+                </div>
 
-                <!-- Incluye el navbar -->
-                <div th:replace="~{layout/plantilla :: navbar}"></div>
+                <div class="filter-bar">
+                    <div class="filter-chips">
+                        <div class="filter-chip" data-filter="status">
+                            <span>Estado</span>
+                            <i class="fas fa-chevron-down"></i>
+                        </div>
+                        <div class="filter-chip" data-filter="priority">
+                            <span>Prioridad</span>
+                            <i class="fas fa-chevron-down"></i>
+                        </div>
+                        <div class="filter-chip" data-filter="category">
+                            <span>Categoría</span>
+                            <i class="fas fa-chevron-down"></i>
+                        </div>
+                        <div class="filter-chip" data-filter="date">
+                            <span>Fecha</span>
+                            <i class="fas fa-chevron-down"></i>
+                        </div>
+                    </div>
+                    <button class="button clear-filters" id="clearFilters">
+                        Limpiar filtros
+                    </button>
+                </div>
 
-                <!-- Contenido principal -->
-                <main class="home-section">
-                    <div class="content-wrapper">
-                        <div class="ticket-list-container">
-                            <div class="ticket-list-header">
-                                <div class="header-left">
-                                    <h2>Historial de Tickets</h2>
-                                    <div class="ticket-counter">
-                                        <span class="counter-number" id="ticketCounter">0</span>
-                                        <span class="counter-label">tickets disponibles</span>
-                                    </div>
-                                </div>
-                                <div class="search-filter">
-                                    <div class="search-box">
-                                        <i class="fas fa-search search-icon"></i>
-                                        <input type="text" id="searchInput" placeholder="Buscar por título, ID o descripción...">
-                                    </div>
+                <!-- Filter Dropdowns -->
+                <div class="filter-dropdown" id="statusFilter">
+                    <div class="dropdown-content">
+                        <label><input type="checkbox" name="status" value="abierto" checked> Abierto</label>
+                        <label><input type="checkbox" name="status" value="en-proceso" checked> En Proceso</label>
+                        <label><input type="checkbox" name="status" value="cerrado" checked> Cerrado</label>
+                    </div>
+                </div>
+
+                <div class="filter-dropdown" id="priorityFilter">
+                    <div class="dropdown-content">
+                        <label><input type="checkbox" name="priority" value="alta" checked> Alta</label>
+                        <label><input type="checkbox" name="priority" value="media" checked> Media</label>
+                        <label><input type="checkbox" name="priority" value="baja" checked> Baja</label>
+                    </div>
+                </div>
+
+                <div class="filter-dropdown" id="categoryFilter">
+                    <div class="dropdown-content">
+                        <label><input type="checkbox" name="category" value="hardware" checked> Hardware</label>
+                        <label><input type="checkbox" name="category" value="software" checked> Software</label>
+                        <label><input type="checkbox" name="category" value="redes" checked> Redes</label>
+                        <label><input type="checkbox" name="category" value="sistemas" checked> Sistemas</label>
+                    </div>
+                </div>
+
+                <div class="filter-dropdown" id="dateFilter">
+                    <div class="dropdown-content date-range">
+                        <div class="date-input-group">
+                            <label>Desde:</label>
+                            <input type="date" id="dateFrom">
+                        </div>
+                        <div class="date-input-group">
+                            <label>Hasta:</label>
+                            <input type="date" id="dateTo">
+                        </div>
+                        <button class="button apply-date">Aplicar</button>
+                    </div>
+                </div>
+
+                <div class="ticket-list" id="ticketList">
+                    <div th:each="ticket : ${tickets}" class="ticket-card" 
+                         th:data-id="${ticket.codigo}" 
+                         th:data-priority="${ticket.prioridad}" 
+                         th:data-category="${ticket.categoria}" 
+                         th:data-status="${ticket.estado}">
+                        <div class="ticket-meta">
+                            <div class="ticket-header">
+                                <span class="ticket-id">
+                                    <i class="fas fa-ticket"></i>
+                                    <span th:text="${'#' + ticket.codigo}">TIC001</span>
+                                </span>
+                                <div class="ticket-tags">
+                                    <span class="status" 
+                                          th:classappend="${'status-' + ticket.estado.toLowerCase().replace(' ', '-')}" 
+                                          th:text="${ticket.estado == 'Abierto' ? 'En Revisión' 
+                                          : (ticket.estado == 'Pendiente' ? 'En Progreso' 
+                                          : (ticket.estado == 'Resuelto' ? 'Solucionado' 
+                                          : ticket.estado))}">
+                                        Estado
+                                    </span>
+                                    <span class="priority priority-high" th:classappend="${'priority-' + ticket.prioridad}" th:text="${ticket.prioridad}">Prioridad</span>
                                 </div>
                             </div>
-
-                            <div class="active-filters" id="activeFilters">
-                                <!-- Active filters will be added here dynamically -->
+                            <span class="date" th:text="${#dates.format(ticket.fechaApertura, 'dd-MM-yyyy')}">24-08-2024</span>
+                        </div>
+                        <div class="ticket-content">
+                            <h3 th:text="${ticket.titulo}">Título del Ticket</h3>
+                            <p th:text="${ticket.descripcion != null ? (#strings.length(ticket.descripcion) > 100 ? #strings.substring(ticket.descripcion,0,100) + '...' : ticket.descripcion) : ''}">Descripción del ticket...</p>
+                        </div>
+                        <div class="ticket-footer">
+                            <div class="category-tag">
+                                <i class="fas fa-desktop"></i>
+                                <span th:text="${ticket.categoria}">Categoría</span>
                             </div>
-
-                            <div class="filter-bar">
-                                <div class="filter-chips">
-                                    <div class="filter-chip" data-filter="status">
-                                        <span>Estado</span>
-                                        <i class="fas fa-chevron-down"></i>
-                                    </div>
-                                    <div class="filter-chip" data-filter="priority">
-                                        <span>Prioridad</span>
-                                        <i class="fas fa-chevron-down"></i>
-                                    </div>
-                                    <div class="filter-chip" data-filter="category">
-                                        <span>Categoría</span>
-                                        <i class="fas fa-chevron-down"></i>
-                                    </div>
-                                    <div class="filter-chip" data-filter="date">
-                                        <span>Fecha</span>
-                                        <i class="fas fa-chevron-down"></i>
-                                    </div>
-                                </div>
-                                <button class="button clear-filters" id="clearFilters">
-                                    Limpiar filtros
-                                </button>
-                            </div>
-
-                            <!-- Filter Dropdowns -->
-                            <div class="filter-dropdown" id="statusFilter">
-                                <div class="dropdown-content">
-                                    <label><input type="checkbox" name="status" value="abierto" checked> Abierto</label>
-                                    <label><input type="checkbox" name="status" value="en-proceso" checked> En Proceso</label>
-                                    <label><input type="checkbox" name="status" value="cerrado" checked> Cerrado</label>
-                                </div>
-                            </div>
-
-                            <div class="filter-dropdown" id="priorityFilter">
-                                <div class="dropdown-content">
-                                    <label><input type="checkbox" name="priority" value="alta" checked> Alta</label>
-                                    <label><input type="checkbox" name="priority" value="media" checked> Media</label>
-                                    <label><input type="checkbox" name="priority" value="baja" checked> Baja</label>
-                                </div>
-                            </div>
-
-                            <div class="filter-dropdown" id="categoryFilter">
-                                <div class="dropdown-content">
-                                    <label><input type="checkbox" name="category" value="hardware" checked> Hardware</label>
-                                    <label><input type="checkbox" name="category" value="software" checked> Software</label>
-                                    <label><input type="checkbox" name="category" value="redes" checked> Redes</label>
-                                    <label><input type="checkbox" name="category" value="sistemas" checked> Sistemas</label>
-                                </div>
-                            </div>
-
-                            <div class="filter-dropdown" id="dateFilter">
-                                <div class="dropdown-content date-range">
-                                    <div class="date-input-group">
-                                        <label>Desde:</label>
-                                        <input type="date" id="dateFrom">
-                                    </div>
-                                    <div class="date-input-group">
-                                        <label>Hasta:</label>
-                                        <input type="date" id="dateTo">
-                                    </div>
-                                    <button class="button apply-date">Aplicar</button>
-                                </div>
-                            </div>
-
-                            <div class="ticket-list" id="ticketList">
-                                <!-- Example Ticket Card -->
-                                <div class="ticket-card" data-id="TIC001" data-priority="alta" data-category="hardware" data-status="abierto">
-                                    <div class="ticket-meta">
-                                        <div class="ticket-header">
-                                            <span class="ticket-id">#TIC001</span>
-                                            <div class="ticket-tags">
-                                                <span class="status status-open">Abierto</span>
-                                                <span class="priority priority-high">Alta</span>
-                                            </div>
-                                        </div>
-                                        <span class="date">24-08-2024</span>
-                                    </div>
-                                    <div class="ticket-content">
-                                        <h3>Problema con el sistema de Facturación</h3>
-                                        <p>Recientemente tengo problema a la hora de imprimir los tickets de facturación...</p>
-                                        <div class="ticket-footer">
-                                            <div class="category-tag">
-                                                <i class="fas fa-desktop"></i>
-                                                Hardware
-                                            </div>
-                                            <button class="button secondary" th:onclick="|window.location.href='@{/tickets/detallesTicket}'|">Ver Detalles</button>
-                                        </div>
-                                    </div>
-                                </div>
-                                <!-- Agregar tickets desde aqui -->
-                                <div class="ticket-card" data-id="TIC001" data-priority="alta" data-category="hardware" data-status="abierto">
-                                    <div class="ticket-meta">
-                                        <div class="ticket-header">
-                                            <span class="ticket-id">#TIC001</span>
-                                            <div class="ticket-tags">
-                                                <span class="status status-open">Abierto</span>
-                                                <span class="priority priority-high">Alta</span>
-                                            </div>
-                                        </div>
-                                        <span class="date">24-08-2024</span>
-                                    </div>
-                                    <div class="ticket-content">
-                                        <h3>Problema con el sistema de Facturación</h3>
-                                        <p>Recientemente tengo problema a la hora de imprimir los tickets de facturación...</p>
-                                        <div class="ticket-footer">
-                                            <div class="category-tag">
-                                                <i class="fas fa-desktop"></i>
-                                                Hardware
-                                            </div>
-                                            <button class="button secondary">Ver Detalles</button>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="ticket-card" data-id="TIC001" data-priority="alta" data-category="hardware" data-status="abierto">
-                                    <div class="ticket-meta">
-                                        <div class="ticket-header">
-                                            <span class="ticket-id">#TIC001</span>
-                                            <div class="ticket-tags">
-                                                <span class="status status-open">Abierto</span>
-                                                <span class="priority priority-high">Alta</span>
-                                            </div>
-                                        </div>
-                                        <span class="date">24-08-2024</span>
-                                    </div>
-                                    <div class="ticket-content">
-                                        <h3>Problema con el sistema de Facturación</h3>
-                                        <p>Recientemente tengo problema a la hora de imprimir los tickets de facturación...</p>
-                                        <div class="ticket-footer">
-                                            <div class="category-tag">
-                                                <i class="fas fa-desktop"></i>
-                                                Hardware
-                                            </div>
-                                            <button class="button secondary">Ver Detalles</button>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="ticket-card" data-id="TIC001" data-priority="alta" data-category="hardware" data-status="abierto">
-                                    <div class="ticket-meta">
-                                        <div class="ticket-header">
-                                            <span class="ticket-id">#TIC001</span>
-                                            <div class="ticket-tags">
-                                                <span class="status status-open">Abierto</span>
-                                                <span class="priority priority-high">Alta</span>
-                                            </div>
-                                        </div>
-                                        <span class="date">24-08-2024</span>
-                                    </div>
-                                    <div class="ticket-content">
-                                        <h3>Problema con el sistema de Facturación</h3>
-                                        <p>Recientemente tengo problema a la hora de imprimir los tickets de facturación...</p>
-                                        <div class="ticket-footer">
-                                            <div class="category-tag">
-                                                <i class="fas fa-desktop"></i>
-                                                Hardware
-                                            </div>
-                                            <button class="button secondary">Ver Detalles</button>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="ticket-card" data-id="TIC001" data-priority="alta" data-category="hardware" data-status="abierto">
-                                    <div class="ticket-meta">
-                                        <div class="ticket-header">
-                                            <span class="ticket-id">#TIC001</span>
-                                            <div class="ticket-tags">
-                                                <span class="status status-open">Abierto</span>
-                                                <span class="priority priority-high">Alta</span>
-                                            </div>
-                                        </div>
-                                        <span class="date">24-08-2024</span>
-                                    </div>
-                                    <div class="ticket-content">
-                                        <h3>Problema con el sistema de Facturación</h3>
-                                        <p>Recientemente tengo problema a la hora de imprimir los tickets de facturación...</p>
-                                        <div class="ticket-footer">
-                                            <div class="category-tag">
-                                                <i class="fas fa-desktop"></i>
-                                                Hardware
-                                            </div>
-                                            <button class="button secondary">Ver Detalles</button>
-                                        </div>
-                                    </div>
-                                </div>
+                            <div class="footer-buttons">
+                                <button class="button-32" th:onclick="|window.location.href='@{/usuario/detalles(id=${ticket.idTicket})}'|">Ver Detalles</button>
+                                <button class="button-32 cancel-button">Cancelar</button>
                             </div>
                         </div>
                     </div>
-                </main>
+                </div>
             </div>
-        </div>
+        </section>
+
+        <section th:fragment="ticket-detalle">
+
+            <div class="back-button-container" style="margin-bottom: 15px;">
+                <a href="javascript:void(0);" onclick="window.history.back();" class="btn btn-outline-secondary back-button">
+                    <i class="fa-solid fa-arrow-left"></i>
+                </a>
+            </div>
+
+            <div class="main-container">
+                <div class="ticket-details">
+                    <div class="ticket-header">
+                        <div class="ticket-id">#TIC00000002</div>
+                        <span class="status"><i class="far fa-clock"></i> En Revisión</span>
+                    </div>
+                    <div class="ticket-title">No me funciona el sistema de facturación</div>
+                    <p class="ticket-description">
+                        Estoy experimentando problemas con el sistema de facturación que están afectando mi capacidad
+                        para realizar mis tareas diarias. Al intentar generar facturas, el sistema me muestra errores y no permite
+                        completar el proceso. Esto está causando retrasos en la emisión de las facturas que los contribuyentes
+                        necesitan. Además, he notado que algunos de los montos que aparecen en las facturas no coinciden
+                        con los valores correctos, lo que está provocando confusión y errores en los registros.
+                    </p>
+                    <div class="info-grid">
+                        <div class="info-item">
+                            <label>Fecha de Apertura:</label>
+                            <div>24 de Agosto del 2024 - 13:45:12</div>
+                        </div>
+                        <div class="info-item">
+                            <label>Prioridad:</label>
+                            <div>Sin Asignar</div>
+                        </div>
+                        <div class="info-item">
+                            <label>Encargado:</label>
+                            <div>Sin Asignar</div>
+                        </div>
+                        <div class="info-item">
+                            <label>Ultima Fecha de Actualización:</label>
+                            <div>24 de Agosto del 2024 - 13:45:12</div>
+                        </div>
+                        <div class="info-item">
+                            <label>Categoría:</label>
+                            <div>Sistemas</div>
+                        </div>
+                    </div>
+                    <div class="attachments">
+                        <span class="attachment"><i class="fas fa-paperclip"></i> Imagen1.jpg</span>
+                        <span class="attachment"><i class="fas fa-paperclip"></i> Imagen2.jpg</span>
+                    </div>
+                    <button class="delete-button">Eliminar</button>
+                </div>
+                <div class="manager-info">
+                    <h2>Información del Encargado</h2>
+                    <div class="manager-icon"><i class="fas fa-headset"></i></div>
+                    <div class="manager-status">
+                        <strong>Su ticket está en revisión.</strong>
+                        <p>Pronto un soportista se pondrá en contacto con usted.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
     </body>
 </html>
-
-<!-- Previous HTML and CSS remain the same until the script section -->
-
-<script>
-    document.addEventListener('DOMContentLoaded', function () {
-        const filterChips = document.querySelectorAll('.filter-chip');
-        const filterDropdowns = document.querySelectorAll('.filter-dropdown');
-        const clearFilters = document.getElementById('clearFilters');
-        const activeFilters = document.getElementById('activeFilters');
-        const searchInput = document.getElementById('searchInput');
-        const ticketList = document.getElementById('ticketList');
-        const dateFrom = document.getElementById('dateFrom');
-        const dateTo = document.getElementById('dateTo');
-
-        // Toggle filter dropdowns
-        filterChips.forEach(chip => {
-            chip.addEventListener('click', (e) => {
-                const filterType = chip.dataset.filter;
-                const dropdown = document.getElementById(`${filterType}Filter`);
-
-                // Close other dropdowns
-                filterDropdowns.forEach(d => {
-                    if (d.id !== `${filterType}Filter`) {
-                        d.style.display = 'none';
-                    }
-                });
-
-                // Toggle current dropdown
-                dropdown.style.display =
-                        dropdown.style.display === 'block' ? 'none' : 'block';
-
-                // Position dropdown below chip
-                const chipRect = chip.getBoundingClientRect();
-                dropdown.style.top = `${chipRect.bottom + window.scrollY + 8}px`;
-                dropdown.style.left = `${chipRect.left}px`;
-
-                // Toggle active state
-                chip.classList.toggle('active');
-            });
-        });
-
-        // Close dropdowns when clicking outside
-        document.addEventListener('click', (e) => {
-            if (!e.target.closest('.filter-chip') && !e.target.closest('.filter-dropdown')) {
-                filterDropdowns.forEach(dropdown => {
-                    dropdown.style.display = 'none';
-                });
-                filterChips.forEach(chip => {
-                    chip.classList.remove('active');
-                });
-            }
-        });
-
-        // Update active filters display
-        function updateActiveFilters() {
-            activeFilters.innerHTML = '';
-
-            // Get all checked filters
-            document.querySelectorAll('input[type="checkbox"]:checked').forEach(checkbox => {
-                const filterTag = document.createElement('div');
-                filterTag.className = 'active-filter-tag';
-                filterTag.innerHTML = `
-${checkbox.value}
-<i class="fas fa-times" data-filter="${checkbox.name}" data-value="${checkbox.value}"></i>
-`;
-                activeFilters.appendChild(filterTag);
-            });
-
-            // Add date range if selected
-            if (dateFrom.value || dateTo.value) {
-                const dateFilterTag = document.createElement('div');
-                dateFilterTag.className = 'active-filter-tag';
-                dateFilterTag.innerHTML = `
-${dateFrom.value} - ${dateTo.value}
-<i class="fas fa-times" data-filter="date"></i>
-`;
-                activeFilters.appendChild(dateFilterTag);
-            }
-        }
-
-        // Remove individual filters when clicking on X
-        activeFilters.addEventListener('click', (e) => {
-            if (e.target.matches('.fa-times')) {
-                const filterType = e.target.dataset.filter;
-                const filterValue = e.target.dataset.value;
-
-                if (filterType === 'date') {
-                    dateFrom.value = '';
-                    dateTo.value = '';
-                } else {
-                    const checkbox = document.querySelector(`input[name="${filterType}"][value="${filterValue}"]`);
-                    if (checkbox)
-                        checkbox.checked = false;
-                }
-
-                filterTickets();
-                updateActiveFilters();
-            }
-        });
-
-        // Clear all filters
-        clearFilters.addEventListener('click', () => {
-            document.querySelectorAll('input[type="checkbox"]').forEach(cb => cb.checked = true);
-            dateFrom.value = '';
-            dateTo.value = '';
-            searchInput.value = '';
-            filterTickets();
-            updateActiveFilters();
-        });
-
-        // Filter tickets based on all criteria
-        function filterTickets() {
-            const tickets = ticketList.getElementsByClassName('ticket-card');
-            const searchText = searchInput.value.toLowerCase();
-            const selectedStatuses = Array.from(document.querySelectorAll('input[name="status"]:checked')).map(cb => cb.value);
-            const selectedPriorities = Array.from(document.querySelectorAll('input[name="priority"]:checked')).map(cb => cb.value);
-            const selectedCategories = Array.from(document.querySelectorAll('input[name="category"]:checked')).map(cb => cb.value);
-
-            let visibleTickets = 0;
-
-            Array.from(tickets).forEach(ticket => {
-                const ticketPriority = ticket.dataset.priority.toLowerCase();
-                const ticketCategory = ticket.dataset.category.toLowerCase();
-                const ticketStatus = ticket.dataset.status.toLowerCase();
-                const ticketDate = ticket.querySelector('.date').textContent;
-
-                // Check if ticket matches all criteria
-                const matchesSearch = ticket.textContent.toLowerCase().includes(searchText);
-                const matchesStatus = selectedStatuses.includes(ticketStatus);
-                const matchesPriority = selectedPriorities.includes(ticketPriority);
-                const matchesCategory = selectedCategories.includes(ticketCategory);
-                const matchesDate = checkDateRange(ticketDate);
-
-                const isVisible = matchesSearch &&
-                        matchesStatus &&
-                        matchesPriority &&
-                        matchesCategory &&
-                        matchesDate;
-
-                ticket.style.display = isVisible ? 'block' : 'none';
-
-                if (isVisible) {
-                    visibleTickets++;
-                }
-            });
-
-            // Actualizar el contador
-            document.getElementById('ticketCounter').textContent = visibleTickets;
-
-            updateActiveFilters();
-        }
-
-        // Helper function to check if a date falls within the selected range
-        function checkDateRange(ticketDate) {
-            if (!dateFrom.value && !dateTo.value)
-                return true;
-
-            const date = new Date(ticketDate);
-            const from = dateFrom.value ? new Date(dateFrom.value) : null;
-            const to = dateTo.value ? new Date(dateTo.value) : null;
-
-            if (from && to) {
-                return date >= from && date <= to;
-            } else if (from) {
-                return date >= from;
-            } else if (to) {
-                return date <= to;
-            }
-
-            return true;
-        }
-
-        // Event listeners for filter changes
-        searchInput.addEventListener('input', filterTickets);
-        document.querySelectorAll('input[type="checkbox"]').forEach(checkbox => {
-            checkbox.addEventListener('change', filterTickets);
-        });
-
-        // Date filter application
-        document.querySelector('.apply-date').addEventListener('click', () => {
-            filterTickets();
-            document.getElementById('dateFilter').style.display = 'none';
-        });
-
-        // Initialize filters and counter
-        filterTickets();
-    });
-</script>

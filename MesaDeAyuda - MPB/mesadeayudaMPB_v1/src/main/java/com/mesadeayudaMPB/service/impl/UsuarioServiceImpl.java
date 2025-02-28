@@ -5,17 +5,22 @@ import com.mesadeayudaMPB.dao.UsuarioDao;
 import com.mesadeayudaMPB.domain.Usuario;
 import com.mesadeayudaMPB.domain.Rol;
 import com.mesadeayudaMPB.service.UsuarioService;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.List;
+import java.util.UUID;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 @Service
 public class UsuarioServiceImpl implements UsuarioService {
 
     @Autowired
     private UsuarioDao usuarioDao;
-
     @Autowired
     private RolDao rolDao;
 
@@ -71,7 +76,7 @@ public class UsuarioServiceImpl implements UsuarioService {
         if (crearRolUser) {
             Rol rol = new Rol();
             rol.setNombre("ROLE_USER");
-            rol.setUsuario(usuario); // Asignar el objeto Usuario completo, no solo el ID
+            rol.setUsuario(usuario);
             rolDao.save(rol);
         }
     }
@@ -80,5 +85,35 @@ public class UsuarioServiceImpl implements UsuarioService {
     @Transactional(readOnly = true)
     public boolean existeUsuarioPorNombreOCorreoElectronico(String nombre, String correoElectronico) {
         return usuarioDao.existsByNombreOrCorreoElectronico(nombre, correoElectronico);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public boolean existeUsuarioPorCorreoElectronico(String correoElectronico) {
+        return usuarioDao.existsByCorreoElectronico(correoElectronico);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Usuario getUsuarioPorCorreo(String correoElectronico) {
+        return usuarioDao.findByCorreoElectronico(correoElectronico);
+    }
+
+    @Override
+    @Transactional
+    public byte[] actualizarImagen(MultipartFile imagen) {
+        try {
+            // Convertir la imagen a un arreglo de bytes
+            return imagen.getBytes();
+        } catch (IOException e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Usuario getUsuarioPorId(Long id) {
+        return usuarioDao.findById(id).orElse(null);
     }
 }

@@ -5,10 +5,12 @@
         <title>Mesa de Ayuda</title>
         <meta charset="UTF-8"/>
     </head>
-    
+
     <th:block th:append="head">
-        <link rel="stylesheet" th:href="@{/css/perfil_layout_principal.css}">
+        <link rel="stylesheet" th:href="@{/css/historial_layout_principal.css}">
     </th:block>
+
+    <th:block th:replace="~{layout/plantilla :: scripts-perfil}"></th:block>
 
     <body>
         <div class="wrapper">
@@ -26,8 +28,7 @@
                 <main class="home-section">
                     <div class="content-wrapper">
 
-                        <section th:replace="~{usuario/segmentos-perfil-info :: perfil-section}"></section>
-                        <section th:replace="~{usuario/segmentos-perfil-info :: tickets-section}"></section>
+                        <section th:replace="~{usuario/segmentos-perfil-historial :: historial}"></section>
 
                     </div>
                 </main>

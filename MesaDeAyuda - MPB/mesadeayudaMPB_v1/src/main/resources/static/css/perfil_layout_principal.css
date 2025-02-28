@@ -26,15 +26,19 @@ Click nbfs://nbhost/SystemFileSystem/Templates/Other/CascadeStyleSheet.css to ed
 }
 
 .profile-header img {
-    width: 120px;
-    height: 120px;
-    border-radius: 8px;
-    object-fit: cover;
     margin-right: 20px;
 }
 
-.profile-info {
-    flex-grow: 1;
+.image-upload-container {
+    position: relative;
+    display: inline-block;
+}
+
+.image-upload-container img {
+    width: 150px; /* Ajusta el tamaño según sea necesario */
+    height: 150px;
+    object-fit: cover;
+    border-radius: 50%; /* Para darle un efecto redondeado */
 }
 
 .btn-update {
@@ -98,6 +102,7 @@ Click nbfs://nbhost/SystemFileSystem/Templates/Other/CascadeStyleSheet.css to ed
 }
 
 .btn-update {
+    font-family: 'Poppins', sans-serif;
     position: absolute;
     top: 0;
     right: 0;
@@ -291,12 +296,7 @@ Click nbfs://nbhost/SystemFileSystem/Templates/Other/CascadeStyleSheet.css to ed
         font-size: 1.25rem;
     }
 
-    .profile-header {
-        gap: 16px;
-    }
-
     .btn-update {
-        padding: 6px 12px;
         font-size: 0.875rem;
     }
 }

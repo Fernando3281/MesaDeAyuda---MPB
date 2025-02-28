@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" 
+      xmlns:th="http://www.thymeleaf.org">
+    <head th:replace="~{layout/plantilla :: head}">
+        <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                <title>Mesa de Ayuda</title>
+                </head>
+                <body class="body-registro">
+                    <div class="registro-container">
+                        <div class="registro-form">
+                            <div class="registro-left">
+                                <h1 class="h1-registro">Registrese</h1>
+                                <p class="p-registro">Bienvenido a su Centro de Soporte</p>
+                                <div class="registro-illustration"></div>
+                                <p class="registro-description">Registrate con nosotros para acceder a nuestro servicio de soporte en línea y obtener asistencia personalizada por nuestra de la institución.</p>
+                            </div>
+                            <div class="registro-right">
+                                <div class="municipalidad-logo"></div>
+                                <form id="registroForm" th:action="@{/registro/nuevo}" method="post" class="form-elements-registro">
+                                    <div class="input-group-registro">
+                                        <label for="nombre">Nombre(s)</label>
+                                        <input type="text" id="nombre" name="nombre" placeholder="Ingrese su nombre..." required>
+                                    </div>
+                                    <div class="input-group-registro">
+                                        <label for="apellidos">Apellido</label>
+                                        <input type="text" id="apellido" name="apellido" placeholder="Ingrese sus apellidos..." required>
+                                    </div>
+                                    <div class="input-group-registro">
+                                        <label for="departamento">Departamento</label>
+                                        <select id="departamento" name="departamento" required>
+                                            <option value="recursos-humanos">Recursos Humanos</option>
+                                            <option value="tecnologia">Contabilidad</option>
+                                            <option value="administracion">Auditoria</option>
+                                            <option value="administracion">Patentes</option>
+                                            <option value="tecnologia">Acueducto</option>
+                                            <option value="administracion">Asesoría Jurídica Municipal</option>
+                                            <option value="administracion">Asesoría Legal Concejo Municipal</option>
+                                            <option value="administracion">Administración Tributaria y Financiera</option>
+                                            <option value="administracion">Bienes Inmuebles, Catastro y Valoración</option>
+                                            <option value="administracion">Unidad Técnica de Gestión Vial</option>
+                                            <option value="administracion">Tecnologías de Información</option>
+                                            <option value="administracion">Promoción de Cultura y Turismo</option>
+                                            <option value="administracion">Archivo</option>
+                                            <option value="administracion">Policía Municipal</option>
+                                            <option value="administracion">Secretaría del Concejo</option>
+                                            <option value="administracion">Gestión Ambiental</option>
+                                            <option value="administracion">Parquímetros</option>
+                                            <option value="administracion">Proveeduría</option>
+                                            <option value="administracion">Bodega</option>
+                                            <option value="administracion">Gestión Social</option>
+                                            <option value="administracion">Obras Civiles</option>
+                                            <option value="administracion">Planificación</option>
+                                            <option value="administracion">Tesorería</option>
+                                            <option value="administracion">Ingeniería</option>
+                                            <option value="administracion">Cobros y cementerio</option>
+                                        </select>
+                                    </div>
+                                    <div class="input-group-registro">
+                                        <label for="email">Correo Electrónico</label>
+                                        <input type="email" id="email" name="correoElectronico" placeholder="Ingrese su correo institucional..." required>
+                                    </div>
+                                    <div class="input-group-registro">
+                                        <label for="password">Contraseña</label>
+                                        <input type="password" id="password" name="contrasena" placeholder="Ingrese una nueva contraseña..." required>
+                                    </div>
+                                    <div class="input-group-registro">
+                                        <label for="confirm-password">Confirmar Contraseña</label>
+                                        <input type="password" id="confirm-password" name="confirm-password" placeholder="Ingrese nuevamente la contraseña..." required>
+                                    </div>
+
+                                    <button type="submit" class="btn-crear-cuenta">Crear Cuenta</button>
+                                    <a href="/login" class="link-ya-tengo-cuenta">Ya tengo una cuenta</a>
+                                </form>     
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Modal -->
+                    <div id="error-modal" class="modal" style="display:none;">
+                        <div class="modal-content">
+                            <span class="close" onclick="closeModal()">&times;</span>
+                            <p id="modal-message">Las contraseñas no coinciden. Por favor, inténtelo de nuevo.</p>
+                        </div>
+                    </div>
+
+                    <footer>
+                        © 2024 Municipalidad de Barva. Todos los derechos reservados.
+                    </footer>
+
+                    <script>
+                        $(document).ready(function () {
+                            function showModal(message) {
+                                $("#modal-message").text(message);
+                                $("#error-modal").show();
+                            }
+
+                            window.closeModal = function () {
+                                $("#error-modal").hide();
+                            }
+
+                            $("#registroForm").on('submit', function (event) {
+                                event.preventDefault();
+
+                                const password = $("#password").val();
+                                const confirmPassword = $("#confirm-password").val();
+                                const email = $("#email").val();
+
+                                // Verificar que las contraseñas coincidan
+                                if (password !== confirmPassword) {
+                                    showModal("Las contraseñas no coinciden. Por favor, inténtelo de nuevo.");
+                                    return;
+                                }
+
+                                // Convertir los datos del formulario a un objeto
+                                const formData = new FormData(this);
+
+                                // Enviar formulario
+                                $.ajax({
+                                    url: '/registro/nuevo',
+                                    method: 'POST',
+                                    data: formData,
+                                    processData: false,
+                                    contentType: false,
+                                    success: function (response) {
+                                        if (response.success) {
+                                            window.location.href = response.redirectUrl;
+                                        } else if (response.error) {
+                                            showModal(response.error);
+                                        }
+                                    },
+                                    error: function (xhr) {
+                                        let errorMessage = "Error al procesar el registro.";
+                                        if (xhr.responseJSON && xhr.responseJSON.error) {
+                                            errorMessage = xhr.responseJSON.error;
+                                        }
+                                        showModal(errorMessage);
+                                    }
+                                });
+                            });
+
+                            // Modal close handlers
+                            $(".close").click(closeModal);
+                            $(window).click(function (event) {
+                                if ($(event.target).is('#error-modal')) {
+                                    closeModal();
+                                }
+                            });
+                        });
+                    </script>
+                </body>
+                </html>
+
+                <style>
+                    .modal {
+                        display: none;
+                        position: fixed;
+                        z-index: 1;
+                        padding-top: 100px;
+                        left: 0;
+                        top: 0;
+                        width: 100%;
+                        height: 100%;
+                        overflow: auto;
+                        background-color: rgba(0,0,0,0.4);
+                    }
+
+                    .modal-content {
+                        background-color: #fefefe;
+                        margin: auto;
+                        padding: 20px;
+                        border: 1px solid #888;
+                        width: 300px;
+                        text-align: center;
+                        border-radius: 8px;
+                    }
+
+                    .close {
+                        color: #aaa;
+                        float: right;
+                        font-size: 28px;
+                        font-weight: bold;
+                        cursor: pointer;
+                    }
+
+                </style>
+
+

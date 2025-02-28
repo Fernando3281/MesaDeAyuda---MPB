@@ -185,16 +185,15 @@
 }
 
 .ticket-card {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
     background: white;
     border-radius: 12px;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
     overflow: hidden;
-    transition: all 0.2s;
-}
-
-.ticket-card:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    height: 100%;
+    min-height: 260px;
 }
 
 .ticket-meta {
@@ -219,24 +218,42 @@
     gap: 8px;
 }
 
-.status, .priority {
+.status {
     padding: 4px 12px;
     border-radius: 12px;
     font-size: 12px;
     font-weight: 500;
 }
 
-.status-open {
-    background: #ecfdf5;
-    color: #059669;
+/* Estado: En Revisión (amarillo) */
+.status-abierto {
+    background-color: #fff3cd;
+    color: #856404;
 }
-.status-process {
-    background: #eff6ff;
-    color: #2563eb;
+
+/* Estado: En Progreso (negro con gris) */
+.status-pendiente {
+    background-color: #cdf3ff;
+    color: #043685;
 }
-.status-closed {
-    background: #f3f4f6;
-    color: #4b5563;
+
+/* Estado: Solucionado (verde) */
+.status-resuelto {
+    background-color: #cdffce;
+    color: #0e8504;
+}
+
+/* Estado: Cerrado (azul) */
+.status-cerrado {
+    background-color: #4b4b4b;
+    color: #f9f9f9;
+}
+
+.priority {
+    padding: 4px 12px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 500;
 }
 
 .priority-high {
@@ -254,6 +271,9 @@
 
 .ticket-content {
     padding: 16px;
+    flex-grow: 1;
+    min-height: 110px;
+    max-height: 110px;
 }
 
 .ticket-content h3 {
@@ -273,6 +293,12 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
+    padding: 16px;
+    border-top: 1px solid #e5e7eb;
+    background-color: #fff; /* Asegura que el fondo sea blanco */
+    position: relative; /* Asegura que el footer esté posicionado correctamente */
+    bottom: 0; /* Lo fija en la parte inferior */
+    width: 100%; /* Asegura que ocupe todo el ancho */
 }
 
 .category-tag {
@@ -286,24 +312,45 @@
     color: #4b5563;
 }
 
-.button {
-    padding: 8px 16px;
-    border-radius: 6px;
-    font-size: 14px;
-    font-weight: 500;
+.button-32 {
+    background-color: #eaeaea;
+    border-radius: 5px;
+    color: #000;
     cursor: pointer;
-    transition: all 0.2s;
-    border: none;
+    padding: 10px 15px;
+    text-align: center;
+    transition: 300ms;
+    width: auto;
+    box-sizing: border-box;
+    border: 0;
+    font-size: 14px;
+    margin-left: 8px;
 }
 
-.button.secondary {
-    background: white;
-    border: 1px solid #2563eb;
-    color: #2563eb;
+.button-32:not(:disabled):hover,
+.button-32:not(:disabled):focus {
+    outline: 0;
+    background: #2d2a52;
+    color: #fff;
+    box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.2), 0 3px 8px 0 rgba(42, 38, 170, 0.59);
 }
 
-.button.secondary:hover {
-    background: #eff6ff;
+.button-32:disabled {
+    filter: saturate(0.2) opacity(0.5);
+    -webkit-filter: saturate(0.2) opacity(0.5);
+    cursor: not-allowed;
+}
+
+/* Estilos específicos para el botón de Cancelar */
+.button-32.cancel-button {
+    background-color: #eaeaea;
+    color: #000; /* Texto blanco para mejor contraste */
+}
+
+.button-32.cancel-button:hover,
+.button-32.cancel-button:focus {
+    background: #ff0000; /* Color rojo más oscuro al pasar el mouse */
+    box-shadow: 0 0 0 2px rgba(255,0,0,.2), 0 3px 8px 0 rgba(255,0,0,.15);
 }
 
 .clear-filters {

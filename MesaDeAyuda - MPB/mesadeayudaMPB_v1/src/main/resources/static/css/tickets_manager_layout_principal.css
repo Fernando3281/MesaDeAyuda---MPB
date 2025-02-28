@@ -3,7 +3,7 @@
     Author     : ferva
 */
 
-/* //////////////////// Panel Perfil //////////////////// */
+/* //////////////////// Panel Tabla Tickets //////////////////// */
 
 
 .clear-filters-btn {
@@ -383,6 +383,7 @@
 
 
 .table-container {
+    min-height: calc(100vh - 200px);
     max-height: calc(100vh - 200px); /* Ajusta según el tamaño del search bar y otros elementos */
     display: block; /* Asegura el comportamiento esperado del contenedor */
     width: 100%; /* El contenedor ocupará todo el ancho disponible */
@@ -391,6 +392,7 @@
     border: 1px solid #ddd;
     border-top: none;
     border-radius: 0 0 4px 4px;
+    background: #ffffff;
 }
 
 .tickets-table {
@@ -463,6 +465,11 @@
     border-radius: 4px;
     font-size: 11px;
     font-weight: 500;
+}
+
+.badge-sin-asignar {
+    background: #267EDC;;
+    color: white;
 }
 
 .badge-alto {

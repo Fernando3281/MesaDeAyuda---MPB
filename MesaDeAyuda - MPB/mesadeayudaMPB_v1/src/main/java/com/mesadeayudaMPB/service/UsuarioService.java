@@ -6,6 +6,7 @@ package com.mesadeayudaMPB.service;
 
 import com.mesadeayudaMPB.domain.Usuario;
 import java.util.List;
+import org.springframework.web.multipart.MultipartFile;
 
 /**
  *
@@ -30,7 +31,8 @@ public interface UsuarioService {
 
     // Se valida si existe un Usuario considerando el username
     public boolean existeUsuarioPorNombreOCorreo(String Nombre, String correoElectronico);
-    
+
+    //ESTE BOOLEAN FUNCCIONA PARA EL LOGIN
     boolean existeUsuarioPorNombreOCorreoElectronico(String nombre, String correoElectronico);
 
     // Se inserta un nuevo usuario si el id del usuario esta vacío
@@ -40,4 +42,13 @@ public interface UsuarioService {
     // Se elimina el usuario que tiene el id pasado por parámetro
     public void delete(Usuario usuario);
 
+    //METODO PARA EL REGISTRO
+    public boolean existeUsuarioPorCorreoElectronico(String correoElectronico);
+
+    Usuario getUsuarioPorCorreo(String correoElectronico);
+
+    // Método para actualizar la imagen como bytes
+    byte[] actualizarImagen(MultipartFile imagen);
+
+    public Usuario getUsuarioPorId(Long id);
 }

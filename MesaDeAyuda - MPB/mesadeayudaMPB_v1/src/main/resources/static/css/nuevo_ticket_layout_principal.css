@@ -60,7 +60,7 @@ h1 i {
 }
 
 .form-row {
-    margin-bottom: 25px;
+    margin-bottom: 10px;
     display: flex;
     gap: 20px;
 }
@@ -88,6 +88,7 @@ textarea.form-control {
     margin-bottom: 20px;
     resize: vertical;
     min-height: 120px;
+    max-height: 200px;
 }
 
 .character-count {
@@ -97,20 +98,70 @@ textarea.form-control {
     margin-top: 4px;
 }
 
-.upload-box {
-    border: 2px dashed #ddd;
-    border-radius: 4px;
+#uploadBox {
+    position: relative;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    border: 2px dashed #ccc;
+    border-radius: 8px;
     padding: 30px;
     text-align: center;
     margin-bottom: 20px;
     color: #666;
     cursor: pointer;
+    transition: all 0.3s ease;
 }
 
 .upload-box i {
     display: block;
     margin-bottom: 10px;
     font-size: 24px;
+}
+
+.upload-box.drag-over {
+    background: #e9ecef;
+    border: 2px dashed #11101d;
+}
+
+.upload-box:hover {
+    background-color: rgba(0, 0, 0, 0.05);
+}
+
+
+
+.image-modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    padding: 20px;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.9);
+}
+
+.modal-content {
+    margin: auto;
+    display: block;
+    max-width: 90%;
+    max-height: 90vh;
+    object-fit: contain;
+}
+
+.close-modal {
+    position: absolute;
+    right: 25px;
+    top: 15px;
+    color: #f1f1f1;
+    font-size: 35px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.close-modal:hover {
+    color: #bbb;
 }
 
 .btn-submit {
@@ -235,6 +286,101 @@ textarea.form-control {
     font-size: 14px;
 }
 
+/*POPOVER*/
+.info-icon {
+    position: relative;
+    display: inline-block;
+    cursor: pointer;
+    margin-left: 5px; /* Espacio entre el texto y el ícono */
+}
+
+.popover-container {
+    position: absolute;
+    top: 50%;
+    left: 100%; /* Posiciona el popover a la derecha del ícono */
+    transform: translateY(-50%);
+    margin-left: 10px; /* Espacio entre el ícono y el popover */
+    z-index: 200;
+}
+
+.popover {
+    position: relative;
+    width: 480px;
+    padding: 15px;
+    background-color: rgba(236, 236, 236, 0.70);
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    font-size: 12px;
+    top: 64px;
+    backdrop-filter: blur(2px);
+}
+
+.popover::before {
+    content: '';
+    position: absolute;
+    top: 12%;
+    left: -10px; /* Posición de la flecha */
+    transform: translateY(-50%);
+    border-width: 5px;
+    border-style: solid;
+    border-color: transparent #e0e0e0 transparent transparent;
+}
+
+.popover::after {
+    content: '';
+    position: absolute;
+    top: 12%;
+    left: -9px; /* Ajuste fino para la flecha */
+    transform: translateY(-50%);
+    border-width: 5px;
+    border-style: solid;
+    border-color: transparent rgb(241, 241, 241) transparent transparent;
+}
+
+.popover-backdrop {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(255, 255, 255, 0.5); /* Fondo semi-transparente */
+    backdrop-filter: blur(5px); /* Efecto de desenfoque */
+    border-radius: 8px;
+    z-index: -1; /* Coloca el fondo detrás del contenido */
+}
+
+.popover-title {
+    font-weight: bold;
+    margin-bottom: 10px;
+    font-size: 14px; /* Tamaño de fuente para el título */
+    color: #333; /* Color oscuro para el título */
+}
+
+.popover-content {
+    font-size: 12px; /* Tamaño de fuente para el contenido */
+    color: #555; /* Color gris oscuro para el contenido */
+    line-height: 1.5; /* Mejora la legibilidad */
+}
+
+.popover-content ul {
+    padding-left: 20px; /* Sangría para la lista */
+    margin: 0; /* Elimina el margen predeterminado */
+}
+
+.popover-content li {
+    margin-bottom: 8px; /* Espacio entre elementos de la lista */
+}
+
+.popover-content strong {
+    color: #000; /* Color más oscuro para los textos en negrita */
+}
+
+.info-icon:hover .popover-container {
+    display: block;
+}
+
+
 /* Responsive styles */
 @media (max-width: 1024px) {
     .content-container {
@@ -254,6 +400,11 @@ textarea.form-control {
 }
 
 @media (max-width: 768px) {
+    .image-preview-wrapper {
+        width: 120px;
+        height: 120px;
+    }
+
     .form-row {
         flex-direction: column;
         gap: 0;

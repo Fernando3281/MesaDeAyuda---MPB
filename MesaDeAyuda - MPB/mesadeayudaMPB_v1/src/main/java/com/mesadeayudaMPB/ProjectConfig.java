@@ -2,74 +2,83 @@ package com.mesadeayudaMPB;
 
 import java.util.Locale;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.MessageSource;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-/*
-import org.springframework.context.support.ResourceBundleMessageSource;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
-import org.springframework.security.core.userdetails.User;
-import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.web.servlet.LocaleResolver;
-import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
-*/
 import org.springframework.web.servlet.config.annotation.ViewControllerRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
-import org.springframework.web.servlet.i18n.LocaleChangeInterceptor;
-import org.springframework.web.servlet.i18n.SessionLocaleResolver;
+import org.springframework.web.servlet.i18n.FixedLocaleResolver;
+import org.thymeleaf.extras.java8time.dialect.Java8TimeDialect;
 
 @Configuration
+@EnableWebSecurity
 public class ProjectConfig implements WebMvcConfigurer {
-    
-    /* Los siguiente métodos son para implementar el tema de seguridad dentro del proyecto */
+
     @Override
     public void addViewControllers(ViewControllerRegistry registry) {
         registry.addViewController("/").setViewName("index");
         registry.addViewController("/index").setViewName("index");
         registry.addViewController("/login").setViewName("login");
-        registry.addViewController("/registro").setViewName("registro");
-        registry.addViewController("/registro/nuevo").setViewName("/registro/nuevo");
+        registry.addViewController("/registro/registro").setViewName("/registro/nuevo");
     }
-/*
+
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
                 .authorizeHttpRequests((request) -> request
-                .requestMatchers("/", "/index", "/errores/**",
-                        "/registro/**", "/js/**", "/css/**", "/img/**","/webjars/**")
-                .permitAll()
                 .requestMatchers(
-                        "/producto/nuevo", "/producto/guardar",
-                        "/producto/modificar/**", "/producto/eliminar/**",
-                        "/categoria/nuevo", "/categoria/guardar",
-                        "/categoria/modificar/**", "/categoria/eliminar/**",
-                        "/usuario/nuevo", "/usuario/guardar",
-                        "/usuario/modificar/**", "/usuario/eliminar/**",
-                        "/reportes/**"
-                ).hasRole("ADMIN")
-                .requestMatchers(
-                        "/producto/listado",
-                        "/categoria/listado",
-                        "/usuario/listado"
-                ).hasAnyRole("ADMIN", "VENDEDOR")
-                .requestMatchers("/facturar/carrito")
-                .hasRole("USER")
+                        "/registro/**",
+                        "/js/**",
+                        "/css/**",
+                        "/img/**",
+                        "/webjars/**",
+                        "/login"
+                ).permitAll()
+                .anyRequest().authenticated()
                 )
                 .formLogin((form) -> form
-                .loginPage("/login").permitAll())
-                .logout((logout) -> logout.permitAll());
+                .loginPage("/login")
+                .defaultSuccessUrl("/index", true)
+                .permitAll()
+                )
+                .logout((logout) -> logout
+                .logoutSuccessUrl("/login?logout")
+                .permitAll())
+                .rememberMe((remember) -> remember
+                .key("AbcdefghiJklmNoPqRsTuVwxyz")
+                .tokenValiditySeconds(7 * 24 * 60 * 60));
+
         return http.build();
     }
+
     @Autowired
     private UserDetailsService userDetailsService;
 
+    @Bean
+    public static BCryptPasswordEncoder passwordEncoder() {
+        return new BCryptPasswordEncoder();
+    }
+
+    @Bean
+    public LocaleResolver localeResolver() {
+        FixedLocaleResolver resolver = new FixedLocaleResolver();
+        resolver.setDefaultLocale(new Locale("es", "ES"));
+        return resolver;
+    }
+
+    @Bean
+    public Java8TimeDialect java8TimeDialect() {
+        return new Java8TimeDialect();
+    }
+
     @Autowired
-    public void configurerGlobal(AuthenticationManagerBuilder build) throws Exception {
-        build.userDetailsService(userDetailsService).passwordEncoder(new BCryptPasswordEncoder());
-    }*/
+    public void configureGlobal(AuthenticationManagerBuilder auth) throws Exception {
+        auth.userDetailsService(userDetailsService).passwordEncoder(passwordEncoder());
+    }
 }

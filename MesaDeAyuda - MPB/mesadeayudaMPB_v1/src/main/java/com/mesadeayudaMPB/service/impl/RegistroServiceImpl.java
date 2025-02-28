@@ -1,97 +1,112 @@
 package com.mesadeayudaMPB.service.impl;
-
 import com.mesadeayudaMPB.dao.UsuarioDao;
+import com.mesadeayudaMPB.dao.RolDao;
 import com.mesadeayudaMPB.domain.Usuario;
+import com.mesadeayudaMPB.domain.Rol;
 import com.mesadeayudaMPB.service.RegistroService;
+import com.mesadeayudaMPB.service.EmailService;
+import com.mesadeayudaMPB.service.VerificationService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
-
-@Service
-public class RegistroServiceImpl implements RegistroService {
-
-    @Autowired
-    private UsuarioDao usuarioDao;
-
-    @Override
-    public void registrarNuevoUsuario(Usuario usuario) {
-        if (!usuarioDao.existsByNombreOrCorreoElectronico(usuario.getNombre(), usuario.getCorreoElectronico())) {
-            usuarioDao.save(usuario);
-        } else {
-            throw new IllegalArgumentException("El usuario ya existe");
-        }
-    }
-}
-
-/*
-package com.mesadeayudaMPB.service.impl;
-
-import com.mesadeayudaMPB.domain.Usuario;
-import com.mesadeayudaMPB.service.RegistroService;
-import com.mesadeayudaMPB.service.UsuarioService;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.MessageSource;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
-import org.springframework.ui.Model;
-import org.springframework.web.multipart.MultipartFile;
-
-import java.util.Locale;
-
+import org.springframework.transaction.annotation.Transactional;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.Date;
+import java.util.Random;
 @Service
 public class RegistroServiceImpl implements RegistroService {
-
     @Autowired
-    private UsuarioService usuarioService;
-
+    private UsuarioDao usuarioDao;
     @Autowired
-    private MessageSource messageSource;
-
+    private RolDao rolDao;
+    @Autowired
+    private BCryptPasswordEncoder passwordEncoder;
+    @Autowired
+    private EmailService emailService;
+    @Autowired
+    private VerificationService verificationService;
     @Override
+    @Transactional
     public void registrarNuevoUsuario(Usuario usuario) {
-        if (!usuarioService.existeUsuarioPorNombreOCorreo(usuario.getNombre(), usuario.getCorreoElectronico())) {
-            usuario.setContrasena(demeClave());
-            usuario.setActivo(false);
-            usuarioService.save(usuario, true);
+        if (!existeUsuario(usuario.getCorreoElectronico())) {
+            // Encriptar contraseña
+            usuario.setContrasena(passwordEncoder.encode(usuario.getContrasena()));
+            usuario.setActivo(true);
+            // Asignar imagen de perfil por defecto
+            byte[] imagenDefault = cargarImagenDefault();
+            usuario.setImagen(imagenDefault);
+            // Guardar el usuario
+            Usuario usuarioGuardado = usuarioDao.save(usuario);
+            // Crear y asignar rol ROL_USER
+            Rol rol = new Rol();
+            rol.setNombre("ROL_USER");
+            rol.setDescripcion("Usuario regular del sistema");
+            rol.setUsuario(usuarioGuardado);
+            rolDao.save(rol);
         } else {
             throw new IllegalArgumentException("El usuario ya existe");
         }
     }
-
     @Override
-    public String activarCuenta(String username, String clave, Model model) {
-        Usuario usuario = usuarioService.getUsuarioPorNombreYContrasena(username, clave);
+    public boolean existeUsuario(String correoElectronico) {
+        return usuarioDao.existsByCorreoElectronico(correoElectronico);
+    }
+    @Override
+    public boolean existeCodigo(String codigo) {
+        return usuarioDao.existsByCodigo(codigo);
+    }
+    public String generarCodigoUnico() {
+        String CARACTERES = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+        StringBuilder codigo = new StringBuilder();
+        Random random = new Random();
+        for (int i = 0; i < 6; i++) {
+            codigo.append(CARACTERES.charAt(random.nextInt(CARACTERES.length())));
+        }
+        return codigo.toString();
+    }
+    // Método para cargar la imagen predeterminada
+    private byte[] cargarImagenDefault() {
+        try {
+            // Ruta de la imagen predeterminada
+            Path rutaImagenDefault = Paths.get("src/main/resources/static/img/ImagenDefaultPerfil.jpg");
+            return Files.readAllBytes(rutaImagenDefault);
+        } catch (IOException e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+    public Usuario prepararNuevoUsuario(Usuario usuario) {
+        // Generar código único
+        String codigoUnico = generarCodigoUnico();
+        while (existeCodigo(codigoUnico)) {
+            codigoUnico = generarCodigoUnico();
+        }
+        // Establecer campos adicionales
+        usuario.setCodigo(codigoUnico);
+        usuario.setUltimaConexion(new Date());
+        return usuario;
+    }
+    public String iniciarVerificacion(Usuario usuario) {
+        String verificationCode = verificationService.generateVerificationCode();
+        emailService.sendVerificationCode(usuario.getCorreoElectronico(), verificationCode);
+        return verificationCode;
+    }
+    
+    @Transactional
+    public void actualizarContrasena(String correoElectronico, String nuevaContrasena) {
+        Usuario usuario = usuarioDao.findByCorreoElectronico(correoElectronico);
         if (usuario != null) {
-            model.addAttribute("usuario", usuario);
-            return "/registro/activarCuenta"; // Redirige a la página de activación
+            // Encriptar la nueva contraseña
+            usuario.setContrasena(passwordEncoder.encode(nuevaContrasena));
+            // Actualizar fecha de última conexión
+            usuario.setUltimaConexion(new Date());
+            // Guardar los cambios
+            usuarioDao.save(usuario);
         } else {
-            model.addAttribute("mensaje", messageSource.getMessage("registro.activar.error", null, Locale.getDefault()));
-            return "/registro/activarCuenta";
+            throw new IllegalArgumentException("Usuario no encontrado");
         }
-    }
-
-    @Override
-    public void activarCuenta(Usuario usuario, MultipartFile imagenFile) {
-        var codigo = new BCryptPasswordEncoder();
-        usuario.setContrasena(codigo.encode(usuario.getContrasena()));
-
-        // Si se proporciona una imagen, se puede agregar al usuario, pero sin Firebase
-        if (!imagenFile.isEmpty()) {
-            // Aquí se podría añadir código para almacenar la imagen de forma local, si es necesario
-            // usuario.setRutaImagen(rutaImagen); // Lógica de almacenamiento de la imagen (si aplica)
-        }
-
-        usuario.setActivo(true);
-        usuarioService.save(usuario, true);
-    }
-
-    private String demeClave() {
-        String tira = "ABCDEFGHIJKLMNOPQRSTUXYZabcdefghijklmnopqrstuvwxyz0123456789_*+-";
-        String clave = "";
-        for (int i = 0; i < 40; i++) {
-            clave += tira.charAt((int) (Math.random() * tira.length()));
-        }
-        return clave;
     }
 }
-
-*/

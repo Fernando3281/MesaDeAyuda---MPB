@@ -14,6 +14,9 @@
                     <input type="text" class="search-input" placeholder="Buscar Ticket..." id="searchInput">
                 </div>
                 <div class="action-buttons">
+                    <button class="btn">
+                        <i class="fa-solid fa-user-plus"></i> Asignar Ticket
+                    </button>
                     <div class="export-container">
                         <button class="btn export-btn" id="exportBtn">
                             <i class="fas fa-download"></i> Exportar
@@ -62,27 +65,31 @@
                     <span>registros por página</span>
                 </div>
                 <div class="pagination-center">
-                    <span id="pageInfo">Mostrando 1 a 10 de 57 registros</span>
+                    <span id="pageInfo" th:text="'Mostrando ' + ${start} + ' a ' + ${end} + ' de ' + ${totalItems} + ' registros'">
+                        Mostrando 1 a 20 de 57 registros
+                    </span>
                 </div>
                 <div class="pagination-controls">
-                    <button class="pagination-btn" id="firstPage" title="Primera página">
+                    <button class="pagination-btn" th:onclick="'window.location.href=\'' + @{/tickets/listado(page=0,size=${pageSize})} + '\''"
+                            th:disabled="${currentPage == 0}">
                         <i class="fas fa-angle-double-left"></i>
                     </button>
-                    <button class="pagination-btn" id="prevPage" title="Página anterior">
+                    <button class="pagination-btn" th:onclick="'window.location.href=\'' + @{/tickets/listado(page=${currentPage-1},size=${pageSize})} + '\''"
+                            th:disabled="${currentPage == 0}">
                         <i class="fas fa-angle-left"></i>
                     </button>
                     <div class="page-numbers" id="pageNumbers">
-                        <button class="page-number active">1</button>
-                        <button class="page-number">2</button>
-                        <button class="page-number">3</button>
-                        <button class="page-number">4</button>
-                        <button class="page-number">5</button>
-                        <button class="page-number">6</button>
+                        <button th:each="pageNum : ${#numbers.sequence(0, totalPages - 1)}"
+                                th:class="'page-number ' + ${pageNum == currentPage ? 'active' : ''}"
+                                th:onclick="'window.location.href=\'' + @{/tickets/listado(page=${pageNum},size=${pageSize})} + '\''"
+                                th:text="${pageNum + 1}">1</button>
                     </div>
-                    <button class="pagination-btn" id="nextPage" title="Página siguiente">
+                    <button class="pagination-btn" th:onclick="'window.location.href=\'' + @{/tickets/listado(page=${currentPage+1},size=${pageSize})} + '\''"
+                            th:disabled="${currentPage >= totalPages - 1}">
                         <i class="fas fa-angle-right"></i>
                     </button>
-                    <button class="pagination-btn" id="lastPage" title="Última página">
+                    <button class="pagination-btn" th:onclick="'window.location.href=\'' + @{/tickets/listado(page=${totalPages-1},size=${pageSize})} + '\''"
+                            th:disabled="${currentPage >= totalPages - 1}">
                         <i class="fas fa-angle-double-right"></i>
                     </button>
                 </div>
@@ -153,184 +160,42 @@
                         </tr>
                     </thead>
                     <tbody>
-                        <tr>
+                        <tr th:each="ticket : ${tickets}">
                             <td><input type="checkbox" class="checkbox-custom"></td>
                             <td>
-                                <a th:href="@{/tickets/propiedadesTicket}" class="ticket-link">TIC00000001</a>
+                                <a th:href="@{/tickets/manager/{id}(id=${ticket.idTicket})}" 
+                                   class="ticket-link" th:text="${ticket.codigo}">(Codigo)</a>
                             </td>
-                            <td>04/11/2024<br>08:45:15</td>
-                            <td>No me funciona la impresora</td>
-                            <td>Juan Pablo</td>
-                            <td><span class="badge badge-alto">Alto</span></td>
-                            <td>Abierto</td>
-                            <td>Hardware</td>
-                            <td>Andres Roberto</td>
-                            <td>05/11/2024<br>11:20:06</td>
+                            <td>
+                                <span th:text="${#dates.format(ticket.fechaApertura, 'dd/MM/yyyy')}">(Fecha)</span><br>
+                                    <span th:text="${#dates.format(ticket.fechaApertura, 'HH:mm:ss')}">(Hora)</span>
+                            </td>
+                            <td th:text="${ticket.titulo}">No me funciona la impresora</td>
+                            <td th:text="${ticket.solicitante.nombre + ' ' + ticket.solicitante.apellido}">(Solicitante)</td>
+                            <td>
+                                <span th:class="'badge badge-' + ${ticket.prioridad == 'Sin Asignar' ? 'sin-asignar' : #strings.toLowerCase(ticket.prioridad)}"
+                                      th:text="${ticket.prioridad == 'Sin Asignar' ? 'Sin Asignar' : ticket.prioridad}">
+                                    (Prioridad)
+                                </span>
+                            </td>
+                            <td th:text="${ticket.estado}">(Estado)</td>
+                            <td th:text="${ticket.categoria}">Hardware</td>
+                            <td th:text="${ticket.asignadoPara != null ? 
+                                ticket.asignadoPara.nombre + ' ' + ticket.asignadoPara.apellido : 
+                                'Sin asignar'}">(Colaborador)</td>
+                            <td>
+                                <span th:text="${#dates.format(ticket.fechaActualizacion, 'dd/MM/yyyy')}">(Fecha)</span><br>
+                                    <span th:text="${#dates.format(ticket.fechaActualizacion, 'HH:mm:ss')}">(Hora)</span>
+                            </td>
                         </tr>
-                        <tr>
-                            <td><input type="checkbox" class="checkbox-custom"></td>
-                            <td>TIC00000002</td>
-                            <td>04/11/2024<br>09:30:22</td>
-                            <td>Error en sistema de facturación</td>
-                            <td>María García</td>
-                            <td><span class="badge badge-critico">Critico</span></td>
-                            <td>En Progreso</td>
-                            <td>Sistemas</td>
-                            <td>Carlos Mendoza</td>
-                            <td>05/11/2024<br>10:15:30</td>
-                        </tr>
-                        <tr>
-                            <td><input type="checkbox" class="checkbox-custom"></td>
-                            <td>TIC00000003</td>
-                            <td>04/11/2024<br>10:15:00</td>
-                            <td>Actualización de software necesaria</td>
-                            <td>Pedro Sánchez</td>
-                            <td><span class="badge badge-medio">Medio</span></td>
-                            <td>Pendiente</td>
-                            <td>Software</td>
-                            <td>Laura Jiménez</td>
-                            <td>05/11/2024<br>09:45:12</td>
-                        </tr>
-                        <tr>
-                            <td><input type="checkbox" class="checkbox-custom"></td>
-                            <td>TIC00000004</td>
-                            <td>04/11/2024<br>11:20:33</td>
-                            <td>Problema de acceso a red</td>
-                            <td>Ana Martínez</td>
-                            <td><span class="badge badge-alto">Alto</span></td>
-                            <td>Abierto</td>
-                            <td>Redes</td>
-                            <td>Roberto Díaz</td>
-                            <td>05/11/2024<br>13:10:45</td>
-                        </tr>
-                        <tr>
-                            <td><input type="checkbox" class="checkbox-custom"></td>
-                            <td>TIC00000005</td>
-                            <td>04/11/2024<br>13:45:18</td>
-                            <td>Backup fallido</td>
-                            <td>Luis Torres</td>
-                            <td><span class="badge badge-critico">Critico</span></td>
-                            <td>En Progreso</td>
-                            <td>Sistemas</td>
-                            <td>Patricia López</td>
-                            <td>05/11/2024<br>14:30:20</td>
-                        </tr>
-                        <tr>
-                            <td><input type="checkbox" class="checkbox-custom"></td>
-                            <td>TIC00000005</td>
-                            <td>04/11/2024<br>13:45:18</td>
-                            <td>Backup fallido</td>
-                            <td>Luis Torres</td>
-                            <td><span class="badge badge-critico">Critico</span></td>
-                            <td>En Progreso</td>
-                            <td>Sistemas</td>
-                            <td>Patricia López</td>
-                            <td>05/11/2024<br>14:30:20</td>
-                        </tr>
-                        <tr>
-                            <td><input type="checkbox" class="checkbox-custom"></td>
-                            <td>TIC00000005</td>
-                            <td>04/11/2024<br>13:45:18</td>
-                            <td>Backup fallido</td>
-                            <td>Luis Torres</td>
-                            <td><span class="badge badge-critico">Critico</span></td>
-                            <td>En Progreso</td>
-                            <td>Sistemas</td>
-                            <td>Patricia López</td>
-                            <td>05/11/2024<br>14:30:20</td>
-                        </tr>
-                        <tr>
-                            <td><input type="checkbox" class="checkbox-custom"></td>
-                            <td>TIC00000005</td>
-                            <td>04/11/2024<br>13:45:18</td>
-                            <td>Backup fallido</td>
-                            <td>Luis Torres</td>
-                            <td><span class="badge badge-critico">Critico</span></td>
-                            <td>En Progreso</td>
-                            <td>Sistemas</td>
-                            <td>Patricia López</td>
-                            <td>05/11/2024<br>14:30:20</td>
-                        </tr>
-                        <tr>
-                            <td><input type="checkbox" class="checkbox-custom"></td>
-                            <td>TIC00000005</td>
-                            <td>04/11/2024<br>13:45:18</td>
-                            <td>Backup fallido</td>
-                            <td>Luis Torres</td>
-                            <td><span class="badge badge-critico">Critico</span></td>
-                            <td>En Progreso</td>
-                            <td>Sistemas</td>
-                            <td>Patricia López</td>
-                            <td>05/11/2024<br>14:30:20</td>
-                        </tr>
-                        <tr>
-                            <td><input type="checkbox" class="checkbox-custom"></td>
-                            <td>TIC00000005</td>
-                            <td>04/11/2024<br>13:45:18</td>
-                            <td>Backup fallido</td>
-                            <td>Luis Torres</td>
-                            <td><span class="badge badge-critico">Critico</span></td>
-                            <td>En Progreso</td>
-                            <td>Sistemas</td>
-                            <td>Patricia López</td>
-                            <td>05/11/2024<br>14:30:20</td>
-                        </tr>
-                        <tr>
-                            <td><input type="checkbox" class="checkbox-custom"></td>
-                            <td>TIC00000005</td>
-                            <td>04/11/2024<br>13:45:18</td>
-                            <td>Backup fallido</td>
-                            <td>Luis Torres</td>
-                            <td><span class="badge badge-critico">Critico</span></td>
-                            <td>En Progreso</td>
-                            <td>Sistemas</td>
-                            <td>Patricia López</td>
-                            <td>05/11/2024<br>14:30:20</td>
-                        </tr>
-                        <tr>
-                            <td><input type="checkbox" class="checkbox-custom"></td>
-                            <td>TIC00000005</td>
-                            <td>04/11/2024<br>13:45:18</td>
-                            <td>Backup fallido</td>
-                            <td>Luis Torres</td>
-                            <td><span class="badge badge-critico">Critico</span></td>
-                            <td>En Progreso</td>
-                            <td>Sistemas</td>
-                            <td>Patricia López</td>
-                            <td>05/11/2024<br>14:30:20</td>
-                        </tr>
-                        <tr>
-                            <td><input type="checkbox" class="checkbox-custom"></td>
-                            <td>TIC00000005</td>
-                            <td>04/11/2024<br>13:45:18</td>
-                            <td>Backup fallido</td>
-                            <td>Luis Torres</td>
-                            <td><span class="badge badge-critico">Critico</span></td>
-                            <td>En Progreso</td>
-                            <td>Sistemas</td>
-                            <td>Patricia López</td>
-                            <td>05/11/2024<br>14:30:20</td>
-                        </tr>
-                        <tr>
-                            <td><input type="checkbox" class="checkbox-custom"></td>
-                            <td>TIC00000005</td>
-                            <td>04/11/2024<br>13:45:18</td>
-                            <td>Backup fallido</td>
-                            <td>Luis Torres</td>
-                            <td><span class="badge badge-critico">Critico</span></td>
-                            <td>En Progreso</td>
-                            <td>Sistemas</td>
-                            <td>Patricia López</td>
-                            <td>05/11/2024<br>14:30:20</td>
+                        <!-- Si no hay tickets, mostrar mensaje -->
+                        <tr th:if="${#lists.isEmpty(tickets)}">
+                            <td colspan="10" class="text-center">No hay tickets registrados</td>
                         </tr>
                     </tbody>
                 </table>
             </div>
         </section>
-        </div>
-        </main>
-        </div>
-        </div>
+
     </body>
-</body>
 </html>

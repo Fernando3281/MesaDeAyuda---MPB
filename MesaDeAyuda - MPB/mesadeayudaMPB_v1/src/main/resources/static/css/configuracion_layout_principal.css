@@ -25,18 +25,18 @@ Click nbfs://nbhost/SystemFileSystem/Templates/Other/CascadeStyleSheet.css to ed
     background: #fff;
     border-radius: 15px;
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.0);
-    transition: all 0.2s ease-in-out;
-    border: 2px solid #ccc; /* Borde gris visible por defecto */
+    transition: all 0.15s ease-in-out;
+    border: 2px solid #ccc;
 }
 
 .settings-item:hover {
-    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
-    border-color: #434e6c; /* Cambia el color del borde al pasar el mouse */
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+    border-color: #434e6c;
 }
 
 .settings-cerrarSesion:hover {
-    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
-    border-color: #434e6c; /* Cambia el color del borde al pasar el mouse */
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+    border-color: #434e6c;
 }
 
 .settings-link {
