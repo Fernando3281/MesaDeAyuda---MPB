@@ -1,0 +1,99 @@
+<!--ES POSIBLE Q SE PUEDA ELIMINAR ESTA VISTA YA QUE YA ESTAN ALMACENADAS EN SECTIONS DENTRO DEL "segmentos-perfil-info.html"-->
+
+
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" 
+      xmlns:th="http://www.thymeleaf.org">
+    <head th:replace="~{layout/plantilla :: head}">
+        <title>Mesa de Ayuda</title>
+    </head>
+    <body>
+
+        <section class="profile-section">
+            <h2 id="Title">Editar Perfil</h2>
+            <div class="profile-card">
+                <div class="profile-header">
+                    <img src="https://i.pinimg.com/280x280_RS/42/03/a5/4203a57a78f6f1b1cc8ce5750f614656.jpg"
+                         alt="Brians Fernando">
+                        <div class="profile-info">
+                            <p id="infoUsuario">Support Staff</p>
+                            <div id="infoUsuario">
+                                <h3 style="display: inline;">Brians Fernando Vargas Camacho</h3>
+                                <p style="display: inline;">ID#208324</p>
+                            </div>
+                            <p id="infoUsuario"><b>Departamento:</b> Asistente de TI</p>
+                            <p id="infoUsuario"><b>Último Acceso al Sistema:</b> 06/07/2024</p>
+                        </div>
+                        <button class="btn-update" onclick="window.history.back();">Cancelar</button>
+                </div>
+                <div class="profile-details">
+                    <div class="detail-row">
+                        <div class="detail-column">
+                            <label>Nombre</label>
+                            <input type="text" value="Brians Fernando">
+                        </div>
+                        <div class="detail-column">
+                            <label>Dirección</label>
+                            <textarea class="form-control" style="height: 140%;">Calle Los Pollos, Barva, Costa Rica</textarea>
+                        </div>
+                    </div>
+                    <div class="detail-row">
+                        <div class="detail-column" id="columnaTelefono">
+                            <label>Apellidos</label>
+                            <input type="text" id="inputTelefono" value="Vargas Camacho">
+                        </div>
+                    </div>
+                    <div class="detail-row">
+                        <div class="detail-column">
+                            <label>Provincia / Ciudad</label>
+                            <select class="form-select">
+                                <option value="heredia">Heredia</option>
+                                <option value="sanjose">San José</option>
+                                <option value="alajuela">Alajuela</option>
+                                <option value="cartago">Cartago</option>
+                                <option value="guanacaste">Guanacaste</option>
+                                <option value="puntarenas">Puntarenas</option>
+                                <option value="limon">Limón</option>
+                            </select>
+                        </div>
+                        <div class="detail-column">
+                            <label>Departamento</label>
+                            <select class="form-select">
+                                <option value="ti">Asistente de TI</option>
+                                <option value="soporte">Soporte Técnico</option>
+                                <option value="desarrollo">Desarrollo</option>
+                                <option value="redes">Redes</option>
+                                <option value="seguridad">Seguridad</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="detail-row">
+                        <div class="detail-column">
+                            <label>Número de Teléfono</label>
+                            <input type="text" value="+506 8975 0909">
+                        </div>
+                        <div class="detail-column">
+                            <label>Contraseña</label>
+                            <div class="password-field">
+                                <input type="password" value="password" id="passwordInput">
+                                    <button type="button" class="toggle-password" onclick="togglePassword()">
+                                        <i class="fa-solid fa-eye" id="toggleIcon"></i>
+                                    </button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="detail-row" style="margin-bottom: 0rem;">
+                        <div class="detail-column">
+                            <label>Correo Electrónico</label>
+                            <input type="email" value="fercvargas70499@outlook.com">
+                        </div>
+                        <div class="detail-column">
+                            <button class="btn-guardar-cambios">Guardar Cambios <i id="iGuardarPerfil" class="fa-solid fa-floppy-disk"></i></button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </body>
+</html>

@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" 
+      xmlns:th="http://www.thymeleaf.org">
+    <head th:replace="~{layout/plantilla :: head}">
+        <title>Mesa de Ayuda</title>
+    </head>
+    <body>
+
+        <section th:fragment="nuevo-ticket">
+            <div class="content-container">
+                <div class="main-form">
+
+                    <!-- Agregar después del título del formulario -->
+                    <div th:if="${error}" class="alert alert-danger alert-dismissible fade show" role="alert">
+                        <span th:text="${error}"></span>
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+
+                    <h1><b>Crear Nuevo Ticket</b> 
+                        <span class="info-icon">
+                            <i class="fas fa-info-circle"></i>
+                            <div class="popover-container">
+                                <div class="popover">
+                                    <div class="popover-title">Información Importante</div>
+                                    <div class="popover-content">
+                                        <ul>
+                                            <li><strong>Categoría:</strong> Seleccione la opción que mejor describa el ámbito en el que se presenta su situacion.</li>
+                                            <li><strong>Impacto:</strong> Seleccione el nivel según la prioridad y el estado en el que se encuentra su trabajo. Esto nos ayudará a valorar si es necesario ofrecer una respuesta inmediata.</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                        </span>
+                    </h1>
+                    <p class="description1">Describe tu situación y te atenderemos lo más pronto posible</p>
+
+                    <form th:action="@{/tickets/guardar}" method="post" enctype="multipart/form-data">
+                        <div class="form-group">
+                            <label id="txtLayout">Breve Descripción</label>
+                            <input type="text" name="titulo" class="form-control" maxlength="80" required>
+                                <div class="character-count">0 / 80</div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="problemDescription" id="txtLayout">Descripción del Problema</label>
+                            <textarea id="problemDescription" name="descripcion" class="form-control" rows="6" required></textarea>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group half">
+                                <label for="category" id="txtLayout">Categoría</label>
+                                <select id="category" name="categoria" class="form-control" required>
+                                    <option value="">Seleccione una categoría...</option>
+                                    <option value="Atencion al Cliente">Atención al Cliente</option>
+                                    <option value="Bancos">Bancos</option>
+                                    <option value="Cajas">Cajas</option>
+                                    <option value="Software">Software</option>
+                                </select>
+                            </div>
+                            <div class="form-group half">
+                                <label for="impact" id="txtLayout">Impacto (Opcional)</label>
+                                <select id="impact" name="impacto" class="form-control">
+                                    <option value="">Seleccione un nivel...</option>
+                                    <option value="Bajo">Bajo</option>
+                                    <option value="Medio">Medio</option>
+                                    <option value="Alto">Alto</option>
+                                    <option value="Urgente">Urgente</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- Caja para subir imágenes -->
+                        <div class="form-group">
+                            <label id="txtLayout">Imágenes (Máximo 2)</label>
+                            <div class="upload-box" id="uploadBox">
+                                <div id="uploadText">
+
+                                </div>
+                                <input type="file" 
+                                       name="imagenes" 
+                                       multiple 
+                                       accept="image/*" 
+                                       class="form-control" 
+                                       id="imageInput"
+                                       onchange="validateImages(this)"
+                                       style="opacity: 0; position: absolute; width: 100%; height: 100%; left: 0; top: 0; cursor: pointer;">
+                                    <div id="imagePreviewContainer" class="image-preview-container"></div>
+                            </div>
+                        </div>
+
+                        <!-- Modal para vista previa -->
+                        <div id="imageModal" class="image-modal">
+                            <span class="close-modal">&times;</span>
+                            <img id="modalImage" class="modal-content">
+                        </div>
+
+                        <style>
+                            .image-preview-container {
+                                display: flex;
+                                justify-content: center;
+                                align-items: center;
+                                gap: 15px;
+                                flex-wrap: wrap;
+                                margin-top: 5px;
+                            }
+
+                            .image-preview-wrapper {
+                                width: calc(50% - 7.5px);
+                                position: relative;
+                                display: flex;
+                                justify-content: center;
+                                align-items: center;
+                            }
+
+                            .image-preview {
+                                border: 1px solid #dee2e6;
+                                border-radius: 8px;
+                                overflow: hidden;
+                                position: relative;
+                            }
+
+                            .image-preview img {
+                                width: 100%;
+                                height: 200px;
+                                object-fit: cover;
+                            }
+
+                            .image-preview-overlay {
+                                position: absolute;
+                                top: 0;
+                                left: 0;
+                                right: 0;
+                                bottom: 0;
+                                background: rgba(0, 0, 0, 0.5);
+                                display: flex;
+                                justify-content: center;
+                                align-items: center;
+                                gap: 15px;
+                                opacity: 0;
+                                transition: opacity 0.3s;
+                            }
+
+                            .image-preview:hover .image-preview-overlay {
+                                opacity: 1;
+                            }
+
+                            .view-image-btn,
+                            .delete-image-btn {
+                                background: white;
+                                border: none;
+                                border-radius: 50%;
+                                width: 40px;
+                                height: 40px;
+                                display: flex;
+                                align-items: center;
+                                justify-content: center;
+                                cursor: pointer;
+                                transition: all 0.3s;
+                            }
+
+                            .view-image-btn:hover {
+                                background: #0d6efd;
+                                color: white;
+                            }
+
+                            .delete-image-btn:hover {
+                                background: #dc3545;
+                                color: white;
+                            }
+
+                            .image-name {
+                                position: absolute;
+                                bottom: 0;
+                                left: 0;
+                                right: 0;
+                                background: rgba(0, 0, 0, 0.7);
+                                color: white;
+                                padding: 5px 10px;
+                                font-size: 0.875rem;
+                                white-space: nowrap;
+                                overflow: hidden;
+                                text-overflow: ellipsis;
+                            }
+
+                            .image-modal {
+                                display: none;
+                                position: fixed;
+                                z-index: 1000;
+                                top: 0;
+                                left: 0;
+                                width: 100%;
+                                height: 100%;
+                                background: rgba(0, 0, 0, 0.9);
+                            }
+
+                            .modal-content {
+                                max-width: 90%;
+                                max-height: 90vh;
+                                margin: auto;
+                                display: block;
+                                position: relative;
+                                top: 50%;
+                                transform: translateY(-50%);
+                            }
+
+                            .close-modal {
+                                position: absolute;
+                                right: 20px;
+                                top: 20px;
+                                color: white;
+                                font-size: 30px;
+                                cursor: pointer;
+                                z-index: 1001;
+                            }
+                        </style>
+
+
+                        <!-- Agregar el siguiente script para validación del lado del cliente -->
+                        <script>
+                            function validateImages(input) {
+                                const files = input.files;
+                                const maxFiles = 2;
+                                const maxSize = 5 * 1024 * 1024; // 5MB en bytes
+
+                                // Validar número de archivos
+                                if (files.length > maxFiles) {
+                                    alert('Solo se permiten máximo 2 imágenes');
+                                    input.value = '';
+                                    return;
+                                }
+
+                                // Validar tamaño de cada archivo
+                                for (let i = 0; i < files.length; i++) {
+                                    if (files[i].size > maxSize) {
+                                        alert('Cada imagen debe ser menor a 5MB');
+                                        input.value = '';
+                                        return;
+                                    }
+
+                                    // Validar tipo de archivo
+                                    if (!files[i].type.startsWith('image/')) {
+                                        alert('Solo se permiten archivos de imagen');
+                                        input.value = '';
+                                        return;
+                                    }
+                                }
+
+                                // Si pasa todas las validaciones, mostrar las previsualizaciones
+                                showImagePreviews(files);
+                            }
+
+                            function showImagePreviews(files) {
+                                const container = document.getElementById('imagePreviewContainer');
+                                container.innerHTML = '';
+
+                                Array.from(files).forEach(file => {
+                                    const reader = new FileReader();
+                                    reader.onload = function (e) {
+                                        const preview = document.createElement('div');
+                                        preview.className = 'image-preview';
+                                        preview.innerHTML = `
+                                        <img src="${e.target.result}" alt="Preview">
+                                        <span class="file-name">${file.name}</span>
+                                    `;
+                                        container.appendChild(preview);
+                                    }
+                                    reader.readAsDataURL(file);
+                                });
+                            }
+                        </script>
+
+
+
+
+
+
+
+
+
+
+
+
+                        <!-- Script para mostrar y ocultar el popup -->
+                        <script>
+                            document.addEventListener('DOMContentLoaded', function () {
+                                const infoIcon = document.querySelector('.info-icon');
+                                const popover = document.querySelector('.popover');
+
+                                infoIcon.addEventListener('mouseenter', function () {
+                                    popover.style.display = 'block';
+                                });
+
+                                infoIcon.addEventListener('mouseleave', function () {
+                                    popover.style.display = 'none';
+                                });
+                            });
+                        </script>
+
+
+
+                        <button type="submit" class="btn-submit">
+                            Enviar Ticket <i class="fa-solid fa-paper-plane"></i>
+                        </button>
+                    </form>
+                </div>
+
+
+                <div class="sidebarContent">
+                    <div class="card">
+                        <h2>Tickets Activos</h2>
+                        <div class="ticket-list">
+                            <div class="ticket-item">
+                                <div class="ticket-header">
+                                    <span class="ticket-id"><i class="fas fa-ticket"></i>#TIC001</span>
+                                    <span class="status-badge">Abierto</span>
+                                </div>
+                                <label id="txtLayout">Problema con el sistema de Facturación</label>
+                                <div class="ticket-details">
+                                    <div>Prioridad: <span>Baja</span></div>
+                                    <div>Categoría: <span>Hardware</span></div>
+                                    <div class="date">23-08-2024</div>
+                                </div>
+                            </div>
+                            <div class="ticket-item">
+                                <div class="ticket-header">
+                                    <span class="ticket-id"><i class="fas fa-ticket"></i>#TIC001</span>
+                                    <span class="status-badge">Abierto</span>
+                                </div>
+                                <label id="txtLayout">Problema con el sistema de Facturación</label>
+                                <div class="ticket-details">
+                                    <div>Prioridad: <span>Baja</span></div>
+                                    <div>Categoría: <span>Hardware</span></div>
+                                    <div class="date">23-08-2024</div>
+                                </div>
+                            </div>
+                            <div class="ticket-item">
+                                <div class="ticket-header">
+                                    <span class="ticket-id"><i class="fas fa-ticket"></i>#TIC001</span>
+                                    <span class="status-badge">Abierto</span>
+                                </div>
+                                <label id="txtLayout">Problema con el sistema de Facturación</label>
+                                <div class="ticket-details">
+                                    <div>Prioridad: <span>Baja</span></div>
+                                    <div>Categoría: <span>Hardware</span></div>
+                                    <div class="date">23-08-2024</div>
+                                </div>
+                            </div>
+                            <div class="ticket-item">
+                                <div class="ticket-header">
+                                    <span class="ticket-id"><i class="fas fa-ticket"></i>#TIC001</span>
+                                    <span class="status-badge">Abierto</span>
+                                </div>
+                                <label id="txtLayout">Problema con el sistema de Facturación</label>
+                                <div class="ticket-details">
+                                    <div>Prioridad: <span>Baja</span></div>
+                                    <div>Categoría: <span>Hardware</span></div>
+                                    <div class="date">23-08-2024</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <h2>Información de Contacto</h2>
+                        <p class="description2">Recuerde mantener sus datos actualizados para lograr ayudarle con su solicitud.</p>
+                        <div class="contact-info">
+                            <div class="form-group">
+                                <label id="txtLayout">Nombre Completo</label>
+                                <input id="txtInput" class="form-control" type="text" th:value="${usuario.nombre} + ' ' + ${usuario.apellido}" readonly>
+                            </div>
+                            <div class="form-group">
+                                <label id="txtLayout">Número de Teléfono</label>
+                                <input id="txtInput" class="form-control" type="tel" th:value="${'+506 ' + usuario.numeroTelefono}" readonly>
+                            </div>
+                            <div class="form-group">
+                                <label id="txtLayout">Correo Electrónico</label>
+                                <input id="txtInput" class="form-control" type="email" th:value="${usuario.correoElectronico}" readonly>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </body>
+</html>

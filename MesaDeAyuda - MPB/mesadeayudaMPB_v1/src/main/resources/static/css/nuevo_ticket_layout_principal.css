@@ -1,0 +1,424 @@
+/* 
+    Created on : Oct 4, 2024, 1:25:37 PM
+    Author     : ferva
+*/
+
+/* //////////////////// Panel Nuevo Ticket //////////////////// */
+
+.content-container {
+    display: flex;
+    gap: 20px;
+    height: 100%;
+}
+
+.main-form {
+    flex: 1;
+    background: white;
+    padding: 30px;
+    border-radius: 8px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    display: flex;
+    flex-direction: column;
+}
+
+.main-form form {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+}
+
+h1 {
+    font-size: 21px;
+    font-weight: normal;
+    margin: 0 0 5px 0;
+}
+
+h1 i {
+    font-size: 16px;
+    color: #6c757d;
+}
+
+#txtInput {
+    font-size: 13px;
+    font-family: 'Poppins', sans-serif;
+}
+
+#txtLayout {
+    font-size: 14px;
+}
+
+.description1 {
+    color: #666;
+    margin-bottom: 18px;
+    font-size: 13px;
+}
+
+.description2 {
+    color: #666;
+    margin-bottom: 18px;
+    font-size: 12px;
+}
+
+.form-row {
+    margin-bottom: 10px;
+    display: flex;
+    gap: 20px;
+}
+
+.form-group.half {
+    flex: 1;
+}
+
+label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 500;
+}
+
+.form-control {
+    margin-bottom: 10px;
+    width: 100%;
+    padding: 8px 12px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 13px;
+}
+
+textarea.form-control {
+    margin-bottom: 20px;
+    resize: vertical;
+    min-height: 120px;
+    max-height: 200px;
+}
+
+.character-count {
+    text-align: right;
+    color: #666;
+    font-size: 10px;
+    margin-top: 4px;
+}
+
+#uploadBox {
+    position: relative;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    border: 2px dashed #ccc;
+    border-radius: 8px;
+    padding: 30px;
+    text-align: center;
+    margin-bottom: 20px;
+    color: #666;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.upload-box i {
+    display: block;
+    margin-bottom: 10px;
+    font-size: 24px;
+}
+
+.upload-box.drag-over {
+    background: #e9ecef;
+    border: 2px dashed #11101d;
+}
+
+.upload-box:hover {
+    background-color: rgba(0, 0, 0, 0.05);
+}
+
+
+
+.image-modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    padding: 20px;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.9);
+}
+
+.modal-content {
+    margin: auto;
+    display: block;
+    max-width: 90%;
+    max-height: 90vh;
+    object-fit: contain;
+}
+
+.close-modal {
+    position: absolute;
+    right: 25px;
+    top: 15px;
+    color: #f1f1f1;
+    font-size: 35px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.close-modal:hover {
+    color: #bbb;
+}
+
+.btn-submit {
+    align-self: flex-end;
+    background: #000;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    margin-top: 10px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+}
+
+.sidebarContent {
+    width: 350px;
+    display: flex;
+    flex-direction: column;
+    height: 100%; /* Asegura que ocupe toda la altura disponible */
+}
+
+.card {
+    background: white;
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 20px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.card:last-child {
+    margin-bottom: 0;
+}
+
+.card h2 {
+    font-size: 18px;
+    margin: 0 0 5px 0;
+}
+
+.ticket-list {
+    max-height: 250px; /* Altura fija para la lista de tickets */
+    overflow-y: auto; /* Habilita el scroll vertical */
+    padding-right: 10px; /* Espacio para el scrollbar */
+}
+
+/* Estilo personalizado para la barra de desplazamiento */
+.ticket-list::-webkit-scrollbar {
+    width: 6px;
+}
+
+.ticket-list::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 3px;
+}
+
+.ticket-list::-webkit-scrollbar-thumb {
+    background: #888;
+    border-radius: 3px;
+}
+
+.ticket-list::-webkit-scrollbar-thumb:hover {
+    background: #555;
+}
+
+/* Mantener los estilos existentes para los ticket-item */
+.ticket-item {
+    padding: 15px 0;
+    border-bottom: 1px solid #eee;
+}
+
+.ticket-item:last-child {
+    border-bottom: none;
+}
+
+.ticket-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 5px;
+}
+
+.ticket-id {
+    color: #666;
+    font-size: 13px;
+}
+
+.ticket-id i {
+    margin-right: 5px;
+}
+
+.status-badge {
+    background: #FFC107;
+    color: #000;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 11px;
+}
+
+.ticket-item h3 {
+    font-size: 14px;
+    margin: 8px 0;
+}
+
+.ticket-details {
+    font-size: 12px;
+    color: #666;
+}
+
+.ticket-details > div {
+    margin-bottom: 2px;
+}
+
+.contact-info input {
+    background: #f5f5f5;
+    border: 1px solid #ddd;
+    width: 100%;
+    padding: 8px 12px;
+    border-radius: 4px;
+    margin-bottom: 15px;
+    font-size: 14px;
+}
+
+/*POPOVER*/
+.info-icon {
+    position: relative;
+    display: inline-block;
+    cursor: pointer;
+    margin-left: 5px; /* Espacio entre el texto y el ícono */
+}
+
+.popover-container {
+    position: absolute;
+    top: 50%;
+    left: 100%; /* Posiciona el popover a la derecha del ícono */
+    transform: translateY(-50%);
+    margin-left: 10px; /* Espacio entre el ícono y el popover */
+    z-index: 200;
+}
+
+.popover {
+    position: relative;
+    width: 480px;
+    padding: 15px;
+    background-color: rgba(236, 236, 236, 0.70);
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    font-size: 12px;
+    top: 64px;
+    backdrop-filter: blur(2px);
+}
+
+.popover::before {
+    content: '';
+    position: absolute;
+    top: 12%;
+    left: -10px; /* Posición de la flecha */
+    transform: translateY(-50%);
+    border-width: 5px;
+    border-style: solid;
+    border-color: transparent #e0e0e0 transparent transparent;
+}
+
+.popover::after {
+    content: '';
+    position: absolute;
+    top: 12%;
+    left: -9px; /* Ajuste fino para la flecha */
+    transform: translateY(-50%);
+    border-width: 5px;
+    border-style: solid;
+    border-color: transparent rgb(241, 241, 241) transparent transparent;
+}
+
+.popover-backdrop {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(255, 255, 255, 0.5); /* Fondo semi-transparente */
+    backdrop-filter: blur(5px); /* Efecto de desenfoque */
+    border-radius: 8px;
+    z-index: -1; /* Coloca el fondo detrás del contenido */
+}
+
+.popover-title {
+    font-weight: bold;
+    margin-bottom: 10px;
+    font-size: 14px; /* Tamaño de fuente para el título */
+    color: #333; /* Color oscuro para el título */
+}
+
+.popover-content {
+    font-size: 12px; /* Tamaño de fuente para el contenido */
+    color: #555; /* Color gris oscuro para el contenido */
+    line-height: 1.5; /* Mejora la legibilidad */
+}
+
+.popover-content ul {
+    padding-left: 20px; /* Sangría para la lista */
+    margin: 0; /* Elimina el margen predeterminado */
+}
+
+.popover-content li {
+    margin-bottom: 8px; /* Espacio entre elementos de la lista */
+}
+
+.popover-content strong {
+    color: #000; /* Color más oscuro para los textos en negrita */
+}
+
+.info-icon:hover .popover-container {
+    display: block;
+}
+
+
+/* Responsive styles */
+@media (max-width: 1024px) {
+    .content-container {
+        flex-direction: column;
+    }
+
+    .sidebarContent {
+        width: 100%;
+        flex-direction: row;
+        gap: 20px;
+    }
+
+    .card {
+        flex: 1;
+        margin-bottom: 0;
+    }
+}
+
+@media (max-width: 768px) {
+    .image-preview-wrapper {
+        width: 120px;
+        height: 120px;
+    }
+
+    .form-row {
+        flex-direction: column;
+        gap: 0;
+    }
+
+    .sidebarContent {
+        flex-direction: column;
+    }
+
+    .card {
+        margin-bottom: 20px;
+    }
+
+    .card:last-child {
+        margin-bottom: 0;
+    }
+}

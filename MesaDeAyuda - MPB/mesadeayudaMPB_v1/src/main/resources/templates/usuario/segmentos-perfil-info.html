@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" 
+      xmlns:th="http://www.thymeleaf.org">
+    <head th:replace="~{layout/plantilla :: head}">
+        <title>Mesa de Ayuda</title>
+    </head>
+
+    <body>
+
+        <section th:fragment="perfil-section">
+            <h2 id="Title">Mi Perfil</h2>
+            <div class="profile-card">
+                <div class="profile-header">
+                    <div class="image-upload-container">
+                        <label>
+                            <img th:src="@{/usuario/imagen/{id}(id=${usuario.idUsuario})}" alt="Imagen de perfil">
+                        </label>
+                        <input type="file" 
+                               id="imagenFile" 
+                               name="imagenFile" 
+                               accept="image/*" 
+                               style="display: none"
+                               onchange="previewImage(this)">
+                    </div>
+                    <div class="profile-info">
+                        <p id="infoUsuario">Usuario</p>
+                        <div id="infoUsuario">
+                            <h3 style="display: inline;" th:text="${usuario.nombre + ' ' + usuario.apellido}"></h3>
+                            <p style="display: inline;" th:text="'ID#' + ${usuario.codigo}"></p>
+                        </div>
+                        <p id="infoUsuario"><b>Departamento:</b> <span th:text="${usuario.departamento}"></span></p>
+                        <p id="infoUsuario">
+                            <b>Último Acceso al Sistema:</b>
+                            <span th:if="${ultimaConexion != null}" 
+                                  th:text="${#temporals.format(ultimaConexion, 'EEEE, d ''de'' MMMM ''de'' yyyy', new java.util.Locale('es', 'ES'))}">
+                            </span>
+                            <span th:unless="${ultimaConexion != null}">
+                                Sin información
+                            </span>
+                        </p>
+                    </div>
+                    <button class="btn-update" onclick="window.location.href = '/usuario/editar'">
+                        <i class="fa-regular fa-pen-to-square"></i> Actualizar Perfil
+                    </button>
+                </div>
+                <div class="profile-details">
+                    <div class="detail-row">
+                        <div class="detail-column">
+                            <label>Provincia</label>
+                            <input type="text" th:value="${usuario.provincia}" placeholder="Sin Informacion..." readonly>
+                        </div>
+                        <div class="detail-column">
+                            <label>Dirección</label>
+                            <textarea class="form-control" style="height: 140%;" readonly th:text="${usuario.direccion}" placeholder="Sin Informacion..."></textarea>
+                        </div>
+                    </div>
+                    <div class="detail-row">
+                        <div class="detail-column" id="columnaTelefono">
+                            <label>Número de Teléfono</label>
+                            <!-- Verifica si el número de teléfono está presente -->
+                            <input type="text" id="inputTelefono" 
+                                   th:if="${usuario.numeroTelefono != null and usuario.numeroTelefono != ''}" 
+                                   th:value="${'+506 ' + usuario.numeroTelefono}" 
+                                   readonly>
+                                <!-- Si no hay número de teléfono, muestra "Sin Información..." -->
+                                <input type="text" id="inputTelefono" 
+                                       th:unless="${usuario.numeroTelefono != null and usuario.numeroTelefono != ''}" 
+                                       value="Sin Información..." 
+                                       readonly>
+                                    </div>
+                                    </div>
+                                    <div class="detail-row" style="margin-bottom: 0rem;">
+                                        <div class="detail-column">
+                                            <label>Ocupación o Departamento</label>
+                                            <input type="text" th:value="${usuario.departamento}" placeholder="Sin Informacion..." readonly>
+                                        </div>
+                                        <div class="detail-column">
+                                            <label>Correo Electrónico</label>
+                                            <input type="text" th:value="${usuario.correoElectronico}" placeholder="Sin Informacion..." readonly>
+                                        </div>
+                                    </div>
+                                    </div>
+                                    </div>
+                                    </section>
+
+                                    <section th:fragment="tickets-section">
+
+                                        <h2 class="h4 mb-3">Tickets Recientes</h2>
+
+                                        <div class="row g-4">
+                                            <div class="col-12">
+                                                <div class="card card-ticket status-abierto">
+                                                    <div class="card-body">
+                                                        <div class="d-flex justify-content-between align-items-center">
+                                                            <span class="text-muted small">#TIC001</span>
+                                                            <span class="badge bg-warning text-dark badge-status">Abierto</span>
+                                                        </div>
+                                                        <h3 class="h5 mb-2">Problema con el sistema de Facturación</h3>
+                                                        <div class="text-muted small">
+                                                            <p class="mb-1">Prioridad: Baja</p>
+                                                            <p class="mb-1">Categoría: Hardware</p>
+                                                            <p class="mb-0">Fecha: 23-08-2024</p>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="col-12">
+                                                <div class="card card-ticket status-en-progreso">
+                                                    <div class="card-body">
+                                                        <div class="d-flex justify-content-between align-items-center">
+                                                            <span class="text-muted small">#TIC002</span>
+                                                            <span class="badge bg-primary badge-status">En progreso</span>
+                                                        </div>
+                                                        <h3 class="h5 mb-2">Actualización de software requerida</h3>
+                                                        <div class="text-muted small">
+                                                            <p class="mb-1">Prioridad: Media</p>
+                                                            <p class="mb-1">Categoría: Software</p>
+                                                            <p class="mb-0">Fecha: 22-08-2024</p>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="col-12">
+                                                <div class="card card-ticket status-completado">
+                                                    <div class="card-body">
+                                                        <div class="d-flex justify-content-between align-items-center">
+                                                            <span class="text-muted small">#TIC003</span>
+                                                            <span class="badge bg-success badge-status">Completado</span>
+                                                        </div>
+                                                        <h3 class="h5 mb-2">Solicitud de nuevo equipo</h3>
+                                                        <div class="text-muted small">
+                                                            <p class="mb-1">Prioridad: Alta</p>
+                                                            <p class="mb-1">Categoría: Hardware</p>
+                                                            <p class="mb-0">Fecha: 21-08-2024</p>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </section>
+
+                                    <section th:fragment="perfil-section-editar">
+                                        <h2 id="Title">Editar Perfil</h2>
+
+                                        <form th:action="@{/usuario/guardar}" method="post" enctype="multipart/form-data">
+                                            <input type="hidden" name="idUsuario" th:value="${usuario.idUsuario}">
+                                                <input type="hidden" name="codigo" th:value="${usuario.codigo}">
+                                                    <input type="hidden" name="activo" th:value="${usuario.activo}">
+
+                                                        <div class="profile-card">
+                                                            <div class="profile-header">
+                                                                <div class="image-upload-container">
+                                                                    <img th:src="@{/usuario/imagen/{id}(id=${usuario.idUsuario})}" 
+                                                                         th:alt="${usuario.nombre}" 
+                                                                         id="preview-image"
+                                                                         onerror="this.src='/images/default-profile.jpg'">
+                                                                        <label for="imagenFile" class="image-upload-label">
+                                                                            <i class="fa-solid fa-camera"></i>
+                                                                        </label>
+                                                                        <input type="file" 
+                                                                               id="imagenFile" 
+                                                                               name="imagenFile" 
+                                                                               accept="image/*" 
+                                                                               style="display: none"
+                                                                               onchange="previewImage(this)">
+                                                                            </div>
+
+                                                                            <div class="profile-info">
+                                                                                <p id="infoUsuario">Usuario</p>
+                                                                                <div id="infoUsuario">
+                                                                                    <h3 style="display: inline;" th:text="${usuario.nombre + ' ' + usuario.apellido}"></h3>
+                                                                                    <p style="display: inline;" th:text="'ID#' + ${usuario.codigo}"></p>
+                                                                                </div>
+                                                                                <p id="infoUsuario"><b>Departamento:</b> <span th:text="${usuario.departamento}"></span></p>
+                                                                                <p id="infoUsuario">
+                                                                                    <b>Último Acceso al Sistema:</b>
+                                                                                    <span th:if="${ultimaConexion != null}" 
+                                                                                          th:text="${#temporals.format(ultimaConexion, 'EEEE, d ''de'' MMMM ''de'' yyyy', new java.util.Locale('es', 'ES'))}">
+                                                                                    </span>
+                                                                                    <span th:unless="${ultimaConexion != null}">
+                                                                                        Sin información
+                                                                                    </span>
+                                                                                </p>
+                                                                            </div>
+                                                                            <button class="btn-update" onclick="window.history.back();">Cancelar</button>
+                                                                            </div>
+                                                                            <div class="profile-details">
+                                                                                <div class="detail-row">
+                                                                                    <div class="detail-column">
+                                                                                        <label>Nombre</label>
+                                                                                        <input type="text" name="nombre" th:value="${usuario.nombre}" maxlength="50" placeholder="Sin Informacion..." required>
+                                                                                    </div>
+                                                                                    <div class="detail-column">
+                                                                                        <label>Dirección</label>
+                                                                                        <textarea name="direccion" class="form-control" style="height: 140%;" 
+                                                                                                  th:text="${usuario.direccion}" placeholder="Sin Informacion..."></textarea>
+                                                                                    </div>
+                                                                                </div>
+                                                                                <div class="detail-row">
+                                                                                    <div class="detail-column" id="columnaTelefono">
+                                                                                        <label>Apellidos</label>
+                                                                                        <input type="text" id="inputTelefono" name="apellido" th:value="${usuario.apellido}" maxlength="50" placeholder="Sin Informacion..." required>
+                                                                                    </div>
+                                                                                </div>
+                                                                                <div class="detail-row">
+                                                                                    <div class="detail-column">
+                                                                                        <label>Provincia</label>
+                                                                                        <select name="provincia" class="form-select">
+                                                                                            <option value="">Seleccione una provincia</option>
+                                                                                            <option value="Heredia" th:selected="${usuario.provincia == 'Heredia'}">Heredia</option>
+                                                                                            <option value="San José" th:selected="${usuario.provincia == 'San José'}">San José</option>
+                                                                                            <option value="Alajuela" th:selected="${usuario.provincia == 'Alajuela'}">Alajuela</option>
+                                                                                            <option value="Cartago" th:selected="${usuario.provincia == 'Cartago'}">Cartago</option>
+                                                                                            <option value="Guanacaste" th:selected="${usuario.provincia == 'Guanacaste'}">Guanacaste</option>
+                                                                                            <option value="Puntarenas" th:selected="${usuario.provincia == 'Puntarenas'}">Puntarenas</option>
+                                                                                            <option value="Limón" th:selected="${usuario.provincia == 'Limón'}">Limón</option>
+                                                                                        </select>
+                                                                                    </div>
+
+                                                                                    <div class="detail-column">
+                                                                                        <label>Departamento</label>
+                                                                                        <select name="departamento" class="form-select">
+                                                                                            <option value="">Seleccione un departamento</option>
+                                                                                            <option value="Asistente de TI" th:selected="${usuario.departamento == 'Asistente de TI'}">Asistente de TI</option>
+                                                                                            <option value="Soporte Técnico" th:selected="${usuario.departamento == 'Soporte Técnico'}">Soporte Técnico</option>
+                                                                                            <option value="Desarrollo" th:selected="${usuario.departamento == 'Desarrollo'}">Desarrollo</option>
+                                                                                            <option value="Redes" th:selected="${usuario.departamento == 'Redes'}">Redes</option>
+                                                                                            <option value="Seguridad" th:selected="${usuario.departamento == 'Seguridad'}">Seguridad</option>
+                                                                                        </select>
+                                                                                    </div>
+                                                                                </div>
+                                                                                <div class="detail-row">
+                                                                                    <div class="detail-column">
+                                                                                        <label>Número de Teléfono</label>
+                                                                                        <input type="text" 
+                                                                                               name="numeroTelefono" 
+                                                                                               th:value="${usuario.numeroTelefono}" 
+                                                                                               pattern="\d{8}" 
+                                                                                               required
+                                                                                               maxlength="8"
+                                                                                               placeholder="Sin Informacion..."
+                                                                                               oninput="validarTelefono(this)">
+                                                                                    </div>
+                                                                                    <div class="detail-column">
+                                                                                        <label>Contraseña</label>
+                                                                                        <div class="password-field">
+                                                                                            <input type="password" value="password" id="passwordInput" th:value="${usuario.contrasena}">
+                                                                                                <button type="button" class="toggle-password" onclick="togglePassword()">
+                                                                                                    <i class="fa-solid fa-eye" id="toggleIcon"></i>
+                                                                                                </button>
+                                                                                        </div>
+                                                                                    </div>
+                                                                                </div>
+                                                                                <div class="detail-row" style="margin-bottom: 0rem;">
+                                                                                    <div class="detail-column">
+                                                                                        <label>Correo Electrónico</label>
+                                                                                        <input type="email" name="correoElectronico" th:value="${usuario.correoElectronico}" placeholder="Sin Informacion..." required>
+                                                                                    </div>
+                                                                                    <div class="detail-column">
+                                                                                        <button type="submit" class="btn-guardar-cambios">
+                                                                                            Guardar Cambios <i id="iGuardarPerfil" class="fa-solid fa-floppy-disk"></i>
+                                                                                        </button>
+                                                                                    </div>
+                                                                                </div>
+                                                                            </div>
+                                                                            </div>
+                                                                            </form>
+                                                                            </section>
+
+                                                                            </body>
+                                                                            </html>
+
+

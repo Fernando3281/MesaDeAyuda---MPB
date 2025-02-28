@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" 
+      xmlns:th="http://www.thymeleaf.org">
+    <head th:replace="~{layout/plantilla :: head}">
+        <title>Mesa de Ayuda</title>
+        <meta charset="UTF-8"/>
+    </head>
+    <body class="body-login">
+        <div class="login-container" id="contenedor">
+            <div class="login-form">
+                <h1 class="h1-login">Mesa de Ayuda</h1>
+                <div class="shield-login"></div>
+
+                <!-- Mensajes de error -->
+                <div th:if="${param.error}" class="alert alert-danger">
+                    Correo electrónico o contraseña incorrectos
+                </div>
+                <div th:if="${param.logout}" class="alert alert-success">
+                    Has cerrado sesión correctamente
+                </div>
+
+                <form class="form-elements-login" 
+                      th:action="@{/login}" 
+                      method="post">
+                    <div class="input-group-login">
+                        <label id="label-login" style="margin-bottom: 8px" for="username">Correo Electrónico</label>
+                        <input type="email" 
+                               id="email" 
+                               name="username" 
+                               placeholder="Ingrese su correo institucional..." 
+                               required>
+                    </div>
+                    <div class="input-group-login">
+                        <label id="label-login" style="margin-bottom: 8px" for="password">Contraseña</label>
+                        <input type="password" 
+                               id="password" 
+                               name="password" 
+                               placeholder="Ingrese su contraseña..." 
+                               required>
+                    </div>
+
+                    <!-- Cambiar el botón para que haga submit del form -->
+                    <button id="button-login" type="submit">Iniciar Sesión</button>
+
+                    <div class="forgot-password">
+                        <a th:href="@{/registro/recordar}" class="forgot-password-login">¿Olvidaste tu contraseña?</a>
+                    </div>
+
+                    <button id="button-register" type="button" onclick="window.location.href = '/registro/nuevo'">
+                        <i class="fas fa-lock"></i> Registrarme
+                    </button>
+
+                    <div class="checkbox-group">
+                        <input type="checkbox" 
+                               id="remember-me" 
+                               name="remember-me">
+                            <label for="remember-me">Mantener sesión activa</label>
+                    </div>
+                </form>
+            </div>
+        </div>
+        <footer>
+            © 2024 Municipalidad de Barva. Todos los derechos reservados.
+        </footer>
+    </body>
+</html>

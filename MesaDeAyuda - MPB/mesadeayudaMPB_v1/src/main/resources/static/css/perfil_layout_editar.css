@@ -1,0 +1,285 @@
+/*
+Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
+Click nbfs://nbhost/SystemFileSystem/Templates/Other/CascadeStyleSheet.css to edit this template
+*/
+/* 
+    Created on : Oct 4, 2024, 1:25:37 PM
+    Author     : ferva
+*/
+
+/* //////////////////// Panel Perfil Editar //////////////////// */
+
+.profile-card {
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    padding: 15px;
+    margin-bottom: 0px;
+    font-family: 'Poppins', sans-serif;
+}
+
+.profile-header {
+    display: flex;
+    padding: 20px;
+    align-items: center;
+    border-bottom: 1px solid #e9ecef;
+    position: relative;
+}
+
+.profile-header img {
+    margin-right: 20px;
+}
+
+.profile-info {
+    flex: 1;
+}
+
+.profile-info h3 {
+    margin: 0;
+    color: #333;
+    font-size: 1.5rem;
+}
+
+.profile-info p {
+    margin: 8px 0;
+    color: #666;
+}
+
+.btn-update, .btn-guardar-cambios {
+    padding: 8px 16px;
+    background-color: #11101d;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-family: 'Poppins', sans-serif;
+    transition: background-color 0.3s ease;
+}
+
+.btn-update {
+    position: absolute;
+    top: 0;
+    right: 0;
+    padding-inline: 45px;
+}
+
+.btn-guardar-cambios {
+    width: 100%;
+    margin-top: 24px;
+}
+
+.btn-update:hover, .btn-guardar-cambios:hover {
+    background-color: #353060;
+}
+
+.form-control {
+    width: 100%;
+    min-height: 60px;
+    padding: 0.5rem 0.75rem;
+    border: 1px solid #ddd;
+    border-radius: 0.25rem;
+    background-color: #fff;
+    color: #333;
+    font-size: 0.875rem;
+    resize: none;
+    font-family: inherit;
+    line-height: 1.5;
+    transition: all 0.2s ease;
+}
+
+.profile-details {
+    padding: 20px;
+}
+
+.detail-row {
+    display: flex;
+    gap: 1.5rem;
+    margin-bottom: 1rem;
+}
+
+.detail-column {
+    flex: 1;
+    min-width: 0;
+}
+
+.detail-column label {
+    display: block;
+    margin-bottom: 0.5rem;
+    color: #666;
+    font-size: 0.875rem;
+    font-weight: 500;
+}
+
+.detail-column input, .detail-column textarea {
+    width: 100%;
+    padding: 0.5rem 0.75rem;
+    border: 1px solid #ddd;
+    border-radius: 0.25rem;
+    background-color: #fff;
+    font-size: 0.875rem;
+    transition: all 0.2s ease;
+    font-family: 'Poppins', sans-serif;
+}
+
+.detail-column input:focus, .detail-column textarea:focus, .form-control:focus {
+    outline: none;
+    border-color: #11101d;
+    box-shadow: 0 0 0 2px rgba(17, 16, 29, 0.1);
+}
+
+#columnaTelefono {
+    margin-top: -20px;
+}
+
+#inputTelefono {
+    width: 48.50%;
+}
+
+.form-select {
+    width: 100%;
+    padding: 0.5rem 0.75rem;
+    border: 1px solid #ddd;
+    border-radius: 0.25rem;
+    background-color: #fff;
+    font-size: 0.875rem;
+    font-family: 'Poppins', sans-serif;
+    color: #333;
+    cursor: pointer;
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23666' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 0.75rem center;
+    background-size: 16px;
+    transition: all 0.2s ease;
+}
+
+.form-select:focus {
+    outline: none;
+    border-color: #11101d;
+    box-shadow: 0 0 0 2px rgba(17, 16, 29, 0.1);
+}
+
+.form-select:hover {
+    border-color: #11101d;
+}
+
+.password-field {
+    position: relative;
+    width: 100%;
+}
+
+.toggle-password {
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    border: none;
+    background: none;
+    cursor: pointer;
+    color: #666;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.toggle-password:hover {
+    color: #11101d;
+}
+
+.detail-column input[type="password"],
+.detail-column input[type="text"] {
+    padding-right: 35px;
+}
+
+#iGuardarPerfil {
+    font-size: 15px;
+}
+
+/*PRUEBA ESTILO DE LABEL IMG*/
+.image-upload-container {
+    position: relative;
+    display: inline-block;
+}
+
+.image-upload-container img {
+    width: 150px;
+    height: 150px;
+    object-fit: cover;
+    border-radius: 50%;
+    transition: opacity 0.3s ease;
+}
+
+.image-upload-label {
+    position: absolute;
+    top: 50%;
+    left: 44%;
+    transform: translate(-50%, -50%);
+    display: none; /* Inicialmente oculto */
+    background-color: rgba(0, 0, 0, 0.5);
+    color: white;
+    padding: 10px;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+.image-upload-container:hover img {
+    opacity: 0.6; /* Efecto de opacidad al pasar el ratón sobre la imagen */
+}
+
+.image-upload-container:hover .image-upload-label {
+    display: block; /* Mostrar el ícono al hacer hover */
+    transform: translate(-50%, -50%) scale(1.1); /* Efecto de agrandamiento */
+}
+
+@media (max-width: 1024px) {
+    #inputTelefono {
+        width: 48%;
+    }
+
+    .profile-info h3 {
+        font-size: 1.25rem;
+    }
+}
+
+@media (max-width: 768px) {
+    #inputTelefono {
+        width: 100%;
+    }
+
+    #columnaTelefono {
+        margin-top: 60px;
+    }
+
+    .profile-header {
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+    }
+
+    .detail-row {
+        flex-direction: column;
+        gap: 1rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .profile-card {
+        padding: 10px;
+    }
+
+    .profile-header img {
+        width: 80px;
+        height: 80px;
+    }
+
+    .detail-column input,
+    .form-control {
+        font-size: 0.8125rem;
+        padding: 0.375rem 0.5rem;
+    }
+}
+

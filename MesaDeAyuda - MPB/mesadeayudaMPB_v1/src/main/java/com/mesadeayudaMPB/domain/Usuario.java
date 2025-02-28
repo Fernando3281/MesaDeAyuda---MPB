@@ -6,16 +6,13 @@ package com.mesadeayudaMPB.domain;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
-import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.OneToMany;
+import jakarta.persistence.Lob;
 import jakarta.persistence.Table;
 import java.io.Serializable;
 import java.util.Date;
-import java.util.List;
 import lombok.Data;
 
 /**
@@ -62,8 +59,9 @@ public class Usuario implements Serializable {
     @Column(name = "ultima_conexion")
     private Date ultimaConexion;
 
-    @Column(name = "ruta_imagen")
-    private String rutaImagen;
+    @Lob
+    @Column(name = "imagen", columnDefinition = "LONGBLOB")
+    private byte[] imagen;
 
     @Column(name = "activo")
     private boolean activo;

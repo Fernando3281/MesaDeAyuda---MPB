@@ -1,0 +1,122 @@
+/* 
+    Created on : Oct 4, 2024, 1:25:37 PM
+    Author     : ferva
+*/
+
+/* //////////////////// Panel Perfil //////////////////// */
+
+.main-container {
+    display: flex;
+    gap: 20px;
+}
+.ticket-details, .manager-info {
+    background-color: white;
+    border-radius: 8px;
+    padding: 20px;
+}
+.ticket-details {
+    flex: 3;
+}
+.manager-info {
+    flex: 1;
+}
+
+
+.back-button {
+    width: 45px; /* Ancho cuadrado */
+    height: 45px; /* Alto cuadrado */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border-radius: 8px; /* Bordes ligeramente redondeados */
+    border: 1px solid #ced4da;
+    background-color: #f8f9fa;
+    cursor: pointer;
+    border: 2px solid #ced4da;
+    text-decoration: none;
+}
+
+.back-button i {
+    color: #333; /* Color del ícono */
+    font-size: 1.5rem; /* Tamaño del ícono */
+}
+
+.back-button:hover {
+    background-color: #e2e6ea; /* Color al pasar el ratón */
+}
+
+.ticket-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+}
+.ticket-id {
+    font-size: 20px;
+    font-weight: bold;
+    color: #ffa500;
+}
+.status {
+    background-color: #fff3cd;
+    color: #856404;
+    padding: 5px 10px;
+    border-radius: 15px;
+    font-size: 14px;
+}
+.ticket-title {
+    font-size: 18px;
+    font-weight: bold;
+    margin-bottom: 10px;
+}
+.ticket-description {
+    color: #6c757d;
+    margin-bottom: 20px;
+    line-height: 1.5;
+}
+.info-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 25px;
+    margin-bottom: 20px;
+}
+.info-item label {
+    font-weight: bold;
+    display: block;
+    margin-bottom: 5px;
+}
+.attachments {
+    margin-bottom: 20px;
+}
+.attachment {
+    display: inline-block;
+    background-color: #f8f9fa;
+    padding: 5px 10px;
+    margin-right: 10px;
+    border-radius: 5px;
+    font-size: 14px;
+}
+.delete-button {
+    background-color: #f8f9fa;
+    border: 1px solid #dee2e6;
+    padding: 8px 15px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 14px;
+}
+.manager-info h2 {
+    font-size: 18px;
+    margin-bottom: 15px;
+}
+.manager-icon {
+    text-align: center;
+    font-size: 48px;
+    color: #6c757d;
+    margin-bottom: 15px;
+}
+.manager-status {
+    text-align: center;
+}
+.manager-status strong {
+    display: block;
+    margin-bottom: 10px;
+}
