@@ -6,7 +6,7 @@ import java.io.Serializable;
 
 @Data
 @Entity
-@Table(name = "Departamento")
+@Table(name = "Departamentos")
 public class Departamento implements Serializable {
 
     @Id

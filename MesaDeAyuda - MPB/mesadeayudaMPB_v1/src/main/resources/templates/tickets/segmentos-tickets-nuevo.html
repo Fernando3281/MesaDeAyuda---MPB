@@ -32,7 +32,7 @@
                             </div>
                         </span>
                     </h1>
-                    <p class="description1">Describe tu situación y te atenderemos lo más pronto posible</p>
+                    <p class="description1">Describe tu situación y le atenderemos lo más pronto posible</p>
 
                     <form th:action="@{/tickets/guardar}" method="post" enctype="multipart/form-data">
                         <div class="form-group">
@@ -43,7 +43,7 @@
 
                         <div class="form-group">
                             <label for="problemDescription" id="txtLayout">Descripción del Problema</label>
-                            <textarea id="problemDescription" name="descripcion" class="form-control" rows="6" required></textarea>
+                            <textarea id="problemDescription" name="descripcion" class="form-control" rows="5" required></textarea>
                         </div>
 
                         <div class="form-row">
@@ -62,7 +62,7 @@
                                 <select id="impact" name="impacto" class="form-control">
                                     <option value="">Seleccione un nivel...</option>
                                     <option value="Bajo">Bajo</option>
-                                    <option value="Medio">Medio</option>
+                                    <option value="Regular">Regular</option>
                                     <option value="Alto">Alto</option>
                                     <option value="Urgente">Urgente</option>
                                 </select>
@@ -71,19 +71,20 @@
 
                         <!-- Caja para subir imágenes -->
                         <div class="form-group">
-                            <label id="txtLayout">Imágenes (Máximo 2)</label>
+                            <label id="txtLayout">Adjuntar Imágenes (Máximo 2)</label>
                             <div class="upload-box" id="uploadBox">
-                                <div id="uploadText">
-
-                                </div>
                                 <input type="file" 
-                                       name="imagenes" 
+                                       name="imagenes"
                                        multiple 
-                                       accept="image/*" 
+                                       accept="image/*"
                                        class="form-control" 
                                        id="imageInput"
-                                       onchange="validateImages(this)"
                                        style="opacity: 0; position: absolute; width: 100%; height: 100%; left: 0; top: 0; cursor: pointer;">
+                                    <div id="uploadText">
+                                        <i class="fas fa-cloud-upload-alt"></i>
+                                        <p>Arrastre sus imágenes aquí o haga clic para seleccionar</p>
+                                        <span>Formatos aceptados: JPG, PNG, GIF (Max: 5MB)</span>
+                                    </div>
                                     <div id="imagePreviewContainer" class="image-preview-container"></div>
                             </div>
                         </div>
@@ -95,17 +96,58 @@
                         </div>
 
                         <style>
+                            /* Estilos para la caja de carga */
+                            .upload-box {
+                                border: 2px dashed #ccc;
+                                border-radius: 8px;
+                                padding: 20px;
+                                text-align: center;
+                                position: relative;
+                                min-height: 120px;
+                                display: flex;
+                                flex-direction: column;
+                                justify-content: center;
+                                background-color: #f8f9fa;
+                                transition: border-color 0.3s, background-color 0.3s;
+                            }
+
+                            .upload-box:hover {
+                                border-color: #0d6efd;
+                                background-color: #f1f8ff;
+                            }
+
+                            #uploadText {
+                                display: flex;
+                                flex-direction: column;
+                                align-items: center;
+                                gap: 10px;
+                            }
+
+                            #uploadText i {
+                                font-size: 2rem;
+                                color: #6c757d;
+                            }
+
+                            #uploadText p {
+                                margin: 0;
+                                font-size: 0.90rem;
+                                color: #495057;
+                            }
+
+                            #uploadText span {
+                                font-size: 0.85rem;
+                                color: #6c757d;
+                            }
+
                             .image-preview-container {
                                 display: flex;
                                 justify-content: center;
                                 align-items: center;
                                 gap: 15px;
                                 flex-wrap: wrap;
-                                margin-top: 5px;
                             }
 
                             .image-preview-wrapper {
-                                width: calc(50% - 7.5px);
                                 position: relative;
                                 display: flex;
                                 justify-content: center;
@@ -117,11 +159,19 @@
                                 border-radius: 8px;
                                 overflow: hidden;
                                 position: relative;
+                                width: 150px;
+                                height: 100px;
+                                box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+                                transition: transform 0.2s;
+                            }
+
+                            .image-preview:hover {
+                                transform: scale(1.05);
                             }
 
                             .image-preview img {
                                 width: 100%;
-                                height: 200px;
+                                height: 100%;
                                 object-fit: cover;
                             }
 
@@ -149,13 +199,14 @@
                                 background: white;
                                 border: none;
                                 border-radius: 50%;
-                                width: 40px;
-                                height: 40px;
+                                width: 36px;
+                                height: 36px;
                                 display: flex;
                                 align-items: center;
                                 justify-content: center;
                                 cursor: pointer;
                                 transition: all 0.3s;
+                                color: #333;
                             }
 
                             .view-image-btn:hover {
@@ -182,6 +233,7 @@
                                 text-overflow: ellipsis;
                             }
 
+                            /* Estilos para el modal */
                             .image-modal {
                                 display: none;
                                 position: fixed;
@@ -201,6 +253,8 @@
                                 position: relative;
                                 top: 50%;
                                 transform: translateY(-50%);
+                                border-radius: 8px;
+                                box-shadow: 0 4px 20px rgba(0,0,0,0.3);
                             }
 
                             .close-modal {
@@ -208,95 +262,102 @@
                                 right: 20px;
                                 top: 20px;
                                 color: white;
-                                font-size: 30px;
+                                font-size: 35px;
                                 cursor: pointer;
                                 z-index: 1001;
+                                transition: color 0.3s;
+                            }
+
+                            .close-modal:hover {
+                                color: #dc3545;
+                            }
+
+
+
+
+
+
+
+
+
+
+                            /*AJUSTAR CSS*/
+
+                            /* Estilos para las miniaturas */
+                            .image-preview-wrapper {
+                                position: relative;
+                                display: inline-block;
+                            }
+
+                            .image-preview {
+                                width: 80px;
+                                height: 80px;
+                                border: 1px solid #ddd;
+                                border-radius: 4px;
+                                overflow: hidden;
+                                position: relative;
+                            }
+
+                            .image-preview img {
+                                width: 100%;
+                                height: 100%;
+                                object-fit: cover;
+                                cursor: pointer;
+                            }
+
+                            .delete-image-btn {
+                                position: absolute;
+                                top: 5px;
+                                right: 5px;
+                                background: rgba(255, 255, 255, 0.8);
+                                border: none;
+                                border-radius: 50%;
+                                width: 24px;
+                                height: 24px;
+                                cursor: pointer;
+                                display: flex;
+                                align-items: center;
+                                justify-content: center;
+                            }
+
+                            .delete-image-btn i {
+                                color: #ff4d4d;
+                                font-size: 12px;
+                            }
+
+                            /* Estilos para el modal */
+                            .image-modal {
+                                display: none;
+                                position: fixed;
+                                z-index: 1000;
+                                top: 0;
+                                left: 0;
+                                width: 100%;
+                                height: 100%;
+                                background: rgba(0, 0, 0, 0.9);
+                                justify-content: center;
+                                align-items: center;
+                            }
+
+                            .modal-content {
+                                max-width: 90%;
+                                max-height: 90vh;
+                                border-radius: 8px;
+                            }
+
+                            .close-modal {
+                                position: absolute;
+                                top: 20px;
+                                right: 20px;
+                                color: white;
+                                font-size: 30px;
+                                cursor: pointer;
+                            }
+
+                            .close-modal:hover {
+                                color: #ccc;
                             }
                         </style>
-
-
-                        <!-- Agregar el siguiente script para validación del lado del cliente -->
-                        <script>
-                            function validateImages(input) {
-                                const files = input.files;
-                                const maxFiles = 2;
-                                const maxSize = 5 * 1024 * 1024; // 5MB en bytes
-
-                                // Validar número de archivos
-                                if (files.length > maxFiles) {
-                                    alert('Solo se permiten máximo 2 imágenes');
-                                    input.value = '';
-                                    return;
-                                }
-
-                                // Validar tamaño de cada archivo
-                                for (let i = 0; i < files.length; i++) {
-                                    if (files[i].size > maxSize) {
-                                        alert('Cada imagen debe ser menor a 5MB');
-                                        input.value = '';
-                                        return;
-                                    }
-
-                                    // Validar tipo de archivo
-                                    if (!files[i].type.startsWith('image/')) {
-                                        alert('Solo se permiten archivos de imagen');
-                                        input.value = '';
-                                        return;
-                                    }
-                                }
-
-                                // Si pasa todas las validaciones, mostrar las previsualizaciones
-                                showImagePreviews(files);
-                            }
-
-                            function showImagePreviews(files) {
-                                const container = document.getElementById('imagePreviewContainer');
-                                container.innerHTML = '';
-
-                                Array.from(files).forEach(file => {
-                                    const reader = new FileReader();
-                                    reader.onload = function (e) {
-                                        const preview = document.createElement('div');
-                                        preview.className = 'image-preview';
-                                        preview.innerHTML = `
-                                        <img src="${e.target.result}" alt="Preview">
-                                        <span class="file-name">${file.name}</span>
-                                    `;
-                                        container.appendChild(preview);
-                                    }
-                                    reader.readAsDataURL(file);
-                                });
-                            }
-                        </script>
-
-
-
-
-
-
-
-
-
-
-
-
-                        <!-- Script para mostrar y ocultar el popup -->
-                        <script>
-                            document.addEventListener('DOMContentLoaded', function () {
-                                const infoIcon = document.querySelector('.info-icon');
-                                const popover = document.querySelector('.popover');
-
-                                infoIcon.addEventListener('mouseenter', function () {
-                                    popover.style.display = 'block';
-                                });
-
-                                infoIcon.addEventListener('mouseleave', function () {
-                                    popover.style.display = 'none';
-                                });
-                            });
-                        </script>
-
-
 
                         <button type="submit" class="btn-submit">
                             Enviar Ticket <i class="fa-solid fa-paper-plane"></i>

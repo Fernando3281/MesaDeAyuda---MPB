@@ -79,7 +79,8 @@
                         <i class="fas fa-angle-left"></i>
                     </button>
                     <div class="page-numbers" id="pageNumbers">
-                        <button th:each="pageNum : ${#numbers.sequence(0, totalPages - 1)}"
+                        <!-- Botones para las páginas en el rango -->
+                        <button th:each="pageNum : ${#numbers.sequence(startPage, endPage)}"
                                 th:class="'page-number ' + ${pageNum == currentPage ? 'active' : ''}"
                                 th:onclick="'window.location.href=\'' + @{/tickets/listado(page=${pageNum},size=${pageSize})} + '\''"
                                 th:text="${pageNum + 1}">1</button>
@@ -178,11 +179,17 @@
                                     (Prioridad)
                                 </span>
                             </td>
-                            <td th:text="${ticket.estado}">(Estado)</td>
-                            <td th:text="${ticket.categoria}">Hardware</td>
-                            <td th:text="${ticket.asignadoPara != null ? 
-                                ticket.asignadoPara.nombre + ' ' + ticket.asignadoPara.apellido : 
-                                'Sin asignar'}">(Colaborador)</td>
+                            <td>
+                                <span th:class="'badge badge-' + ${#strings.toLowerCase(ticket.estado)}" 
+                                      th:text="${ticket.estado}">(Estado)</span>
+                            </td>
+                            <td th:text="${ticket.categoria}">(Categoria)</td>
+                            <td>
+                                <span th:if="${ticket.asignadoPara == null}" 
+                                      class="badge badge-sin-asignar">Sin Asignar</span>
+                                <span th:unless="${ticket.asignadoPara == null}" 
+                                      th:text="${ticket.asignadoPara.nombre + ' ' + ticket.asignadoPara.apellido}">(Colaborador)</span>
+                            </td>
                             <td>
                                 <span th:text="${#dates.format(ticket.fechaActualizacion, 'dd/MM/yyyy')}">(Fecha)</span><br>
                                     <span th:text="${#dates.format(ticket.fechaActualizacion, 'HH:mm:ss')}">(Hora)</span>

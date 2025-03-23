@@ -5,6 +5,7 @@
         <title>Mesa de Ayuda</title>
         <meta charset="UTF-8"/>
     </head>
+    
     <th:block th:append="head">
         <link rel="stylesheet" th:href="@{/css/nuevo_ticket_layout_principal.css}">
     </th:block>
@@ -28,6 +29,7 @@
                     <div class="content-wrapper">
 
                         <section th:replace="~{tickets/segmentos-tickets-nuevo :: nuevo-ticket}"></section>
+                        <section th:replace="~{tickets/segmentos-tickets-nuevo :: confirmacion}"></section>
 
                     </div>
                 </main>

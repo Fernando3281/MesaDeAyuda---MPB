@@ -5,19 +5,15 @@
         <title>Mesa de Ayuda</title>
         <meta charset="UTF-8"/>
     </head>
+
+    <th:block th:replace="~{layout/plantilla :: scripts-login}"></th:block>
+    <th:block th:replace="~{layout/plantilla :: script-mostrar-contraseña}"></th:block>
+
     <body class="body-login">
         <div class="login-container" id="contenedor">
             <div class="login-form">
                 <h1 class="h1-login">Mesa de Ayuda</h1>
                 <div class="shield-login"></div>
-
-                <!-- Mensajes de error -->
-                <div th:if="${param.error}" class="alert alert-danger">
-                    Correo electrónico o contraseña incorrectos
-                </div>
-                <div th:if="${param.logout}" class="alert alert-success">
-                    Has cerrado sesión correctamente
-                </div>
 
                 <form class="form-elements-login" 
                       th:action="@{/login}" 
@@ -33,13 +29,15 @@
                     <div class="input-group-login">
                         <label id="label-login" style="margin-bottom: 8px" for="password">Contraseña</label>
                         <input type="password" 
-                               id="password" 
+                               id="passwordInput" 
                                name="password" 
                                placeholder="Ingrese su contraseña..." 
                                required>
+                            <button type="button" class="toggle-password" onclick="togglePassword()">
+                                <i class="fa-solid fa-eye" id="toggleIcon"></i>
+                            </button>
                     </div>
 
-                    <!-- Cambiar el botón para que haga submit del form -->
                     <button id="button-login" type="submit">Iniciar Sesión</button>
 
                     <div class="forgot-password">
@@ -59,6 +57,46 @@
                 </form>
             </div>
         </div>
+
+        <!-- Modal de Éxito -->
+        <div id="toast-success" class="toast-modal toast-success">
+            <div class="toast-content">
+                <p class="toast-message">
+                    <i class="toast-icon fa-solid fa-circle-check"></i>
+                    <span>Su cuenta fue creada correctamente. Por favor, inicie sesión.</span>
+                </p>
+                <span class="toast-close" onclick="closeToast('success')">
+                    <i class="fa-solid fa-xmark"></i>
+                </span>
+            </div>
+        </div>
+
+        <!-- Modal de Error de Credenciales -->
+        <div id="toast-warning" class="toast-modal toast-warning">
+            <div class="toast-content">
+                <p class="toast-message">
+                    <i class="toast-icon fa-solid fa-triangle-exclamation"></i>
+                    <span>Correo electrónico o contraseña incorrectos. Por favor, intente nuevamente.</span>
+                </p>
+                <span class="toast-close" onclick="closeToast('warning')">
+                    <i class="fa-solid fa-xmark"></i>
+                </span>
+            </div>
+        </div>
+
+        <!-- Modal de Sesión Cerrada -->
+        <div id="toast-info" class="toast-modal toast-info">
+            <div class="toast-content">
+                <p class="toast-message">
+                    <i class="toast-icon fa-solid fa-circle-info"></i>
+                    <span>Has cerrado sesión correctamente.</span>
+                </p>
+                <span class="toast-close" onclick="closeToast('info')">
+                    <i class="fa-solid fa-xmark"></i>
+                </span>
+            </div>
+        </div>
+
         <footer>
             © 2024 Municipalidad de Barva. Todos los derechos reservados.
         </footer>

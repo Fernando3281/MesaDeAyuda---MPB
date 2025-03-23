@@ -14,7 +14,7 @@ function handleTableResize() {
         100, // Estado
         100, // Categoría
         120, // Asignado para
-        100    // Actualizado
+        100  // Actualizado
     ];
 
     // Función para obtener los anchos guardados o usar los por defecto

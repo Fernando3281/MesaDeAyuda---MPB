@@ -271,7 +271,7 @@
 }
 
 .btn {
-    padding: 8px 16px;
+    padding: 6px 16px;
     border: 1px solid #ddd;
     border-radius: 4px;
     background: white;
@@ -279,7 +279,7 @@
     display: flex;
     align-items: center;
     gap: 8px;
-    font-size: 14px;
+    font-size: 13px;
     color: #333;
 }
 
@@ -467,29 +467,56 @@
     font-weight: 500;
 }
 
+/*Prioridad Badges*/
 .badge-sin-asignar {
-    background: #267EDC;;
-    color: white;
-}
-
-.badge-alto {
-    background: #DC2626;
-    color: white;
-}
-
-.badge-medio {
-    background: #F59E0B;
-    color: white;
+    background-color: #cdf3ff;
+    color: #043685;
 }
 
 .badge-bajo {
-    background: #10B981;
-    color: white;
+    background: #AAEEAF;
+    color: #153e0d;
+}
+
+.badge-medio {
+    background-color: #f7e2a0;
+    color: #443507;
+}
+
+.badge-alto {
+    background: #f4a9a9;
+    color: #3c0707;
 }
 
 .badge-critico {
-    background: #7C3AED;
-    color: white;
+    background: #C6A6FF;
+    color: #2e063e;
+}
+
+/*Estado Badges*/
+.badge-abierto {
+    background-color: #cdf3ff;
+    color: #043685;
+}
+
+.badge-pendiente {
+    background-color: #f7e2a0;
+    color: #443507;
+}
+
+.badge-resuelto {
+    background-color: #cdffce;
+    color: #0e8504;
+}
+
+.badge-cerrado {
+    background-color: #4b4b4b;
+    color: #f9f9f9;
+}
+
+.badge-desactivado {
+    background: #f4a9a9;
+    color: #3c0707;
 }
 
 .checkbox-custom {

@@ -69,9 +69,10 @@ Click nbfs://nbhost/SystemFileSystem/Templates/Other/CascadeStyleSheet.css to ed
 
 .input-group-login {
     text-align: left;
+    position: relative;
 }
 
-#password, #email {
+#passwordInput, #email {
     font-family: 'Poppins', sans-serif;
     width: 100%;
     padding: 0.45rem;
@@ -173,7 +174,7 @@ Click nbfs://nbhost/SystemFileSystem/Templates/Other/CascadeStyleSheet.css to ed
     margin-bottom: 25px;
 }
 
-.form-control,
+.form-control, .form-select, .btn, .btn-new,
 select.form-control, #confirm-password {
     font-family: 'Poppins', sans-serif;
 }
@@ -307,7 +308,7 @@ select.form-control, #confirm-password {
         border-radius: 10px;
         padding: 25px;
     }
-    
+
     .registro-illustration{
         margin-top: 0px;
     }
@@ -405,3 +406,37 @@ select.form-control, #confirm-password {
     margin-top: 20px;
 }
 
+.back-button {
+    width: 43px;
+    height: 43px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border-radius: 8px;
+    background-color: #f8f9fa;
+    cursor: pointer;
+    border: 1px solid #c1c1c1;
+    text-decoration: none;
+    transition: 0.3s ease;
+}
+
+.back-button i {
+    color: #333;
+    font-size: 1.5rem;
+}
+
+.back-button:hover {
+    background-color: #e2e6ea;
+    border: 1px solid #a3a3a3;
+}
+
+@keyframes slideDown {
+    from {
+        transform: translateY(-20px);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}

@@ -32,3 +32,161 @@ Click nbfs://nbhost/SystemFileSystem/Templates/Other/html.html to edit this temp
                     </div>
                 </body>
             </html>
+
+
+
+
+<!-- Modals BASE -->
+                    
+                    <!-- Contenedor para los botones de prueba -->
+                    <div style="text-align: center; margin-top: 50px;">
+                        <button onclick="showToast('success')">Mostrar Éxito</button>
+                        <button onclick="showToast('info')">Mostrar Información</button>
+                        <button onclick="showToast('warning')">Mostrar Alerta</button>
+                        <button onclick="showToast('error')">Mostrar Error</button>
+                    </div>
+
+                    <!-- Toast de Éxito (Verde) -->
+                    <div id="toast-success" class="toast-modal toast-success">
+                        <div class="toast-content">
+                            <p class="toast-message">
+                                <i class="toast-icon fa-solid fa-circle-check"></i>
+                                <span>"Mensaje generico..."</span>
+                            </p>
+                            <span class="toast-close" onclick="closeToast('success')">
+                                <i class="fa-solid fa-xmark"></i>
+                            </span>
+                        </div>
+                    </div>
+
+                    <!-- Toast de Información (Azul) -->
+                    <div id="toast-info" class="toast-modal toast-info">
+                        <div class="toast-content">
+                            <p class="toast-message">
+                                <i class="toast-icon fa-solid fa-user"></i>
+                                <span>"Mensaje generico..."</span>
+                            </p>
+                            <span class="toast-close" onclick="closeToast('info')">
+                                <i class="fa-solid fa-xmark"></i>
+                            </span>
+                        </div>
+                    </div>
+
+                    <!-- Toast de Alerta (Amarillo) -->
+                    <div id="toast-warning" class="toast-modal toast-warning">
+                        <div class="toast-content">
+                            <p class="toast-message">
+                                <i class="toast-icon fa-solid fa-triangle-exclamation"></i>
+                                <span>"Mensaje generico..."</span>
+                            </p>
+                            <span class="toast-close" onclick="closeToast('warning')">
+                                <i class="fa-solid fa-xmark"></i>
+                            </span>
+                        </div>
+                    </div>
+
+                    <!-- Toast de Error (Rojo) -->
+                    <div id="toast-error" class="toast-modal toast-error">
+                        <div class="toast-content">
+                            <p class="toast-message">
+                                <i class="toast-icon fa-solid fa-server"></i>
+                                <span>"Mensaje generico..."</span>
+                            </p>
+                            <span class="toast-close" onclick="closeToast('error')">
+                                <i class="fa-solid fa-xmark"></i>
+                            </span>
+                        </div>
+                    </div>
+
+                    <footer>
+                        © 2024 Municipalidad de Barva. Todos los derechos reservados.
+                    </footer>
+
+                    <script>
+                        // Dentro de tu script existente, modifica la parte de manejo de AJAX:
+                        $("#registroForm").on('submit', function (event) {
+                            event.preventDefault();
+
+                            const password = $("#password").val();
+                            const confirmPassword = $("#confirm-password").val();
+                            const email = $("#email").val();
+
+                            if (password !== confirmPassword) {
+                                showToast('error', "Las contraseñas no coinciden. Por favor, inténtelo de nuevo.");
+                                return;
+                            }
+
+                            const formData = new FormData(this);
+
+                            $.ajax({
+                                url: '/registro/nuevo',
+                                method: 'POST',
+                                data: formData,
+                                processData: false,
+                                contentType: false,
+                                success: function (response) {
+                                    if (response.success) {
+                                        window.location.href = response.redirectUrl;
+                                    } else if (response.error) {
+                                        // Si el error es que el correo ya está registrado, muestra el modal amarillo
+                                        if (response.error.includes("ya está registrado")) {
+                                            // Cambia el mensaje a "El correo ya se encuentra registrado"
+                                            showToast('warning', "El correo ya se encuentra registrado.");
+                                        } else {
+                                            showToast('error', response.error);
+                                        }
+                                    }
+                                },
+                                error: function (xhr) {
+                                    let errorMessage = "Error al procesar el registro.";
+
+                                    // Intenta parsear la respuesta JSON
+                                    try {
+                                        const jsonResponse = JSON.parse(xhr.responseText);
+                                        if (jsonResponse && jsonResponse.error) {
+                                            errorMessage = jsonResponse.error;
+                                            // Si el error es que el correo ya está registrado, muestra el modal amarillo
+                                            if (errorMessage.includes("ya está registrado")) {
+                                                // Cambia el mensaje a "El correo ya se encuentra registrado"
+                                                showToast('warning', "El correo ya se encuentra registrado.");
+                                            } else {
+                                                showToast('error', errorMessage);
+                                            }
+                                        }
+                                    } catch (e) {
+                                        // Si no es JSON, verifica si xhr.responseJSON existe
+                                        if (xhr.responseJSON && xhr.responseJSON.error) {
+                                            errorMessage = xhr.responseJSON.error;
+                                            // Si el error es que el correo ya está registrado, muestra el modal amarillo
+                                            if (errorMessage.includes("ya está registrado")) {
+                                                // Cambia el mensaje a "El correo ya se encuentra registrado"
+                                                showToast('warning', "El correo ya se encuentra registrado.");
+                                            } else {
+                                                showToast('error', errorMessage);
+                                            }
+                                        } else {
+                                            showToast('error', errorMessage);
+                                        }
+                                    }
+                                }
+                            });
+                        });
+
+                        // Función para mostrar toast con mensaje dinámico
+                        function showToast(type, message) {
+                            // Actualiza el mensaje en el toast
+                            $(`#toast-${type} .toast-message span`).text(message);
+
+                            // Muestra el toast
+                            $(`#toast-${type}`).css('display', 'block');
+
+                            // Cierra automáticamente después de 5 segundos
+                            setTimeout(function () {
+                                closeToast(type);
+                            }, 20000);
+                        }
+
+                        function closeToast(type) {
+                            $(`#toast-${type}`).css('display', 'none');
+                        }
+                    </script>

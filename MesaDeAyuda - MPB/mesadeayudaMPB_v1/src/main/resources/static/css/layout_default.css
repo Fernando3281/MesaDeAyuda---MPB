@@ -472,12 +472,12 @@ footer {
 .btn-new {
     background-color: #4CAF50;
     color: #fff;
-    padding: 6px 12px;
+    padding: 5px 12px;
     border: none;
     border-radius: 4px;
     cursor: pointer;
     margin-right: 10px;
-    font-size: 14px;
+    font-size: 13px;
     transition: all 0.3s ease;
 }
 
@@ -755,4 +755,140 @@ textarea.form-control:focus {
     .user-profile {
         display: flex;
     }
+}
+
+.toggle-password {
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    border: none;
+    background: none;
+    cursor: pointer;
+    color: #666;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.toggle-password:hover {
+    color: #11101d;
+}
+
+
+
+/*Modals Estilos Layout*/
+.toast-modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    background-color: rgba(0, 0, 0, 0.3);
+}
+
+.toast-content {
+    margin: 20px auto;
+    padding: 12px 16px;
+    width: 90%;
+    max-width: 400px;
+    text-align: left;
+    border-radius: 4px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    position: relative;
+    animation: fadeIn 0.3s ease-out;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.toast-message {
+    font-size: 14px;
+    font-weight: 400;
+    margin: 0;
+    line-height: 1.5;
+    display: flex;
+    align-items: center;
+}
+
+.toast-icon {
+    margin-right: 12px;
+}
+
+.toast-close {
+    color: rgba(0, 0, 0, 0.3);
+    cursor: pointer;
+    transition: color 0.3s ease;
+}
+
+.toast-close:hover {
+    color: #ff4444;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+
+/* 1. Modal de éxito (verde) */
+.toast-success .toast-content {
+    background-color: #dff2e1;
+    border: 1px solid rgba(40, 167, 69, 0.2);
+}
+
+.toast-success .toast-message {
+    color: #2c7636;
+}
+
+.toast-success .toast-icon {
+    color: #28a745;
+}
+
+/* 2. Modal de información (azul) */
+.toast-info .toast-content {
+    background-color: #e4f1fb;
+    border: 1px solid rgba(23, 162, 184, 0.2);
+}
+
+.toast-info .toast-message {
+    color: #0c5484;
+}
+
+.toast-info .toast-icon {
+    color: #17a2b8;
+}
+
+/* 3. Modal de alerta (amarillo) */
+.toast-warning .toast-content {
+    background-color: #fcf8e3;
+    border: 1px solid rgba(255, 193, 7, 0.2);
+}
+
+.toast-warning .toast-message {
+    color: #8a6d3b;
+}
+
+/* 4. Modal de error (rojo) */
+.toast-error .toast-content {
+    background-color: #f8e7e7;
+    border: 1px solid rgba(220, 53, 69, 0.2);
+}
+
+.toast-error .toast-message {
+    color: #a53535;
+}
+
+.toast-error .toast-icon {
+    color: #dc3545;
 }

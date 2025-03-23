@@ -13,36 +13,13 @@
     background-color: white;
     border-radius: 8px;
     padding: 20px;
+    border: 2px solid #ced4da;
 }
 .ticket-details {
     flex: 3;
 }
 .manager-info {
     flex: 1;
-}
-
-
-.back-button {
-    width: 45px; /* Ancho cuadrado */
-    height: 45px; /* Alto cuadrado */
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    border-radius: 8px; /* Bordes ligeramente redondeados */
-    border: 1px solid #ced4da;
-    background-color: #f8f9fa;
-    cursor: pointer;
-    border: 2px solid #ced4da;
-    text-decoration: none;
-}
-
-.back-button i {
-    color: #333; /* Color del ícono */
-    font-size: 1.5rem; /* Tamaño del ícono */
-}
-
-.back-button:hover {
-    background-color: #e2e6ea; /* Color al pasar el ratón */
 }
 
 .ticket-header {

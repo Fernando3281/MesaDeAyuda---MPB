@@ -16,10 +16,6 @@
                     <h1 class="verification-title">Ingrese el codigo</h1>
                     <p class="verification-subtitle">Acabamos de enviarle un código de verificación a su correo</p>
 
-                    <div th:if="${error}" class="alert alert-danger" role="alert">
-                        <p th:text="${error}">Error message</p>
-                    </div>
-
                     <form th:action="@{/registro/verificar}" method="post">
                         <input type="text" name="code" 
                                class="verification-input" 
@@ -33,129 +29,52 @@
                 </div>
             </div>
         </div>
+        
+        <!-- Modal de Error -->
+        <div id="toast-error" class="toast-modal toast-error">
+            <div class="toast-content">
+                <p class="toast-message">
+                    <i class="toast-icon fa-solid fa-triangle-exclamation"></i>
+                    <span>El código de verificación ingresado es incorrecto. Por favor intente nuevamente.</span>
+                </p>
+                <span class="toast-close" onclick="closeToast('error')">
+                    <i class="fa-solid fa-xmark"></i>
+                </span>
+            </div>
+        </div>
+        
+        <footer class="verification-footer">
+            © 2024 Municipalidad de Barva. Todos los derechos reservados.
+        </footer>
+        
+        <script th:inline="javascript">
+            $(document).ready(function() {
+                // Verificar si hay un mensaje de error usando Thymeleaf
+                const errorMessage = /*[[${error}]]*/ null;
+                if (errorMessage) {
+                    showToast('error');
+                }
+                
+                // También verificar por parámetro en URL (alternativa)
+                const urlParams = new URLSearchParams(window.location.search);
+                if (urlParams.get('error') === 'true') {
+                    showToast('error');
+                }
+            });
+            
+            // Función para mostrar toast
+            function showToast(type) {
+                $(`#toast-${type}`).css('display', 'block');
+                
+                // Cierra automáticamente después de 5 segundos
+                setTimeout(function() {
+                    closeToast(type);
+                }, 80000);
+            }
+            
+            function closeToast(type) {
+                $(`#toast-${type}`).css('display', 'none');
+            }
+        </script>
     </body>
-
-    <footer class="verification-footer">
-        © 2024 Municipalidad de Barva. Todos los derechos reservados.
-    </footer>
-
 </html>
-
-
-<style>
-    .back-button {
-        text-decoration: none;
-        width: 40px; /* Ancho cuadrado */
-        height: 40px; /* Alto cuadrado */
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        border-radius: 8px; /* Bordes ligeramente redondeados */
-        border: 1px solid #ced4da;
-        background-color: #f8f9fa;
-        cursor: pointer;
-        border: 2px solid #ced4da;
-    }
-
-    .back-button i {
-        color: #333; /* Color del ícono */
-        font-size: 1.3rem; /* Tamaño del ícono */
-    }
-
-    .back-button:hover {
-        background-color: #e2e6ea; /* Color al pasar el ratón */
-    }
-
-    /* Base modal styles */
-    @keyframes slideDown {
-        from {
-            transform: translateY(-20px);
-            opacity: 0;
-        }
-        to {
-            transform: translateY(0);
-            opacity: 1;
-        }
-    }
-
-    .modal {
-        display: none;
-        position: fixed;
-        z-index: 1;
-        left: 0;
-        top: 0;
-        width: 100%;
-        height: 100%;
-        overflow: auto;
-        background-color: rgba(0, 0, 0, 0.4);
-        padding-top: 30px;
-    }
-
-    .modal-content {
-        background-color: #f8c4c4;
-        margin: 15px auto;
-        padding: 12px 16px;
-        width: 90%;
-        max-width: 400px;
-        border-radius: 4px;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
-        position: relative;
-        animation: slideDown 0.3s ease-out;
-    }
-
-    .modal-header {
-        display: flex;
-        align-items: flex-start;
-        gap: 9px;
-    }
-
-    .modal-header i {
-        color: #a94442;
-        font-size: 16px;
-        margin-top: 2px;
-    }
-
-    .modal-header p {
-        margin: 0;
-        padding: 0;
-        font-size: 16px;
-        color: #a94442;
-        font-weight: 500;
-    }
-
-    .modal-body {
-        padding-left: 26px;
-        margin-top: 4px;
-        color: #666;
-        font-size: 14px;
-    }
-
-    .close {
-        position: absolute;
-        right: 12px;
-        top: 12px;
-        color: #999;
-        font-size: 18px;
-        font-weight: normal;
-        cursor: pointer;
-        padding: 0 5px;
-    }
-
-    .close:hover {
-        color: #666;
-    }
-
-    /* Fade out animation */
-    @keyframes fadeOut {
-        from {
-            opacity: 1;
-        }
-        to {
-            opacity: 0;
-        }
-    }
-
-    .modal.hiding {
-        animation: fadeOut 0.2s ease-out;
-    }
-</style>

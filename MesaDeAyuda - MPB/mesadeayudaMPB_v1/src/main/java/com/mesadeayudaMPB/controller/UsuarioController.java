@@ -1,13 +1,14 @@
 package com.mesadeayudaMPB.controller;
 
+import com.mesadeayudaMPB.domain.Departamento;
 import com.mesadeayudaMPB.domain.Ticket;
 import com.mesadeayudaMPB.domain.Usuario;
+import com.mesadeayudaMPB.service.DepartamentoService;
 import com.mesadeayudaMPB.service.TicketService;
 import com.mesadeayudaMPB.service.UsuarioService;
 import jakarta.servlet.http.HttpSession;
 import java.time.LocalDateTime;
-import java.time.ZoneId;
-import java.util.Date;
+import java.util.Arrays;
 import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
@@ -25,6 +26,9 @@ public class UsuarioController {
 
     @Autowired
     private UsuarioService usuarioService;
+
+    @Autowired
+    private DepartamentoService departamentoService;
 
     @Autowired
     private TicketService ticketService;
@@ -48,36 +52,23 @@ public class UsuarioController {
         return "redirect:/login";
     }
 
-    @GetMapping("/perfil/{id}") //Este metodo se encarga de obtener el id del usuario solicitado para mostrar en el panel del manager
-    public String verPerfil(@PathVariable Long id, Model model, Authentication authentication) {
-        if (authentication != null) {
-            Usuario usuarioActual = usuarioService.getUsuarioPorCorreo(authentication.getName());
-            Usuario usuarioSolicitado = usuarioService.getUsuarioPorId(id);
-
-            if (usuarioSolicitado != null) {
-                model.addAttribute("usuario", usuarioSolicitado);
-                model.addAttribute("usuarioActual", usuarioActual);
-
-                LocalDateTime fechaActual = LocalDateTime.now();
-                model.addAttribute("ultimaConexion", fechaActual);
-                // Remove session attribute manipulation here
-                return "/usuario/perfil";
-            }
-        }
-        return "redirect:/login";
-    }
-
     @GetMapping("/editar")
     public String editar(Model model, Authentication authentication) {
         if (authentication != null) {
             String correoElectronico = authentication.getName();
             Usuario usuario = usuarioService.getUsuarioPorCorreo(correoElectronico);
             if (usuario != null) {
+                // Obtener la lista de departamentos desde la base de datos
+                List<Departamento> departamentos = departamentoService.obtenerTodosLosDepartamentos();
+
                 // Añadir la fecha actual al modelo para la vista de editar
                 LocalDateTime fechaActual = LocalDateTime.now();
                 model.addAttribute("ultimaConexion", fechaActual);
 
+                // Añadir el usuario y la lista de departamentos al modelo
                 model.addAttribute("usuario", usuario);
+                model.addAttribute("departamentos", departamentos);
+
                 return "/usuario/editar";
             }
         }

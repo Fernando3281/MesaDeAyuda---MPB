@@ -15,7 +15,7 @@ Click nbfs://nbhost/SystemFileSystem/Templates/Other/CascadeStyleSheet.css to ed
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     padding: 15px;
     margin-bottom: 0px;
-    font-family: 'Poppins', sans-serif;
+    border: 2px solid #ced4da;
 }
 
 .profile-header {
@@ -45,7 +45,18 @@ Click nbfs://nbhost/SystemFileSystem/Templates/Other/CascadeStyleSheet.css to ed
     color: #666;
 }
 
-.btn-update, .btn-guardar-cambios {
+.btn-update {
+    padding: 8px 16px;
+    background-color: #fb4326;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-family: 'Poppins', sans-serif;
+    transition: background-color 0.3s ease;
+}
+
+.btn-guardar-cambios {
     padding: 8px 16px;
     background-color: #11101d;
     color: white;
@@ -68,8 +79,12 @@ Click nbfs://nbhost/SystemFileSystem/Templates/Other/CascadeStyleSheet.css to ed
     margin-top: 24px;
 }
 
-.btn-update:hover, .btn-guardar-cambios:hover {
-    background-color: #353060;
+.btn-update:hover {
+    background-color: #c5331c;
+}
+
+.btn-guardar-cambios:hover {
+    background-color: #4e3af8;
 }
 
 .form-control {
@@ -168,25 +183,6 @@ Click nbfs://nbhost/SystemFileSystem/Templates/Other/CascadeStyleSheet.css to ed
 .password-field {
     position: relative;
     width: 100%;
-}
-
-.toggle-password {
-    position: absolute;
-    right: 10px;
-    top: 50%;
-    transform: translateY(-50%);
-    border: none;
-    background: none;
-    cursor: pointer;
-    color: #666;
-    padding: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.toggle-password:hover {
-    color: #11101d;
 }
 
 .detail-column input[type="password"],

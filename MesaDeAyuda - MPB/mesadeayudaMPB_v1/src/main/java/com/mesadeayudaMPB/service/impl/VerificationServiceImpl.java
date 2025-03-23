@@ -5,10 +5,7 @@
 package com.mesadeayudaMPB.service.impl;
 
 import com.mesadeayudaMPB.service.VerificationService;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 import java.security.SecureRandom;
 
 /**

@@ -1,0 +1,240 @@
+/*
+Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
+Click nbfs://nbhost/SystemFileSystem/Templates/Other/CascadeStyleSheet.css to edit this template
+*/
+/* 
+    Created on : Mar 8, 2025, 7:29:59 PM
+    Author     : ferva
+*/
+
+
+/* Estilos generales para la sección de mensajes */
+.mensajes-section {
+    padding: 20px;
+    background-color: #f9f9f9;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    margin-bottom: 20px;
+}
+
+.mensajes-container {
+    display: flex;
+    gap: 20px;
+}
+
+/* Estilos para la lista de tickets */
+.tickets-list {
+    width: 300px;
+    background-color: #ffffff;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    padding: 15px;
+}
+
+.tickets-list h2 {
+    font-size: 18px;
+    margin-bottom: 15px;
+    color: #333333;
+}
+
+.ticket-item {
+    padding: 10px;
+    border-bottom: 1px solid #e0e0e0;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.ticket-item:hover {
+    background-color: #f1f1f1;
+}
+
+.ticket-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 5px;
+}
+
+.ticket-id {
+    font-weight: 600;
+    color: #007bff;
+}
+
+.ticket-status {
+    font-size: 12px;
+    padding: 3px 8px;
+    border-radius: 12px;
+    color: #ffffff;
+}
+
+.status-open {
+    background-color: #28a745;
+}
+
+.status-closed {
+    background-color: #dc3545;
+}
+
+.ticket-title {
+    font-size: 14px;
+    color: #555555;
+    margin-bottom: 5px;
+}
+
+.ticket-date {
+    font-size: 12px;
+    color: #888888;
+}
+
+.ticket-unread {
+    font-size: 12px;
+    color: #ffffff;
+    background-color: #ff6f61;
+    padding: 2px 6px;
+    border-radius: 12px;
+    margin-top: 5px;
+}
+
+/* Estilos para el área de mensajes */
+.mensajes-area {
+    flex: 1;
+    background-color: #ffffff;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    padding: 15px;
+}
+
+.mensajes-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+.mensajes-header h2 {
+    font-size: 18px;
+    color: #333333;
+}
+
+.btn-filter {
+    background-color: #007bff;
+    color: #ffffff;
+    border: none;
+    border-radius: 4px;
+    padding: 8px 12px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.btn-filter:hover {
+    background-color: #0056b3;
+}
+
+/* Estilos para la lista de mensajes */
+.mensajes-list {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.mensaje-item {
+    display: flex;
+    align-items: flex-start;
+    padding: 15px;
+    background-color: #f9f9f9;
+    border-radius: 8px;
+    border: 1px solid #e0e0e0;
+    transition: all 0.3s ease;
+}
+
+.mensaje-item:hover {
+    background-color: #f1f1f1;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.mensaje-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background-color: #007bff;
+    color: #ffffff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    margin-right: 15px;
+}
+
+.mensaje-content {
+    flex: 1;
+}
+
+.mensaje-sender {
+    font-weight: 600;
+    color: #333333;
+    margin-bottom: 5px;
+}
+
+.mensaje-text {
+    font-size: 14px;
+    color: #555555;
+    line-height: 1.5;
+}
+
+.mensaje-date {
+    font-size: 12px;
+    color: #888888;
+    margin-top: 5px;
+}
+
+.mensaje-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 10px;
+}
+
+.btn-reply, .btn-view-ticket {
+    padding: 5px 10px;
+    border: none;
+    border-radius: 4px;
+    background-color: #007bff;
+    color: #ffffff;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.btn-reply:hover, .btn-view-ticket:hover {
+    background-color: #0056b3;
+}
+
+/* Estilos para el área de respuesta */
+.mensaje-reply {
+    margin-top: 20px;
+    padding: 15px;
+    background-color: #f1f1f1;
+    border-radius: 8px;
+}
+
+.mensaje-reply textarea {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #e0e0e0;
+    border-radius: 4px;
+    font-size: 14px;
+    resize: vertical;
+}
+
+.btn-send {
+    margin-top: 10px;
+    padding: 8px 15px;
+    border: none;
+    border-radius: 4px;
+    background-color: #28a745;
+    color: #ffffff;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.btn-send:hover {
+    background-color: #218838;
+}

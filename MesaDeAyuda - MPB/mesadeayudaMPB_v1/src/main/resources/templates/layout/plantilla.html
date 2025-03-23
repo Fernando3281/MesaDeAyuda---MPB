@@ -24,7 +24,7 @@
             </div>
             <div class="header-right">
                 <a th:href="@{/tickets/nuevo}">
-                    <button class="btn-new">Nuevo Ticket +</button>
+                    <button class="btn-new">Nuevo Ticket <i class="fa-solid fa-plus"></i></button>
                 </a>
                 <button class="notifications-button">
                     <i class="fas fa-bell"></i>
@@ -86,7 +86,9 @@
         <div th:fragment="sidebar">
             <aside class="sidebar close">
                 <div class="logo-details">
-                    <img th:src="@{/img/escudo-barva.webp}" alt="Logo" class="logo_img" />
+                    <a th:href="@{/index}">
+                        <img th:src="@{/img/escudo-barva.webp}" alt="Logo" class="logo_img" />
+                    </a>
                 </div>
                 <sidebar>
                     <ul class="nav-links">
@@ -116,7 +118,7 @@
                         </li>
                         <li>
                             <div class="iocn-link">
-                                <a href="#">
+                                <a th:href="@{/mensajes/listado}">
                                     <i class="fas fa-envelope"></i>
                                     <span class="link_name">Mensajes</span>
                                 </a>
@@ -156,19 +158,28 @@
 
         <div th:fragment="scripts-table">
             <script th:src="@{/js/tickets-table.js}"></script>
-            <script th:src="@{/js/tickets-functions.js}"></script>
+            <script th:src="@{/js/tickets-funciones.js}"></script>
         </div>
         <div th:fragment="nuevo-ticket-scripts">
             <script th:src="@{/js/nuevo-ticket.js}"></script>
         </div>
-        <div th:fragment="scripts-perfil-editar">
-            <script th:src="@{/js/show-password.js}"></script>
+        <div th:fragment="script-mostrar-contraseña">
+            <script th:src="@{/js/mostrar-contraseña.js}"></script>
+        </div>
+        <div th:fragment="scripts-historial">
+            <script th:src="@{/js/historial-funciones.js}"></script>
         </div>
         <div th:fragment="scripts-perfil">
-            <script th:src="@{/js/historial-functions.js}"></script>
+            <script th:src="@{/js/perfil-funciones.js}"></script>
         </div>
         <div th:fragment="scripts-manager">
-            <script th:src="@{/js/manager-functions.js}"></script>
+            <script th:src="@{/js/manager-funciones.js}"></script>
+        </div>
+        <div th:fragment="scripts-departamentos">
+            <script th:src="@{/js/departamentos-table.js}"></script>
+        </div>
+        <div th:fragment="scripts-login">
+            <script th:src="@{/js/login-funciones.js}"></script>
         </div>
     </body>
 </html>

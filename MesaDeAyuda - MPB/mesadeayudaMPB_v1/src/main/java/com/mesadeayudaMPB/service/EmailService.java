@@ -48,7 +48,7 @@ public class EmailService {
             helper.setSubject("Recuperación de contraseña");
             
             // URL de recuperación de contraseña
-            String resetUrl = "http://localhost:8080/registro/cambiar-contrasena?token=" + token;
+            String resetUrl = "http://localhost:81/registro/cambiar-contrasena?token=" + token;
             
             String htmlContent = loadHtmlTemplate("classpath:templates/recuperacion-contrasena.html")
                     .replace("{{resetUrl}}", resetUrl)

@@ -19,156 +19,59 @@
                 <button class="image-nav next-image" onclick="changeImage(1)">&#10095;</button>
             </div>
 
-            <script>
-                let currentIndex = 0;
-                let imageUrls = [];
-
-                function showImageViewer(ticketId) {
-                    const viewer = document.getElementById('imageViewer');
-                    const counter = document.getElementById('imageCounter');
-                    const thumbnailContainer = document.getElementById('thumbnailContainer');
-
-                    // Limpiar contenedores
-                    thumbnailContainer.innerHTML = '';
-                    imageUrls = [];
-
-                    // Obtener la cantidad de imágenes
-                    fetch(`/tickets/imagen/${ticketId}/0`)
-                            .then(response => {
-                                if (!response.ok)
-                                    throw new Error('No images found');
-                                return response.blob();
-                            })
-                            .then(blob => {
-                                // Primera imagen encontrada, buscar más
-                                imageUrls.push(URL.createObjectURL(blob));
-                                return fetch(`/tickets/imagen/${ticketId}/1`);
-                            })
-                            .then(response => {
-                                if (!response.ok)
-                                    throw new Error('Only one image');
-                                return response.blob();
-                            })
-                            .then(blob => {
-                                imageUrls.push(URL.createObjectURL(blob));
-                                initializeViewer();
-                            })
-                            .catch(error => {
-                                if (imageUrls.length > 0) {
-                                    initializeViewer();
-                                } else {
-                                    console.error('No images available');
-                                }
-                            });
-
-                    function initializeViewer() {
-                        currentIndex = 0;
-                        updateImage();
-                        createThumbnails();
-                        viewer.classList.add('active');
-                        document.body.style.overflow = 'hidden';
-                    }
-                }
-
-                function updateImage() {
-                    const mainImage = document.getElementById('currentImage');
-                    const counter = document.getElementById('imageCounter');
-
-                    mainImage.src = imageUrls[currentIndex];
-                    counter.textContent = `${currentIndex + 1} / ${imageUrls.length}`;
-
-                    // Actualizar miniaturas activas
-                    document.querySelectorAll('.thumbnail').forEach((thumb, idx) => {
-                        thumb.classList.toggle('active', idx === currentIndex);
-                    });
-                }
-
-                function createThumbnails() {
-                    const container = document.getElementById('thumbnailContainer');
-                    container.innerHTML = '';
-
-                    imageUrls.forEach((url, idx) => {
-                        const thumb = document.createElement('img');
-                        thumb.src = url;
-                        thumb.classList.add('thumbnail');
-                        if (idx === currentIndex)
-                            thumb.classList.add('active');
-                        thumb.onclick = () => {
-                            currentIndex = idx;
-                            updateImage();
-                        };
-                        container.appendChild(thumb);
-                    });
-                }
-
-                function changeImage(direction) {
-                    currentIndex = (currentIndex + direction + imageUrls.length) % imageUrls.length;
-                    updateImage();
-                }
-
-                function closeViewer() {
-                    const viewer = document.getElementById('imageViewer');
-                    viewer.classList.remove('active');
-                    document.body.style.overflow = 'auto';
-
-                    // Limpiar URLs de objeto
-                    imageUrls.forEach(url => URL.revokeObjectURL(url));
-                    imageUrls = [];
-                }
-
-                // Eventos de teclado
-                document.addEventListener('keydown', function (e) {
-                    if (!document.getElementById('imageViewer').classList.contains('active'))
-                        return;
-
-                    switch (e.key) {
-                        case 'ArrowLeft':
-                            changeImage(-1);
-                            break;
-                        case 'ArrowRight':
-                            changeImage(1);
-                            break;
-                        case 'Escape':
-                            closeViewer();
-                            break;
-                    }
-                });
-
-                // Cerrar al hacer clic fuera de la imagen
-                document.getElementById('imageViewer').addEventListener('click', function (e) {
-                    if (e.target === this) {
-                        closeViewer();
-                    }
-                });
-            </script>
-
-
 
             <div class="back-button-container">
                 <a href="javascript:void(0);" onclick="window.history.back();" class="btn btn-outline-secondary back-button">
                     <i class="fa-solid fa-arrow-left"></i>
                 </a>
 
-                <div class="btn-group">
-                    <button type="button" class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#elevateTicketModal">
-                        <i class="fa-solid fa-pen"></i> Actualizar Ticket
-                    </button>
 
-                    <button type="button" class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#elevateTicketModal">
-                        <i class="fa-solid fa-user-plus"></i> Asignar Ticket
-                    </button>
+                <button th:if="${ticket.asignadoPara == null}" 
+                        type="button" 
+                        id="btnAtenderTicket" 
+                        class="btn btn-outline-primary" 
+                        th:data-ticket-id="${ticket.idTicket}"
+                        onclick="atenderTicket(this.getAttribute('data-ticket-id'))">
+                    <i class="fa-solid fa-clipboard-check"></i> Atender Ticket
+                </button>
 
-                    <button type="button" class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#elevateTicketModal">
-                        <i class="fa-solid fa-user-pen"></i> Reasignar Ticket
-                    </button>
-                    <button type="button" class="btn btn-outline-success" data-bs-toggle="modal" data-bs-target="#resolveTicketModal">
-                        <i class="fa-regular fa-circle-check"></i> Cerrar Ticket
-                    </button>
-
-                    <button type="button" class="btn btn-outline-success" data-bs-toggle="modal" data-bs-target="#resolveTicketModal">
-                        <i class="fa-solid fa-ban"></i> Desactivar Ticket
-                    </button>
-                </div>
+                <!-- Botones que se muestran solo si el ticket está asignado -->
+                <button type="button" 
+                        class="btn btn-outline-primary" 
+                        data-bs-toggle="modal" 
+                        data-bs-target="#elevateTicketModal">
+                    <i class="fa-solid fa-pen"></i> Actualizar Ticket
+                </button>
+                <button th:if="${ticket.asignadoPara == null}" 
+                        type="button" 
+                        class="btn btn-outline-primary"
+                        data-bs-toggle="modal" 
+                        data-bs-target="#elevateTicketModal"
+                        onclick="openAssignTicketsModal()">
+                    <i class="fa-solid fa-user-plus"></i> Asignar Ticket
+                </button>
+                <button th:if="${ticket.asignadoPara != null}" 
+                        type="button" 
+                        class="btn btn-outline-primary" 
+                        data-bs-toggle="modal" 
+                        data-bs-target="#elevateTicketModal">
+                    <i class="fa-solid fa-user-pen"></i> Reasignar Ticket
+                </button>
+                <button th:if="${ticket.asignadoPara != null && ticket.estado != 'Resuelto'}" 
+        type="button" 
+        class="btn btn-outline-success" 
+        id="btnCerrarTicket"
+        th:data-ticket-id="${ticket.idTicket}"
+        onclick="closeTicket(this.getAttribute('data-ticket-id'))">
+    <i class="fa-regular fa-circle-check"></i> Cerrar Ticket
+</button>
+                <button type="button" 
+                        class="btn btn-danger" 
+                        id="desactivarBtn" 
+                        th:data-ticket-id="${ticket.idTicket}"
+                        onclick="desactivarTicket(this.getAttribute('data-ticket-id'))">
+                    <i class="fa-solid fa-ban"></i> Desactivar Ticket
+                </button>
             </div>
 
             <div class="container">
@@ -177,11 +80,15 @@
                     <h2 class="ticket-title">Resumen del Ticket</h2>
                     <div class="info-row">
                         <span class="info-label">Estado</span>
-                        <span class="status-badge">Abierto</span>
+                        <span th:class="'badge badge-' + ${#strings.toLowerCase(ticket.estado)}"
+                              th:text="${ticket.estado}">(Estado)</span>
                     </div>
                     <div class="info-row">
                         <span class="info-label">Prioridad</span>
-                        <span class="priority-badge">MEDIA</span>
+                        <span th:class="'badge badge-' + ${ticket.prioridad == 'Sin Asignar' ? 'sin-asignar' : #strings.toLowerCase(ticket.prioridad)}"
+                              th:text="${ticket.prioridad == 'Sin Asignar' ? 'Sin Asignar' : ticket.prioridad}">
+                            (Prioridad)
+                        </span>
                     </div>
                     <div class="info-row">
                         <span class="info-label">Nivel de Soporte</span>
@@ -193,7 +100,7 @@
                     </div>
                     <div class="info-row">
                         <span class="info-label">Tiempo Transcurrido</span>
-                        <span class="info-value">2 horas 15 minutos</span>
+                        <span class="info-value" id="tiempoTranscurrido">0 horas 0 minutos</span>
                     </div>
                     <button class="action-button">
                         <i class="fa-solid fa-arrow-turn-up"></i>
@@ -201,6 +108,12 @@
                     </button>
                     <button class="action-button">
                         <i class="fa-solid fa-people-arrows"></i> Heredar Ticket
+                    </button>
+                    <button th:if="${ticket.asignadoPara != null}" 
+                            type="button" 
+                            class="action-button" 
+                            onclick="openPrioridadModal()">
+                        <i class="fa-solid fa-thumbtack"></i> Asignar Prioridad
                     </button>
                     <button class="action-button">
                         <i class="far fa-clock"></i>
@@ -211,13 +124,19 @@
                 <!-- Main Content -->
                 <div class="ticket-details">
                     <div class="tabs">
-                        <button class="tab-button active" data-tab="tab1">Detalles del Ticket</button>
+                        <button class="tab-button active" data-tab="tab1">
+                            <i class="fa-solid fa-list-ul"></i>
+                            Detalles del Ticket
+                        </button>
                         <button class="tab-button" data-tab="tab2">
-                            <i class="fas fa-list"></i>
+                            <i class="fa-solid fa-comments"></i>
                             Respuestas
                             <span class="counter">3</span>
                         </button>
-                        <button class="tab-button" data-tab="tab3">Auditoria</button>
+                        <button class="tab-button" data-tab="tab3">
+                            <i class="fa-solid fa-clock-rotate-left"></i>
+                            Auditoria
+                        </button>
                     </div>
                     <div class="tab-content">
                         <div id="tab1" class="tab-pane active">
@@ -228,20 +147,20 @@
                                             <label for="solicitante" class="form-label">Solicitante</label>
                                             <div class="input-group">
                                                 <input type="text" class="form-control" id="solicitante" 
-                                                       th:value="${ticket.solicitante != null ? ticket.solicitante.nombre + ' ' + ticket.solicitante.apellido : 'Sin asignar'}" 
+                                                       th:value="${ticket.solicitante != null ? ticket.solicitante.nombre + ' ' + ticket.solicitante.apellido : 'Sin Asignar'}" 
                                                        readonly>
                                                     <button type="button" 
                                                             id="infoUsuario" 
                                                             class="btn btn-outline-secondary popover-btn" 
                                                             data-popover="Ver Perfil del Solicitante"
-                                                            th:onclick="viewSolicitanteProfile([[${ticket.solicitante.idUsuario}]], [[${session.usuarioId}]])">
+                                                            th:onclick="'window.location.href=\'/tickets/perfil-solicitante/' + ${ticket.solicitante.idUsuario} + '\''">
                                                         <i class="fa-solid fa-id-badge"></i>
                                                     </button>
                                             </div>
                                         </div>
 
                                         <script>
-                                            
+
                                         </script>
 
                                         <div class="grid grid-2">
@@ -276,9 +195,9 @@
                                             </div>
                                             <div class="form-group">
                                                 <label for="estado" class="form-label">Estado</label>
-                                                <select class="form-control" id="estado">
+                                                <select class="form-control no-interaction" id="estado">
                                                     <option th:selected="${ticket.estado == 'Abierto'}">Abierto</option>
-                                                    <option th:selected="${ticket.estado == 'En Progreso'}">En Progreso</option>
+                                                    <option th:selected="${ticket.estado == 'Pendiente'}">Pendiente</option>
                                                     <option th:selected="${ticket.estado == 'Cerrado'}">Cerrado</option>
                                                 </select>
                                             </div>
@@ -290,7 +209,7 @@
                                             <label for="asignadoPara" class="form-label">Asignado para</label>
                                             <div class="input-group">
                                                 <input type="text" class="form-control" id="asignadoPara" 
-                                                       th:value="${ticket.asignadoPara != null ? ticket.asignadoPara.nombre + ' ' + ticket.asignadoPara.apellido : 'Sin asignar'}" 
+                                                       th:value="${ticket.asignadoPara != null ? ticket.asignadoPara.nombre + ' ' + ticket.asignadoPara.apellido : 'Sin Asignar'}" 
                                                        readonly>
                                                     <button type="button" id="asignarTicket" class="btn btn-outline-secondary popover-btn" data-popover="Asignar Ticket">
                                                         <i class="fa-solid fa-user-plus"></i>
@@ -307,7 +226,7 @@
                                             <div class="form-group">
                                                 <label for="actualizadoPor" class="form-label">Actualizado por</label>
                                                 <input type="text" class="form-control" id="actualizadoPor" 
-                                                       th:value="${ticket.asignadoPara != null ? ticket.asignadoPara.nombre + ' ' + ticket.asignadoPara.apellido : 'Sin asignar'}" 
+                                                       th:value="${ticket.asignadoPara != null ? ticket.asignadoPara.nombre + ' ' + ticket.asignadoPara.apellido : 'Sin Asignar'}" 
                                                        readonly>
                                             </div>
                                         </div>
@@ -325,14 +244,12 @@
 
                                     <div class="form-group">
                                         <label class="form-label">Archivos adjuntos</label>
-                                        <div class="btn-group" th:if="${ticket.imagenes != null and not #lists.isEmpty(ticket.imagenes)}">
-                                            <button type="button" class="btn btn-outline" th:onclick="'showImageViewer(' + ${ticket.idTicket} + ')'">
-                                                <i class="fas fa-paperclip"></i> Ver Imágenes
+                                        <div class="btn-group" th:if="${tieneImagenes}">
+                                            <button type="button" class="btn btn-outline" 
+                                                    th:onclick="'showImageViewer(' + ${ticket.idTicket} + ')'">
+                                                <i class="fas fa-paperclip"></i> Ver Imágenes ([[${imagenesInfo.size()}]])
                                             </button>
                                         </div>
-                                        <p th:if="${ticket.imagenes == null or #lists.isEmpty(ticket.imagenes)}" class="text-muted">
-                                            No hay imágenes adjuntas.
-                                        </p>
                                     </div>
 
                                 </form>
@@ -342,89 +259,20 @@
                         <div id="tab2" class="tab-pane">
                             <!-- Contenido de la pestaña Respuestas -->
                             <div class="card" id="card-tabs" style="margin-bottom: 30px;">
-
                                 <div class="chat-header">
                                     <h2>Chat de Soporte</h2>
                                 </div>
                                 <div class="chat-messages">
-                                    <div class="message">
+                                    <!-- Iterar sobre los mensajes del ticket -->
+                                    <div th:each="mensaje : ${mensajes}" th:class="${mensaje.esNotaInterna} ? 'message internal-note' : 'message'">
                                         <div class="message-header">
-                                            <span class="user-name">Juan Pablo Hernandez</span>
-                                            <span class="message-time">2/16/2025, 10:35:53 PM</span>
+                                            <span class="user-name" th:text="${mensaje.emisor.nombre + ' ' + mensaje.emisor.apellido}"></span>
+                                            <!-- Mostrar la fecha en formato dd/MM/yyyy -->
+                                            <span class="message-time" th:text="${#dates.format(mensaje.fechaHora, 'dd/MM/yyyy, hh:mm:ss a')}"></span>
                                         </div>
-                                        <div class="message-content">
-                                            Hola esto es una prueba
-                                        </div>
+                                        <div class="message-content" th:text="${mensaje.mensaje}"></div>
                                     </div>
-                                    <div class="message">
-                                        <div class="message-header">
-                                            <span class="user-name">Soporte Técnico</span>
-                                            <span class="message-time">2/16/2025, 10:36:16 PM</span>
-                                        </div>
-                                        <div class="message-content">
-                                            Hola esto es una prueba sobre una nota interna
-                                        </div>
-                                    </div>
-                                    <div class="message internal-note">
-                                        <div class="message-header">
-                                            <span class="user-name">Nota Interna</span>
-                                        </div>
-                                        <div class="message-content">
-                                            Esta es una nota interna.
-                                        </div>
-                                    </div>
-                                    <div class="message">
-                                        <div class="message-header">
-                                            <span class="user-name">Soporte Técnico</span>
-                                            <span class="message-time">2/16/2025, 10:36:16 PM</span>
-                                        </div>
-                                        <div class="message-content">
-                                            Hola esto es una prueba sobre una nota interna
-                                        </div>
-                                    </div>
-                                    <div class="message">
-                                        <div class="message-header">
-                                            <span class="user-name">Soporte Técnico</span>
-                                            <span class="message-time">2/16/2025, 10:36:16 PM</span>
-                                        </div>
-                                        <div class="message-content">
-                                            Hola esto es una prueba sobre una nota interna
-                                        </div>
-                                    </div>
-                                    <div class="message">
-                                        <div class="message-header">
-                                            <span class="user-name">Soporte Técnico</span>
-                                            <span class="message-time">2/16/2025, 10:36:16 PM</span>
-                                        </div>
-                                        <div class="message-content">
-                                            Hola esto es una prueba sobre una nota interna
-                                        </div>
-                                    </div>
-                                    <div class="message">
-                                        <div class="message-header">
-                                            <span class="user-name">Soporte Técnico</span>
-                                            <span class="message-time">2/16/2025, 10:36:16 PM</span>
-                                        </div>
-                                        <div class="message-content">
-                                            Hola esto es una prueba sobre una nota interna
-                                        </div>
-                                    </div>
-                                    <div class="message">
-                                        <div class="message-header">
-                                            <span class="user-name">Soporte Técnico</span>
-                                            <span class="message-time">2/16/2025, 10:36:16 PM</span>
-                                        </div>
-                                        <div class="message-content">
-                                            Hola esto es una prueba sobre una nota interna
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="chat-input">
-                                    <textarea placeholder="Escribe tu mensaje..."></textarea>
-                                    <button class="btn btn-primary">Enviar</button>
-                                </div>
-
-                            </div>
+                                </div>                            </div>
                         </div>
 
                         <div id="tab3" class="tab-pane">
@@ -502,64 +350,367 @@
                         <div class="card" id="card-message-manager">
                             <div class="response-header">
                                 <h2>Responder Ticket</h2>
-                                <button class="response-type" id="responseType">Respuesta Pública</button>
+                                <button type="button" class="response-type" id="responseType" onclick="toggleResponseType()">Respuesta Pública</button>
                             </div>
-                            <textarea 
-                                class="response-textarea" 
-                                placeholder="Escribe tu respuesta pública..."
-                                id="responseText"
-                                disabled
-                                ></textarea>
-                            <div class="response-actions">
-                                <div class="action-buttons">
-                                    <button class="btn">
-                                        <i class="fas fa-paperclip"></i>
-                                        Adjuntar archivo
-                                    </button>
-                                    <button class="btn">
-                                        <i class="fas fa-file-alt"></i>
-                                        Usar plantilla
-                                    </button>
-                                </div>
-                                <button class="btn btn-primary" id="sendResponse" disabled>
-                                    <i class="fas fa-paper-plane"></i>
-                                    Enviar Respuesta
-                                </button>
-                            </div>
+                            <form id="formResponderTicket" th:action="@{/tickets/responder/{id}(id=${ticket.idTicket})}" method="POST" onsubmit="responderTicket(event)">
+                                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                                <input type="hidden" id="esNotaInterna" name="esNotaInterna" value="false">
+                                    <textarea class="response-textarea" id="respuesta" name="respuesta" 
+                                              placeholder="Escribe tu respuesta pública..." 
+                                              th:disabled="${ticket.prioridad == 'Sin Asignar'}"></textarea>
+                                    <div class="response-actions">
+                                        <button type="submit" class="btn btn-primary">
+                                            <i class="fas fa-paper-plane"></i> Enviar Respuesta
+                                        </button>
+                                    </div>
+                            </form>
                         </div>
 
-                        <!--
-                        <div class="card" id="card-asignacion-prioridad">
-                            <h2 style="margin-bottom: 10px;">Asigne la prioridad estimada según el valor de cada celda</h2>
-                            <p style="margin-bottom: 20px; color: #6c757d;">Una vez se actualice la prioridad del ticket, el usuario será notificado de inmediato y el estado del ticket cambiará automáticamente a "En Progreso" para iniciar su respectiva resolución</p>
-
-                            <div class="grid grid-3" style="margin-bottom: 10px;">
-                                <div class="form-group">
-                                    <label for="categoria" class="form-label">Categoría</label>
-                                    <input type="text" class="form-control" id="categoria" value="Hardware" readonly>
-                                </div>
-                                <div class="form-group">
-                                    <label for="impactoEstimado" class="form-label">Impacto</label>
-                                    <input type="text" class="form-control" id="impactoEstimado" value="Medio" readonly>
-                                </div>
-                                <div class="form-group">
-                                    <label for="prioridadEstimada" class="form-label">Prioridad</label>
-                                    <select class="form-control" id="prioridadEstimada">
-                                        <option>Alto</option>
-                                        <option selected>Medio</option>
-                                        <option>Bajo</option>
-                                    </select>
-                                </div>
-                            </div>
-
-                            <div class="btn-group" style="flex-direction: column;">
-                                <button type="button" class="btn btn-dark full-width" style="margin-bottom: 10px;">Actualizar Estado</button>
-                                <button type="button" class="btn btn-secondary full-width">Cerrar Ticket</button>
-                            </div>
-                        </div>
-                        -->
+                        <script>
+                            function toggleResponseType() {
+                                const button = document.getElementById('responseType');
+                                const hiddenInput = document.getElementById('esNotaInterna');
+                                if (button.textContent === 'Respuesta Pública') {
+                                    button.textContent = 'Nota Interna';
+                                    hiddenInput.value = 'true';
+                                } else {
+                                    button.textContent = 'Respuesta Pública';
+                                    hiddenInput.value = 'false';
+                                }
+                            }
+                        </script>
                     </div>
                 </div>
+            </div>
+
+            <!-- Modal de Asignar Prioridad -->
+            <div class="modal-overlay" id="prioridadModalOverlay">
+                <div class="modal">
+                    <div class="modal-header">
+                        <h2 class="modal-title">Asigne la prioridad estimada según el valor de cada celda</h2>
+                        <p class="modal-description">Una vez se actualice la prioridad del ticket, el usuario será notificado de inmediato y la sección para responder el ticket será habilitada para iniciar su respectiva resolución.</p>
+                    </div>
+
+                    <div class="modal-body">
+                        <!-- Usa Thymeleaf para pasar el ID del ticket -->
+                        <form th:action="@{/tickets/asignar-prioridad/{id}(id=${ticket.idTicket})}" method="POST">
+                            <input type="hidden" name="_csrf" th:value="${_csrf.token}" /> <!-- Token CSRF -->
+                            <div class="form-grid">
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label class="form-label" for="categoria">Categoría</label>
+                                        <div class="form-control">Hardware</div>
+                                    </div>
+
+                                    <div class="form-group">
+                                        <label class="form-label" for="impacto">Impacto</label>
+                                        <div class="form-control">Medio</div>
+                                    </div>
+
+                                    <div class="form-group">
+                                        <label class="form-label" for="prioridad">Prioridad</label>
+                                        <select class="form-select" id="prioridadSelect" name="prioridad" onchange="habilitarBoton()">
+                                            <!-- Mostrar "Sin Asignar" solo si la prioridad actual es "Sin Asignar" -->
+                                            <option th:if="${ticket.prioridad == 'Sin Asignar'}" value="Sin Asignar" th:selected="${ticket.prioridad == 'Sin Asignar'}">Sin Asignar</option>
+                                            <option value="Bajo" th:selected="${ticket.prioridad == 'Bajo'}">Bajo</option>
+                                            <option value="Medio" th:selected="${ticket.prioridad == 'Medio'}">Medio</option>
+                                            <option value="Alto" th:selected="${ticket.prioridad == 'Alto'}">Alto</option>
+                                            <option value="Critico" th:selected="${ticket.prioridad == 'Critico'}">Critico</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="submit" class="btn" id="btnActualizarPrioridad" disabled>Actualizar Prioridad</button>
+                        <button type="button" class="btn btn-outline" id="closePrioridadModalBtn">Cerrar</button>
+                    </div>
+                    </form>
+                </div>
+            </div>
+
+
+
+            <!-- Modal para confirmar el cierre del ticket -->
+            <div class="modal-overlay" id="confirmCloseModalOverlay">
+                <div class="modal">
+                    <div class="modal-header">
+                        <h2 class="modal-title">Confirmar Cierre del Ticket</h2>
+                    </div>
+                    <div class="modal-body">
+                        <p>¿Está seguro que desea cerrar el ticket?</p>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-outline" onclick="closeConfirmCloseModal()">Cancelar</button>
+                        <button type="button" class="btn btn-primary" onclick="confirmCloseTicket()">Aceptar</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Modal para mostrar error si no hay prioridad asignada -->
+            <div class="modal-overlay" id="errorPriorityModalOverlay">
+                <div class="modal">
+                    <div class="modal-header">
+                        <h2 class="modal-title">Error</h2>
+                    </div>
+                    <div class="modal-body">
+                        <div class="form-group">
+                            <p>Para cerrar un ticket primero se le debe asignar un nivel de prioridad.</p>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-primary" onclick="closeErrorPriorityModal()">Aceptar</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Modal para asignar tickets -->
+            <div class="modal-overlay" id="assignTicketsModalOverlay">
+                <div class="modal">
+                    <div class="modal-header">
+                        <h2 class="modal-title">Asignar Ticket</h2>
+                        <p class="modal-description">Seleccione un soportista o administrador para asignar el ticket.</p>
+                    </div>
+                    <div class="modal-body">
+                        <div class="form-group">
+                            <label class="form-label" for="soportistaSelect">Buscar soportista/administrador</label>
+                            <select class="form-select" id="soportistaSelect" style="width: 100%">
+                                <option value="">Seleccionar soportista...</option>
+                            </select>
+                        </div>
+                        <div class="scroll-area">
+                            <div class="scroll-content">
+                                <div class="ticket-group">
+                                    <div class="ticket-group-header">
+                                        <span th:class="'badge badge-' + ${ticket.prioridad.toLowerCase()}" 
+                                              th:text="${ticket.prioridad}"></span>
+                                        <span style="font-size: 12px; color: #64748b;">1 ticket</span>
+                                    </div>
+                                    <ul class="ticket-list">
+                                        <li class="ticket-item">
+                                            <span class="ticket-id" th:text="${ticket.codigo}"></span> - 
+                                            <span th:text="${ticket.categoria}"></span>: 
+                                            <span th:text="${ticket.titulo}"></span>
+                                        </li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-outline" onclick="closeAssignTicketsModal()">Cancelar</button>
+                        <button type="button" class="btn btn-primary" id="confirmAssignBtn">Confirmar</button>
+                    </div>
+                </div>
+            </div>
+
+            <style>
+                /* Modal */
+                .modal-overlay {
+                    position: fixed;
+                    top: 0;
+                    left: 0;
+                    right: 0;
+                    bottom: 0;
+                    background-color: rgba(0, 0, 0, 0.5);
+                    display: none;
+                    justify-content: center;
+                    align-items: center;
+                    z-index: 1050; /* Asegúrate de que sea mayor que otros elementos */
+                }
+
+                .modal-overlay.active {
+                    display: flex;
+                }
+
+                .modal {
+                    background-color: white;
+                    border-radius: 8px;
+                    border: 1px solid #ced4da; /* Borde más suave */
+                    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+                    width: 95%;
+                    max-width: 600px; /* Tamaño más compacto */
+                    max-height: 90vh;
+                    overflow-y: auto;
+                    z-index: 1051; /* Mayor que el overlay */
+                }
+
+                .modal-header {
+                    padding: 20px 24px;
+                    border-bottom: 1px solid #e9ecef; /* Línea divisoria */
+                }
+
+                .modal-title {
+                    font-size: 18px;
+                    font-weight: 600;
+                    margin-bottom: 8px;
+                    color: #333; /* Color más oscuro */
+                }
+
+                .modal-description {
+                    color: #6c757d; /* Color más suave */
+                    font-size: 14px;
+                    margin-bottom: 0;
+                }
+
+                .modal-body {
+                    padding: 20px 24px;
+                }
+
+                .modal-footer {
+                    border-top: 1px solid #e9ecef; /* Línea divisoria */
+                    padding: 16px 24px 24px;
+                    display: flex;
+                    flex-direction: column;
+                    gap: 8px;
+                }
+
+                /* Formulario */
+                .form-grid {
+                    display: grid;
+                    gap: 16px;
+                }
+
+                .form-row {
+                    display: grid;
+                    grid-template-columns: 1fr;
+                    gap: 16px;
+                }
+
+                .form-group {
+                    display: flex;
+                    flex-direction: column;
+                    gap: 8px;
+                    margin-bottom: 16px;
+                }
+
+                .form-select {
+                    width: 100%;
+                    padding: 4px 8px;
+                    border: 1px solid #ced4da;
+                    border-radius: 4px;
+                    font-size: 13px;
+                    background-color: #fff;
+                    color: #495057;
+                    cursor: pointer;
+                    appearance: none; /* Elimina el estilo por defecto del select */
+                    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+                    background-repeat: no-repeat;
+                    background-position: right 12px center;
+                    background-size: 12px;
+                    transition: border-color 0.3s ease;
+                }
+
+                .form-select:focus {
+                    border-color: #80bdff;
+                    outline: none;
+                    box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
+                }
+
+                /* Scroll area */
+                .scroll-area {
+                    border: 1px solid #e2e8f0;
+                    border-radius: 6px;
+                    max-height: 200px;
+                    overflow-y: auto;
+                    margin-bottom: 16px;
+                }
+
+                .scroll-content {
+                    padding: 16px;
+                }
+
+                /* Ticket groups */
+                .ticket-group {
+                    margin-bottom: 16px;
+                }
+
+                .ticket-group-header {
+                    display: flex;
+                    align-items: center;
+                    gap: 8px;
+                    margin-bottom: 8px;
+                }
+
+                .ticket-list {
+                    list-style-type: disc;
+                    padding-left: 20px;
+                }
+
+                .ticket-item {
+                    font-size: 14px;
+                    margin-bottom: 4px;
+                }
+
+                .ticket-id {
+                    font-weight: 500;
+                }
+
+
+                /* Summary box */
+                .summary-box {
+                    background-color: #f8fafc;
+                    border-radius: 6px;
+                    padding: 12px;
+                }
+
+                .summary-header {
+                    display: flex;
+                    align-items: center;
+                    gap: 8px;
+                    margin-bottom: 8px;
+                }
+
+                .summary-icon {
+                    width: 16px;
+                    height: 16px;
+                    color: #64748b;
+                }
+
+                .summary-title {
+                    font-size: 14px;
+                    font-weight: 500;
+                }
+
+                .summary-content {
+                    display: flex;
+                    justify-content: space-between;
+                }
+
+                .summary-item {
+                    margin-bottom: 4px;
+                }
+
+                .summary-label {
+                    font-size: 12px;
+                    color: #64748b;
+                }
+
+                .summary-value {
+                    font-size: 14px;
+                    font-weight: 500;
+                }
+
+                /* Responsive */
+                @media (min-width: 768px) {
+                    .form-row {
+                        grid-template-columns: repeat(3, 1fr);
+                    }
+                }
+
+
+                /* Responsive */
+                @media (min-width: 640px) {
+                    .modal-footer {
+                        flex-direction: row;
+                        justify-content: flex-end;
+                    }
+
+                    .btn-full {
+                        width: auto;
+                    }
+                }
+            </style>
         </section>
     </body>
 </html>

@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" 
+      xmlns:th="http://www.thymeleaf.org">
+    <head th:replace="~{layout/plantilla :: head}">
+        <title>Mesa de Ayuda</title>
+        <meta charset="UTF-8"/>
+    </head>
+    <body>
+
+        <section th:fragment="metodosDepartamentos">
+            <div class="search-section">
+                <div class="search-container">
+                    <i class="fas fa-search search-icon"></i>
+                    <input type="text" class="search-input" placeholder="Buscar Ticket..." id="searchInput">
+                </div>
+                <div class="action-buttons">
+                    <button class="btn">
+                        <i class="fa-solid fa-user-plus"></i> Asignar Ticket
+                    </button>
+                    <div class="export-container">
+                        <button class="btn export-btn" id="exportBtn">
+                            <i class="fas fa-download"></i> Exportar
+                        </button>
+                        <div class="export-menu" id="exportMenu">
+                            <div class="export-item" data-format="json">
+                                <i class="fas fa-file-code"></i> JSON
+                            </div>
+                            <div class="export-item" data-format="xml">
+                                <i class="fas fa-file-code"></i> XML
+                            </div>
+                            <div class="export-item" data-format="csv">
+                                <i class="fas fa-file-csv"></i> CSV
+                            </div>
+                            <div class="export-item" data-format="txt">
+                                <i class="fas fa-file-alt"></i> TXT
+                            </div>
+                            <div class="export-item" data-format="sql">
+                                <i class="fas fa-database"></i> SQL
+                            </div>
+                            <div class="export-item" data-format="excel">
+                                <i class="fas fa-file-excel"></i> MS-Excel
+                            </div>
+                        </div>
+                    </div>
+                    <button class="btn" id="filterBtn">
+                        <i class="fas fa-filter"></i> Filtrar
+                    </button>
+                    <button class="btn" id="deleteBtn">
+                        <i class="fas fa-trash"></i> Eliminar
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <section th:fragment="listadoDepartamentos">
+            <div class="table-header">
+                <div class="pagination-left">
+                    <span>Mostrar</span>
+                    <select id="recordsPerPage" class="records-select">
+                        <option value="10">10</option>
+                        <option value="20">20</option>
+                        <option value="50">50</option>
+                        <option value="100">100</option>
+                    </select>
+                    <span>registros por página</span>
+                </div>
+                <div class="pagination-center">
+                    <span id="pageInfo" th:text="'Mostrando ' + ${currentPage * pageSize + 1} + ' a ' + ${(currentPage + 1) * pageSize} + ' de ' + ${totalItems} + ' registros'">
+                        Mostrando 1 a 20 de 57 registros
+                    </span>
+                </div>
+                <div class="pagination-controls">
+                    <button class="pagination-btn" th:onclick="'window.location.href=\'' + @{/departamento/listado(page=0,size=${pageSize})} + '\''"
+                            th:disabled="${currentPage == 0}">
+                        <i class="fas fa-angle-double-left"></i>
+                    </button>
+                    <button class="pagination-btn" th:onclick="'window.location.href=\'' + @{/departamento/listado(page=${currentPage-1},size=${pageSize})} + '\''"
+                            th:disabled="${currentPage == 0}">
+                        <i class="fas fa-angle-left"></i>
+                    </button>
+                    <div class="page-numbers" id="pageNumbers">
+                        <button th:each="pageNum : ${#numbers.sequence(0, totalPages - 1)}"
+                                th:class="'page-number ' + ${pageNum == currentPage ? 'active' : ''}"
+                                th:onclick="'window.location.href=\'' + @{/departamento/listado(page=${pageNum},size=${pageSize})} + '\''"
+                                th:text="${pageNum + 1}">1</button>
+                    </div>
+                    <button class="pagination-btn" th:onclick="'window.location.href=\'' + @{/departamento/listado(page=${currentPage+1},size=${pageSize})} + '\''"
+                            th:disabled="${currentPage >= totalPages - 1}">
+                        <i class="fas fa-angle-right"></i>
+                    </button>
+                    <button class="pagination-btn" th:onclick="'window.location.href=\'' + @{/departamento/listado(page=${totalPages-1},size=${pageSize})} + '\''"
+                            th:disabled="${currentPage >= totalPages - 1}">
+                        <i class="fas fa-angle-double-right"></i>
+                    </button>
+                </div>
+            </div>
+
+            <div class="table-container">
+                <table class="tickets-table table-resizable">
+                    <thead>
+                        <tr>
+                            <th>
+                                <input type="checkbox" class="checkbox-custom" id="selectAll">
+                                    <div class="resizer"></div>
+                            </th>
+                            <th>
+                                Nombre
+                                <div class="resizer"></div>
+                            </th>
+                            <th>
+                                Descripción
+                                <div class="resizer"></div>
+                            </th>
+                            <th>
+                                Usuarios Asignados
+                                <div class="resizer"></div>
+                            </th>
+                            <th>
+                                Acciones
+                                <div class="resizer"></div>
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="departamento : ${departamentos}">
+                            <td><input type="checkbox" class="checkbox-custom"></td>
+                            <td th:text="${departamento.nombre}">(Nombre)</td>
+                            <td th:text="${departamento.descripcion}">(Descripción)</td>
+                            <td th:text="${usuariosPorDepartamento.get(departamento.idDepartamento)}">(Usuarios Asignados)</td>
+                            <td>
+                                <a th:href="@{/departamento/editar/{id}(id=${departamento.idDepartamento})}" class="btn btn-primary">Editar</a>
+                                <a th:href="@{/departamento/eliminar/{id}(id=${departamento.idDepartamento})}" class="btn btn-danger">Eliminar</a>
+                            </td>
+                        </tr>
+                        <!-- Si no hay departamentos, mostrar mensaje -->
+                        <tr th:if="${#lists.isEmpty(departamentos)}">
+                            <td colspan="5" class="text-center">No hay departamentos registrados</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+    </body>
+</html>

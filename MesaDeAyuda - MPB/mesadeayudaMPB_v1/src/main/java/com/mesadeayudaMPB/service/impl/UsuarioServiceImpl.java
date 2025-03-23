@@ -6,11 +6,7 @@ import com.mesadeayudaMPB.domain.Usuario;
 import com.mesadeayudaMPB.domain.Rol;
 import com.mesadeayudaMPB.service.UsuarioService;
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.List;
-import java.util.UUID;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -21,6 +17,7 @@ public class UsuarioServiceImpl implements UsuarioService {
 
     @Autowired
     private UsuarioDao usuarioDao;
+
     @Autowired
     private RolDao rolDao;
 
@@ -115,5 +112,17 @@ public class UsuarioServiceImpl implements UsuarioService {
     @Transactional(readOnly = true)
     public Usuario getUsuarioPorId(Long id) {
         return usuarioDao.findById(id).orElse(null);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Long contarUsuariosPorDepartamento(String nombreDepartamento) {
+        return usuarioDao.countByDepartamento(nombreDepartamento);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<Usuario> getUsuariosPorRoles(List<String> roles) {
+        return usuarioDao.findByRolesNombreIn(roles);
     }
 }

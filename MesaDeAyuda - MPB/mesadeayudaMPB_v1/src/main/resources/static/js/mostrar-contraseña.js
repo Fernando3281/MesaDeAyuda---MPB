@@ -12,4 +12,3 @@ function togglePassword() {
         toggleIcon.classList.add('fa-eye');
     }
 }
-

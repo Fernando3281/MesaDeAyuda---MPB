@@ -29,31 +29,9 @@
                                     <div class="input-group-registro">
                                         <label for="departamento">Departamento</label>
                                         <select id="departamento" name="departamento" required>
-                                            <option value="recursos-humanos">Recursos Humanos</option>
-                                            <option value="tecnologia">Contabilidad</option>
-                                            <option value="administracion">Auditoria</option>
-                                            <option value="administracion">Patentes</option>
-                                            <option value="tecnologia">Acueducto</option>
-                                            <option value="administracion">Asesoría Jurídica Municipal</option>
-                                            <option value="administracion">Asesoría Legal Concejo Municipal</option>
-                                            <option value="administracion">Administración Tributaria y Financiera</option>
-                                            <option value="administracion">Bienes Inmuebles, Catastro y Valoración</option>
-                                            <option value="administracion">Unidad Técnica de Gestión Vial</option>
-                                            <option value="administracion">Tecnologías de Información</option>
-                                            <option value="administracion">Promoción de Cultura y Turismo</option>
-                                            <option value="administracion">Archivo</option>
-                                            <option value="administracion">Policía Municipal</option>
-                                            <option value="administracion">Secretaría del Concejo</option>
-                                            <option value="administracion">Gestión Ambiental</option>
-                                            <option value="administracion">Parquímetros</option>
-                                            <option value="administracion">Proveeduría</option>
-                                            <option value="administracion">Bodega</option>
-                                            <option value="administracion">Gestión Social</option>
-                                            <option value="administracion">Obras Civiles</option>
-                                            <option value="administracion">Planificación</option>
-                                            <option value="administracion">Tesorería</option>
-                                            <option value="administracion">Ingeniería</option>
-                                            <option value="administracion">Cobros y cementerio</option>
+                                            <option th:each="departamento : ${departamentos}" 
+                                                    th:value="${departamento.nombre}" 
+                                                    th:text="${departamento.nombre}"></option>
                                         </select>
                                     </div>
                                     <div class="input-group-registro">
@@ -76,113 +54,130 @@
                         </div>
                     </div>
 
-                    <!-- Modal -->
-                    <div id="error-modal" class="modal" style="display:none;">
-                        <div class="modal-content">
-                            <span class="close" onclick="closeModal()">&times;</span>
-                            <p id="modal-message">Las contraseñas no coinciden. Por favor, inténtelo de nuevo.</p>
+                    <!-- Contenedor para los botones de prueba -->
+                    <div style="text-align: center; margin-top: 50px;">
+                        <button onclick="showToast('warning')">Mostrar Alerta</button>
+                        <button onclick="showToast('error')">Mostrar Error</button>
+                    </div>
+
+                    <!-- Toast de Alerta (Amarillo) -->
+                    <div id="toast-warning" class="toast-modal toast-warning">
+                        <div class="toast-content">
+                            <p class="toast-message">
+                                <i class="toast-icon fa-solid fa-triangle-exclamation"></i>
+                                <span>"Mensaje generico..."</span>
+                            </p>
+                            <span class="toast-close" onclick="closeToast('warning')">
+                                <i class="fa-solid fa-xmark"></i>
+                            </span>
                         </div>
                     </div>
+
+                    <!-- Toast de Error (Rojo) -->
+                    <div id="toast-error" class="toast-modal toast-error">
+                        <div class="toast-content">
+                            <p class="toast-message">
+                                <i class="toast-icon fa-solid fa-server"></i>
+                                <span>"Mensaje generico..."</span>
+                            </p>
+                            <span class="toast-close" onclick="closeToast('error')">
+                                <i class="fa-solid fa-xmark"></i>
+                            </span>
+                        </div>
+                    </div>
+
+
+                    <script>
+                        //Para mostrar los modals del formulario de registro
+                        $("#registroForm").on('submit', function (event) {
+                            event.preventDefault();
+
+                            const password = $("#password").val();
+                            const confirmPassword = $("#confirm-password").val();
+                            const email = $("#email").val();
+
+                            if (password !== confirmPassword) {
+                                showToast('error', "Las contraseñas no coinciden. Por favor, inténtelo de nuevo.");
+                                return;
+                            }
+
+                            const formData = new FormData(this);
+
+                            $.ajax({
+                                url: '/registro/nuevo',
+                                method: 'POST',
+                                data: formData,
+                                processData: false,
+                                contentType: false,
+                                success: function (response) {
+                                    if (response.success) {
+                                        window.location.href = response.redirectUrl;
+                                    } else if (response.error) {
+                                        // Si el error es que el correo ya está registrado, muestra el modal amarillo
+                                        if (response.error.includes("ya está registrado")) {
+                                            // Cambia el mensaje a "El correo ya se encuentra registrado"
+                                            showToast('warning', "El correo ya se encuentra registrado.");
+                                        } else {
+                                            showToast('error', response.error);
+                                        }
+                                    }
+                                },
+                                error: function (xhr) {
+                                    let errorMessage = "Error al procesar el registro.";
+
+                                    // Intenta parsear la respuesta JSON
+                                    try {
+                                        const jsonResponse = JSON.parse(xhr.responseText);
+                                        if (jsonResponse && jsonResponse.error) {
+                                            errorMessage = jsonResponse.error;
+                                            // Si el error es que el correo ya está registrado, muestra el modal amarillo
+                                            if (errorMessage.includes("ya está registrado")) {
+                                                // Cambia el mensaje a "El correo ya se encuentra registrado"
+                                                showToast('warning', "El correo ya se encuentra registrado.");
+                                            } else {
+                                                showToast('error', errorMessage);
+                                            }
+                                        }
+                                    } catch (e) {
+                                        // Si no es JSON, verifica si xhr.responseJSON existe
+                                        if (xhr.responseJSON && xhr.responseJSON.error) {
+                                            errorMessage = xhr.responseJSON.error;
+                                            // Si el error es que el correo ya está registrado, muestra el modal amarillo
+                                            if (errorMessage.includes("ya está registrado")) {
+                                                // Cambia el mensaje a "El correo ya se encuentra registrado"
+                                                showToast('warning', "El correo ya se encuentra registrado.");
+                                            } else {
+                                                showToast('error', errorMessage);
+                                            }
+                                        } else {
+                                            showToast('error', errorMessage);
+                                        }
+                                    }
+                                }
+                            });
+                        });
+
+// Función para mostrar toast con mensaje dinámico
+                        function showToast(type, message) {
+                            // Actualiza el mensaje en el toast
+                            $(`#toast-${type} .toast-message span`).text(message);
+
+                            // Muestra el toast
+                            $(`#toast-${type}`).css('display', 'block');
+
+                            // Cierra automáticamente después de 5 segundos
+                            setTimeout(function () {
+                                closeToast(type);
+                            }, 20000);
+                        }
+
+                        function closeToast(type) {
+                            $(`#toast-${type}`).css('display', 'none');
+                        }
+                    </script>
 
                     <footer>
                         © 2024 Municipalidad de Barva. Todos los derechos reservados.
                     </footer>
-
-                    <script>
-                        $(document).ready(function () {
-                            function showModal(message) {
-                                $("#modal-message").text(message);
-                                $("#error-modal").show();
-                            }
-
-                            window.closeModal = function () {
-                                $("#error-modal").hide();
-                            }
-
-                            $("#registroForm").on('submit', function (event) {
-                                event.preventDefault();
-
-                                const password = $("#password").val();
-                                const confirmPassword = $("#confirm-password").val();
-                                const email = $("#email").val();
-
-                                // Verificar que las contraseñas coincidan
-                                if (password !== confirmPassword) {
-                                    showModal("Las contraseñas no coinciden. Por favor, inténtelo de nuevo.");
-                                    return;
-                                }
-
-                                // Convertir los datos del formulario a un objeto
-                                const formData = new FormData(this);
-
-                                // Enviar formulario
-                                $.ajax({
-                                    url: '/registro/nuevo',
-                                    method: 'POST',
-                                    data: formData,
-                                    processData: false,
-                                    contentType: false,
-                                    success: function (response) {
-                                        if (response.success) {
-                                            window.location.href = response.redirectUrl;
-                                        } else if (response.error) {
-                                            showModal(response.error);
-                                        }
-                                    },
-                                    error: function (xhr) {
-                                        let errorMessage = "Error al procesar el registro.";
-                                        if (xhr.responseJSON && xhr.responseJSON.error) {
-                                            errorMessage = xhr.responseJSON.error;
-                                        }
-                                        showModal(errorMessage);
-                                    }
-                                });
-                            });
-
-                            // Modal close handlers
-                            $(".close").click(closeModal);
-                            $(window).click(function (event) {
-                                if ($(event.target).is('#error-modal')) {
-                                    closeModal();
-                                }
-                            });
-                        });
-                    </script>
                 </body>
                 </html>
-
-                <style>
-                    .modal {
-                        display: none;
-                        position: fixed;
-                        z-index: 1;
-                        padding-top: 100px;
-                        left: 0;
-                        top: 0;
-                        width: 100%;
-                        height: 100%;
-                        overflow: auto;
-                        background-color: rgba(0,0,0,0.4);
-                    }
-
-                    .modal-content {
-                        background-color: #fefefe;
-                        margin: auto;
-                        padding: 20px;
-                        border: 1px solid #888;
-                        width: 300px;
-                        text-align: center;
-                        border-radius: 8px;
-                    }
-
-                    .close {
-                        color: #aaa;
-                        float: right;
-                        font-size: 28px;
-                        font-weight: bold;
-                        cursor: pointer;
-                    }
-
-                </style>
-
-

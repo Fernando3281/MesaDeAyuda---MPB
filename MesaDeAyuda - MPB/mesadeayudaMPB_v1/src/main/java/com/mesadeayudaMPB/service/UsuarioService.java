@@ -42,6 +42,10 @@ public interface UsuarioService {
     // Se elimina el usuario que tiene el id pasado por parámetro
     public void delete(Usuario usuario);
 
+    Long contarUsuariosPorDepartamento(String nombreDepartamento);
+
+    List<Usuario> getUsuariosPorRoles(List<String> roles);
+
     //METODO PARA EL REGISTRO
     public boolean existeUsuarioPorCorreoElectronico(String correoElectronico);
 

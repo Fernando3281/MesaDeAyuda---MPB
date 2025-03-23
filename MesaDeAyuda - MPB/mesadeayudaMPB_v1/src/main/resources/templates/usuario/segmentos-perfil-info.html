@@ -4,7 +4,6 @@
     <head th:replace="~{layout/plantilla :: head}">
         <title>Mesa de Ayuda</title>
     </head>
-
     <body>
 
         <section th:fragment="perfil-section">
@@ -219,13 +218,14 @@
 
                                                                                     <div class="detail-column">
                                                                                         <label>Departamento</label>
-                                                                                        <select name="departamento" class="form-select">
+                                                                                        <select name="departamento" class="form-select form-select-departamento" required>
                                                                                             <option value="">Seleccione un departamento</option>
-                                                                                            <option value="Asistente de TI" th:selected="${usuario.departamento == 'Asistente de TI'}">Asistente de TI</option>
-                                                                                            <option value="Soporte Técnico" th:selected="${usuario.departamento == 'Soporte Técnico'}">Soporte Técnico</option>
-                                                                                            <option value="Desarrollo" th:selected="${usuario.departamento == 'Desarrollo'}">Desarrollo</option>
-                                                                                            <option value="Redes" th:selected="${usuario.departamento == 'Redes'}">Redes</option>
-                                                                                            <option value="Seguridad" th:selected="${usuario.departamento == 'Seguridad'}">Seguridad</option>
+                                                                                            <!-- Iterar sobre la lista de departamentos -->
+                                                                                            <option th:each="departamento : ${departamentos}" 
+                                                                                                    th:value="${departamento.nombre}" 
+                                                                                                    th:text="${departamento.nombre}"
+                                                                                                    th:selected="${usuario.departamento == departamento.nombre}">
+                                                                                            </option>
                                                                                         </select>
                                                                                     </div>
                                                                                 </div>
