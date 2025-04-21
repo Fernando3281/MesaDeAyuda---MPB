@@ -1,16 +1,14 @@
 <!DOCTYPE html>
-<html xmlns="http://www.w3.org/1999/xhtml" 
-      xmlns:th="http://www.thymeleaf.org">
+<html xmlns:th="http://www.thymeleaf.org">
     <head th:replace="~{layout/plantilla :: head}">
-        <title>Mesa de Ayuda</title>
-        <meta charset="UTF-8"/>
+        <title>Administrar Usuarios</title>
     </head>
-    
+
     <th:block th:append="head">
         <link rel="stylesheet" th:href="@{/css/table_layout_principal.css}">
     </th:block>
 
-    <th:block th:replace="~{layout/plantilla :: scripts-table}"></th:block>
+    <th:block th:replace="~{layout/plantilla :: scripts-table-usuarios}"></th:block>
 
     <body>
         <div class="wrapper">
@@ -28,8 +26,7 @@
                 <main class="home-section">
                     <div class="content-wrapper">
 
-                        <section th:replace="~{tickets/segmentos-tickets-table :: metodosTickets}"></section>
-                        <section th:replace="~{tickets/segmentos-tickets-table :: listadoTickets}"></section>
+                        <section th:replace="~{usuario/segmentos-perfil :: usuarios-listado}"></section>
 
                     </div>
                 </main>

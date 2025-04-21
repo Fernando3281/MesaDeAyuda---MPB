@@ -19,4 +19,16 @@ public class RolServiceImpl implements RolService {
     public List<Rol> obtenerRolesPorUsuario(Long idUsuario) {
         return rolDao.findByUsuarioIdUsuario(idUsuario);
     }
+    
+    @Override
+    @Transactional
+    public void eliminarRolesPorUsuario(Long idUsuario) {
+        rolDao.deleteByUsuarioIdUsuario(idUsuario);
+    }
+    
+    @Override
+    @Transactional
+    public void save(Rol rol) {
+        rolDao.save(rol);
+    }
 }

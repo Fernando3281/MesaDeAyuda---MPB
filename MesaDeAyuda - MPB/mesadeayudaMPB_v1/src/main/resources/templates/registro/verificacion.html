@@ -29,7 +29,7 @@
                 </div>
             </div>
         </div>
-        
+
         <!-- Modal de Error -->
         <div id="toast-error" class="toast-modal toast-error">
             <div class="toast-content">
@@ -42,36 +42,36 @@
                 </span>
             </div>
         </div>
-        
+
         <footer class="verification-footer">
             © 2024 Municipalidad de Barva. Todos los derechos reservados.
         </footer>
-        
+
         <script th:inline="javascript">
-            $(document).ready(function() {
+            $(document).ready(function () {
                 // Verificar si hay un mensaje de error usando Thymeleaf
                 const errorMessage = /*[[${error}]]*/ null;
                 if (errorMessage) {
                     showToast('error');
                 }
-                
+
                 // También verificar por parámetro en URL (alternativa)
                 const urlParams = new URLSearchParams(window.location.search);
                 if (urlParams.get('error') === 'true') {
                     showToast('error');
                 }
             });
-            
+
             // Función para mostrar toast
             function showToast(type) {
                 $(`#toast-${type}`).css('display', 'block');
-                
+
                 // Cierra automáticamente después de 5 segundos
-                setTimeout(function() {
+                setTimeout(function () {
                     closeToast(type);
                 }, 80000);
             }
-            
+
             function closeToast(type) {
                 $(`#toast-${type}`).css('display', 'none');
             }

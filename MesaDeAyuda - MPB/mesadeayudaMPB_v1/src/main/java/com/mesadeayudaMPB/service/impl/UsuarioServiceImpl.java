@@ -6,8 +6,17 @@ import com.mesadeayudaMPB.domain.Usuario;
 import com.mesadeayudaMPB.domain.Rol;
 import com.mesadeayudaMPB.service.UsuarioService;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.List;
+import java.util.Random;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -20,6 +29,9 @@ public class UsuarioServiceImpl implements UsuarioService {
 
     @Autowired
     private RolDao rolDao;
+
+    @Autowired
+    private PasswordEncoder passwordEncoder;
 
     @Override
     @Transactional(readOnly = true)
@@ -69,10 +81,10 @@ public class UsuarioServiceImpl implements UsuarioService {
         // Guardar el usuario
         usuario = usuarioDao.save(usuario);
 
-        // Si se debe crear el rol, crear el rol "ROLE_USER" asociado al usuario
+        // Si se debe crear el rol, crear el rol "ROL_USUARIO" asociado al usuario
         if (crearRolUser) {
             Rol rol = new Rol();
-            rol.setNombre("ROLE_USER");
+            rol.setNombre("ROL_USUARIO");
             rol.setUsuario(usuario);
             rolDao.save(rol);
         }
@@ -124,5 +136,12 @@ public class UsuarioServiceImpl implements UsuarioService {
     @Transactional(readOnly = true)
     public List<Usuario> getUsuariosPorRoles(List<String> roles) {
         return usuarioDao.findByRolesNombreIn(roles);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<Usuario> getUsuariosPaginados(int page, int size) {
+        Pageable pageable = PageRequest.of(page, size, Sort.by("nombre").ascending());
+        return usuarioDao.findAll(pageable);
     }
 }

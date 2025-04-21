@@ -41,6 +41,12 @@ public class TicketServiceImpl implements TicketService {
 
     @Override
     @Transactional(readOnly = true)
+    public List<Ticket> getTicketsPorSolicitanteYEstado(Usuario solicitante, String estado) {
+        return ticketDao.findBySolicitanteAndEstadoOrderByFechaAperturaDesc(solicitante, estado);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
     public Ticket getTicket(Ticket ticket) {
         return ticketDao.findById(ticket.getIdTicket()).orElse(null);
     }
@@ -82,5 +88,25 @@ public class TicketServiceImpl implements TicketService {
     @Transactional(readOnly = true)
     public Ticket getTicketPorId(Long idTicket) {
         return ticketDao.findById(idTicket).orElse(null);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<Ticket> getTicketsConMensajes(Usuario usuario) {
+        boolean esAdmin = usuario.getRoles().stream()
+                .anyMatch(rol -> "ROL_ADMINISTRADOR".equals(rol.getNombre()));
+        boolean esSoportista = usuario.getRoles().stream()
+                .anyMatch(rol -> "ROL_SOPORTISTA".equals(rol.getNombre()));
+
+        if (esAdmin) {
+            // Si es admin, obtener todos los tickets que tienen mensajes
+            return ticketDao.findTicketsWithMessages();
+        } else if (esSoportista) {
+            // Si es soportista, obtener tickets asignados a él que tienen mensajes
+            return ticketDao.findTicketsWithMessagesBySupport(usuario.getIdUsuario());
+        } else {
+            // Si es cliente, obtener sus tickets que tienen mensajes
+            return ticketDao.findTicketsWithMessagesByClient(usuario.getIdUsuario());
+        }
     }
 }

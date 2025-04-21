@@ -6,6 +6,7 @@ package com.mesadeayudaMPB.service;
 
 import com.mesadeayudaMPB.domain.Usuario;
 import java.util.List;
+import org.springframework.data.domain.Page;
 import org.springframework.web.multipart.MultipartFile;
 
 /**
@@ -55,4 +56,7 @@ public interface UsuarioService {
     byte[] actualizarImagen(MultipartFile imagen);
 
     public Usuario getUsuarioPorId(Long id);
+
+    // Nuevo método para paginación
+    Page<Usuario> getUsuariosPaginados(int page, int size);
 }

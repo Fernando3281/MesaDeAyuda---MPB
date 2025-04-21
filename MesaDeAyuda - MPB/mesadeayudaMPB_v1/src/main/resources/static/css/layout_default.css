@@ -374,8 +374,6 @@ footer {
     align-items: center;
 }
 
-
-
 .breadcrumb-item {
     display: inline;
     font-size: 14px;
@@ -394,9 +392,14 @@ footer {
     font-size: 13px;
 }
 
+.breadcrumb-item a:hover {
+    color: #0056b3;
+    text-decoration: underline;
+}
+
 .breadcrumb-item.active {
+    color: #6c757d;
     font-size: 13px;
-    color: rgba(0, 0, 0, 0.6);
 }
 
 
@@ -543,7 +546,6 @@ footer {
     z-index: 1000;
     font-size: 0.85rem;
     padding: 3px 0px;
-    margin-right: 5px;
     flex-direction: column;
     gap: 10px;
     color: #7e8590;

@@ -25,53 +25,60 @@
                     <i class="fa-solid fa-arrow-left"></i>
                 </a>
 
+                <input type="hidden" id="ticketId" th:value="${ticket.idTicket}">
 
-                <button th:if="${ticket.asignadoPara == null}" 
-                        type="button" 
-                        id="btnAtenderTicket" 
-                        class="btn btn-outline-primary" 
-                        th:data-ticket-id="${ticket.idTicket}"
-                        onclick="atenderTicket(this.getAttribute('data-ticket-id'))">
-                    <i class="fa-solid fa-clipboard-check"></i> Atender Ticket
-                </button>
+                    <button th:if="${ticket.asignadoPara == null and ticket.estado != 'Desactivado'}" 
+                            type="button" 
+                            id="btnAtenderTicket" 
+                            class="btn btn-outline-primary" 
+                            th:data-ticket-id="${ticket.idTicket}"
+                            onclick="atenderTicket(this.getAttribute('data-ticket-id'))">
+                        <i class="fa-solid fa-clipboard-check"></i> Atender Ticket
+                    </button>
 
-                <!-- Botones que se muestran solo si el ticket está asignado -->
-                <button type="button" 
-                        class="btn btn-outline-primary" 
-                        data-bs-toggle="modal" 
-                        data-bs-target="#elevateTicketModal">
-                    <i class="fa-solid fa-pen"></i> Actualizar Ticket
-                </button>
-                <button th:if="${ticket.asignadoPara == null}" 
-                        type="button" 
-                        class="btn btn-outline-primary"
-                        data-bs-toggle="modal" 
-                        data-bs-target="#elevateTicketModal"
-                        onclick="openAssignTicketsModal()">
-                    <i class="fa-solid fa-user-plus"></i> Asignar Ticket
-                </button>
-                <button th:if="${ticket.asignadoPara != null}" 
-                        type="button" 
-                        class="btn btn-outline-primary" 
-                        data-bs-toggle="modal" 
-                        data-bs-target="#elevateTicketModal">
-                    <i class="fa-solid fa-user-pen"></i> Reasignar Ticket
-                </button>
-                <button th:if="${ticket.asignadoPara != null && ticket.estado != 'Resuelto'}" 
-        type="button" 
-        class="btn btn-outline-success" 
-        id="btnCerrarTicket"
-        th:data-ticket-id="${ticket.idTicket}"
-        onclick="closeTicket(this.getAttribute('data-ticket-id'))">
-    <i class="fa-regular fa-circle-check"></i> Cerrar Ticket
-</button>
-                <button type="button" 
-                        class="btn btn-danger" 
-                        id="desactivarBtn" 
-                        th:data-ticket-id="${ticket.idTicket}"
-                        onclick="desactivarTicket(this.getAttribute('data-ticket-id'))">
-                    <i class="fa-solid fa-ban"></i> Desactivar Ticket
-                </button>
+                    <!-- Botones que se muestran solo si el ticket está asignado -->
+                    <button th:if="${esAdmin}" 
+                            type="button" 
+                            class="btn btn-outline-primary" 
+                            data-bs-toggle="modal" 
+                            data-bs-target="#elevateTicketModal">
+                        <i class="fa-solid fa-pen"></i> Actualizar Ticket
+                    </button>
+                    <button th:if="${esAdmin}" 
+                            type="button" 
+                            class="btn btn-outline-primary"
+                            onclick="openAssignTicketsModal()">
+                        <i class="fa-solid fa-user-plus"></i> Asignar Ticket
+                    </button>
+
+                    <button th:if="${ticket.asignadoPara != null}" 
+                            type="button" 
+                            class="btn btn-outline-primary" 
+                            data-bs-toggle="modal" 
+                            data-bs-target="#elevateTicketModal">
+                        <i class="fa-solid fa-user-pen"></i> Reasignar Ticket
+                    </button>
+                    <button th:if="${ticket.estado == 'Resuelto'}"
+                            type="button" 
+                            class="btn btn-outline-primary" 
+                            onclick="openReabrirTicketModal()">
+                        <i class="fa-solid fa-rotate"></i> Reabrir Ticket
+                    </button>
+                    <button th:if="${ticket.asignadoPara != null and ticket.estado != 'Resuelto' and ticket.estado != 'Desactivado'}" 
+                            type="button" 
+                            class="btn btn-outline-success" 
+                            id="btnCerrarTicket"
+                            onclick="verificarPrioridadYCerrar()">
+                        <i class="fa-regular fa-circle-check"></i> Cerrar Ticket
+                    </button>
+                    <button type="button" 
+                            class="btn btn-danger" 
+                            id="desactivarBtn" 
+                            th:data-ticket-id="${ticket.idTicket}"
+                            th:disabled="${ticket.estado == 'Resuelto' or ticket.estado == 'Desactivado'}"
+                            onclick="desactivarTicket(this.getAttribute('data-ticket-id'))">
+                        <i class="fa-solid fa-ban"></i> Desactivar Ticket
+                    </button>
             </div>
 
             <div class="container">
@@ -91,33 +98,25 @@
                         </span>
                     </div>
                     <div class="info-row">
-                        <span class="info-label">Nivel de Soporte</span>
+                        <span class="info-label">Nivel de Soporte:</span>
                         <span class="info-value">Nivel 1</span>
                     </div>
                     <div class="info-row">
-                        <span class="info-label">Tiempo de Respuesta SLA</span>
+                        <span class="info-label">Fecha de Apertura:</span>
                         <span class="info-value">4 horas</span>
                     </div>
-                    <div class="info-row">
-                        <span class="info-label">Tiempo Transcurrido</span>
-                        <span class="info-value" id="tiempoTranscurrido">0 horas 0 minutos</span>
-                    </div>
-                    <button class="action-button">
-                        <i class="fa-solid fa-arrow-turn-up"></i>
-                        Elevar Ticket
-                    </button>
-                    <button class="action-button">
+
+                    <button class="action-button" id="btnHeredarTicket"
+                            th:disabled="${(ticket.estado == 'Resuelto' or ticket.estado == 'Desactivado') or 
+                            (ticket.estado == 'Abierto' and esSoportista)}">
                         <i class="fa-solid fa-people-arrows"></i> Heredar Ticket
                     </button>
-                    <button th:if="${ticket.asignadoPara != null}" 
-                            type="button" 
-                            class="action-button" 
-                            onclick="openPrioridadModal()">
+
+                    <button class="action-button" id="btnAsignarPrioridad"
+                            onclick="openPrioridadModal()"
+                            th:disabled="${(ticket.estado == 'Resuelto' or ticket.estado == 'Desactivado') or 
+                            (ticket.estado == 'Abierto' and esSoportista)}">
                         <i class="fa-solid fa-thumbtack"></i> Asignar Prioridad
-                    </button>
-                    <button class="action-button">
-                        <i class="far fa-clock"></i>
-                        Programar Seguimiento
                     </button>
                 </div>
 
@@ -207,11 +206,16 @@
                                     <div class="grid grid-2">
                                         <div class="form-group">
                                             <label for="asignadoPara" class="form-label">Asignado para</label>
-                                            <div class="input-group">
+                                            <div class="input-group" 
+                                                 th:classappend="${(ticket.estado == 'Resuelto' or ticket.estado == 'Desactivado' or esSoportista)} ? 'no-button' : ''">
                                                 <input type="text" class="form-control" id="asignadoPara" 
                                                        th:value="${ticket.asignadoPara != null ? ticket.asignadoPara.nombre + ' ' + ticket.asignadoPara.apellido : 'Sin Asignar'}" 
                                                        readonly>
-                                                    <button type="button" id="asignarTicket" class="btn btn-outline-secondary popover-btn" data-popover="Asignar Ticket">
+                                                    <button type="button" 
+                                                            id="asignarTicket" 
+                                                            class="btn btn-outline-secondary popover-btn" 
+                                                            data-popover="Asignar Ticket"
+                                                            th:unless="${ticket.estado == 'Resuelto' or ticket.estado == 'Desactivado' or esSoportista}">
                                                         <i class="fa-solid fa-user-plus"></i>
                                                     </button>
                                             </div>
@@ -244,11 +248,17 @@
 
                                     <div class="form-group">
                                         <label class="form-label">Archivos adjuntos</label>
-                                        <div class="btn-group" th:if="${tieneImagenes}">
+                                        <div class="attachments-container" th:if="${tieneImagenes}">
                                             <button type="button" class="btn btn-outline" 
                                                     th:onclick="'showImageViewer(' + ${ticket.idTicket} + ')'">
                                                 <i class="fas fa-paperclip"></i> Ver Imágenes ([[${imagenesInfo.size()}]])
                                             </button>
+                                        </div>
+                                        <div class="no-attachments-message" th:unless="${tieneImagenes}">
+                                            <div class="empty-state">
+                                                <i class="far fa-folder-open"></i>
+                                                <p>No se han adjuntado archivos a este ticket</p>
+                                            </div>
                                         </div>
                                     </div>
 
@@ -350,20 +360,31 @@
                         <div class="card" id="card-message-manager">
                             <div class="response-header">
                                 <h2>Responder Ticket</h2>
-                                <button type="button" class="response-type" id="responseType" onclick="toggleResponseType()">Respuesta Pública</button>
+                                <button type="button" class="response-type" id="responseType" 
+                                        th:disabled="${ticket.estado == 'Resuelto' or ticket.estado == 'Desactivado'}"
+                                        onclick="toggleResponseType()">Respuesta Pública</button>
                             </div>
                             <form id="formResponderTicket" th:action="@{/tickets/responder/{id}(id=${ticket.idTicket})}" method="POST" onsubmit="responderTicket(event)">
                                 <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
                                 <input type="hidden" id="esNotaInterna" name="esNotaInterna" value="false">
                                     <textarea class="response-textarea" id="respuesta" name="respuesta" 
                                               placeholder="Escribe tu respuesta pública..." 
-                                              th:disabled="${ticket.prioridad == 'Sin Asignar'}"></textarea>
+                                              th:disabled="${ticket.asignadoPara == null or ticket.estado == 'Resuelto' or ticket.estado == 'Desactivado'}"></textarea>
                                     <div class="response-actions">
-                                        <button type="submit" class="btn btn-primary">
+                                        <button type="submit" class="btn btn-primary" 
+                                                th:disabled="${ticket.asignadoPara == null or ticket.estado == 'Resuelto' or ticket.estado == 'Desactivado'}">
                                             <i class="fas fa-paper-plane"></i> Enviar Respuesta
                                         </button>
                                     </div>
                             </form>
+                            <div th:if="${ticket.asignadoPara == null}" class="status-message warning">
+                                <i class="fas fa-exclamation-circle"></i>
+                                <span>Debes atender el ticket primero para poder enviar mensajes</span>
+                            </div>
+                            <div th:if="${ticket.estado == 'Resuelto' or ticket.estado == 'Desactivado'}" class="status-message info">
+                                <i class="fas fa-info-circle"></i>
+                                <span>Este ticket está <span th:text="${ticket.estado == 'Resuelto' ? 'resuelto' : 'desactivado'}"></span> y no acepta más mensajes</span>
+                            </div>
                         </div>
 
                         <script>
@@ -432,18 +453,23 @@
 
 
             <!-- Modal para confirmar el cierre del ticket -->
-            <div class="modal-overlay" id="confirmCloseModalOverlay">
+            <div class="modal-overlay" id="resolveTicketModalOverlay">
                 <div class="modal">
                     <div class="modal-header">
                         <h2 class="modal-title">Confirmar Cierre del Ticket</h2>
                     </div>
-                    <div class="modal-body">
-                        <p>¿Está seguro que desea cerrar el ticket?</p>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-outline" onclick="closeConfirmCloseModal()">Cancelar</button>
-                        <button type="button" class="btn btn-primary" onclick="confirmCloseTicket()">Aceptar</button>
-                    </div>
+                    <form th:action="@{/tickets/cerrarTicket}" method="post">
+                        <div class="modal-body">
+                            <input type="hidden" name="idTicket" th:value="${ticket.idTicket}">
+                                <div class="form-group">
+                                    <p>¿Está seguro que desea cerrar el ticket?</p>
+                                </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" onclick="closeResolveTicketModal()">Cancelar</button>
+                            <button type="submit" class="btn btn-primary">Cerrar Ticket</button>
+                        </div>
+                    </form>
                 </div>
             </div>
 
@@ -459,7 +485,7 @@
                         </div>
                     </div>
                     <div class="modal-footer">
-                        <button type="button" class="btn btn-primary" onclick="closeErrorPriorityModal()">Aceptar</button>
+                        <button type="button" class="btn btn-primary">Aceptar</button>
                     </div>
                 </div>
             </div>
@@ -504,6 +530,27 @@
                 </div>
             </div>
 
+            <!-- Modal para confirmar reapertura del ticket -->
+            <div class="modal-overlay" id="reabrirTicketModal">
+                <div class="modal">
+                    <div class="modal-header">
+                        <h2 class="modal-title">Confirmar Reapertura del Ticket</h2>
+                    </div>
+                    <form th:action="@{/tickets/reabrir/{id}(id=${ticket.idTicket})}" method="POST">
+                        <div class="modal-body">
+                            <input type="hidden" name="_csrf" th:value="${_csrf.token}"/>
+                            <div class="form-group">
+                                <p>¿Está seguro que desea reabrir este ticket? El estado cambiará a "Pendiente".</p>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" onclick="closeReabrirTicketModal()">Cancelar</button>
+                            <button type="submit" class="btn btn-primary">Reabrir Ticket</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
             <style>
                 /* Modal */
                 .modal-overlay {
@@ -517,6 +564,7 @@
                     justify-content: center;
                     align-items: center;
                     z-index: 1050; /* Asegúrate de que sea mayor que otros elementos */
+                    backdrop-filter: blur(5px);
                 }
 
                 .modal-overlay.active {
@@ -533,6 +581,7 @@
                     max-height: 90vh;
                     overflow-y: auto;
                     z-index: 1051; /* Mayor que el overlay */
+                    animation: fadeIn 0.2s ease;
                 }
 
                 .modal-header {
@@ -605,6 +654,11 @@
                     border-color: #80bdff;
                     outline: none;
                     box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
+                }
+
+                /* Cuando no hay botón (estado Resuelto/Desactivado) */
+                .input-group.no-button .form-control {
+                    border-radius: 4px !important;
                 }
 
                 /* Scroll area */
@@ -691,6 +745,20 @@
                     font-weight: 500;
                 }
 
+                .action-button:disabled {
+                    opacity: 1.0;
+                    cursor: not-allowed;
+                    background-color: #f8f9fa;
+                    color: #6c757d;
+                    border-color: #dee2e6;
+                }
+
+                .action-button:disabled:hover {
+                    background-color: #f8f9fa;
+                    color: #6c757d;
+                    border-color: #dee2e6;
+                }
+
                 /* Responsive */
                 @media (min-width: 768px) {
                     .form-row {
@@ -709,6 +777,138 @@
                     .btn-full {
                         width: auto;
                     }
+                }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                /* Estilos para el mensaje de archivos adjuntos */
+                .attachments-container {
+                    margin-top: 8px;
+                }
+
+                .no-attachments-message {
+                    margin-top: 8px;
+                    text-align: center;
+                    padding: 12px;
+                    border-radius: 4px;
+                    background-color: #f8f9fa;
+                }
+
+                .empty-state {
+                    color: #6c757d;
+                    font-size: 13px;
+                    display: ruby;
+                    gap: 8px;
+                }
+
+                .empty-state i {
+                    font-size: 16px;
+                    color: #adb5bd;
+                }
+
+                .empty-state p {
+                    margin: 0;
+                    font-style: normal;
+                }
+
+                .btn-outline {
+                    border: 1px solid #dee2e6;
+                    padding: 6px 12px;
+                    border-radius: 4px;
+                    transition: all 0.3s ease;
+                    font-size: 13px;
+                }
+
+                .btn-outline:hover {
+                    background-color: #f1f1f1;
+                    border-color: #ced4da;
+                }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                /* Mensajes de estado - versión sutil */
+                .status-message {
+                    padding: 10px 12px;
+                    border-radius: 6px;
+                    font-size: 13px;
+                    margin-top: 12px;
+                    display: flex;
+                    align-items: center;
+                    gap: 8px;
+                    line-height: 1.4;
+                    border-left: 3px solid transparent;
+                }
+
+                .status-message i {
+                    font-size: 14px;
+                    opacity: 0.8;
+                }
+
+                /* Variantes */
+                .status-message.warning {
+                    background-color: rgba(255, 213, 0, 0.08);
+                    border-left-color: #ffd500;
+                    color: #b38f00;
+                }
+
+                .status-message.info {
+                    background-color: rgba(0, 145, 234, 0.08);
+                    border-left-color: #0091ea;
+                    color: #006db3;
+                }
+
+                /* Efectos hover sutiles */
+                .status-message:hover {
+                    opacity: 0.9;
+                }
+
+                /* Textarea deshabilitado - versión más sutil */
+                .response-textarea:disabled {
+                    background-color: #fafafa;
+                    cursor: not-allowed;
+                    opacity: 0.7;
+                }
+
+                /* Botones deshabilitados - estilo minimalista */
+                .btn:disabled, .action-button:disabled {
+                    opacity: 0.5;
+                    cursor: not-allowed;
+                    background-image: none;
+                    box-shadow: none;
                 }
             </style>
         </section>

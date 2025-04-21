@@ -236,8 +236,6 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 });
 
-
-
 /*Funcion para mostrar y ocultar el Popover*/
 document.addEventListener('DOMContentLoaded', function () {
     let popover = document.createElement('div');
@@ -277,8 +275,6 @@ document.addEventListener('DOMContentLoaded', function () {
     popover.addEventListener('mouseenter', () => clearTimeout(hideTimeout));
     popover.addEventListener('mouseleave', hidePopover);
 });
-
-
 
 // Función para cambiar el tipo de respuesta (Pública/Interna)
 function toggleResponseType() {
@@ -348,48 +344,64 @@ document.addEventListener('DOMContentLoaded', function () {
     habilitarBoton();
 });
 
-
-
-
-
-
-
-
 // Función para atender un ticket usando AJAX
 function atenderTicket(ticketId) {
-    const csrfToken = document.querySelector('input[name="_csrf"]').value;
-
-    fetch(`/tickets/atender/${ticketId}`, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'X-CSRF-TOKEN': csrfToken
+    try {
+        // Verificar primero si el token CSRF existe
+        const csrfTokenElement = document.querySelector('input[name="_csrf"]');
+        if (!csrfTokenElement) {
+            throw new Error('No se encontró el token de seguridad CSRF');
         }
-    })
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error(`Error HTTP: ${response.status}`);
-                }
-                return response.json();
-            })
-            .then(data => {
-                if (data.success) {
-                    // Recargar la página para reflejar los cambios
-                    window.location.reload();
-                } else {
-                    alert('Error al atender el ticket: ' + data.error);
-                }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                alert('Hubo un error al atender el ticket: ' + error.message);
-            });
+        const csrfToken = csrfTokenElement.value;
+
+        fetch(`/tickets/atender/${ticketId}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': csrfToken
+            }
+        })
+        .then(response => {
+            if (!response.ok) {
+                return response.json().then(err => {
+                    throw new Error(err.error || `Error HTTP: ${response.status}`);
+                });
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (data.success) {
+                // Recargar la página para reflejar todos los cambios
+                window.location.reload();
+            } else {
+                alert('Error al atender el ticket: ' + (data.error || 'Error desconocido'));
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Hubo un error al atender el ticket: ' + error.message);
+        });
+    } catch (error) {
+        console.error('Error en atenderTicket:', error);
+        alert('Error al procesar la solicitud: ' + error.message);
+    }
 }
+
+
 
 
 // Función para enviar una respuesta al ticket usando AJAX
 function responderTicket(event) {
     event.preventDefault(); // Evita que el formulario se envíe de forma tradicional
+
+    // Verificar si el ticket está siendo atendido
+    const ticketId = document.getElementById('ticketId').value;
+    const ticketAsignado = document.getElementById('asignadoPara').value !== 'Sin Asignar';
+
+    if (!ticketAsignado) {
+        alert('Debes atender el ticket primero antes de enviar mensajes.');
+        return;
+    }
 
     // Deshabilita el botón de envío para prevenir envíos múltiples
     const submitButton = event.target.querySelector('button[type="submit"]');
@@ -404,7 +416,7 @@ function responderTicket(event) {
         method: 'POST',
         body: formData,
         headers: {
-            'X-CSRF-TOKEN': document.querySelector('input[name="_csrf"]').value // Incluye el token CSRF
+            'X-CSRF-TOKEN': document.querySelector('input[name="_csrf"]').value
         }
     })
             .then(response => {
@@ -427,13 +439,11 @@ function responderTicket(event) {
                         newMessage.innerHTML = `
                     <div class="message-header">
                         <span class="user-name">${data.emisorNombre}</span>
-                        <span class="message-time">${new Date().toLocaleString()}</span>
+                        <span class="message-time">${data.fechaHora}</span>
                     </div>
                     <div class="message-content">${data.mensaje}</div>
                 `;
-                        chatMessages.appendChild(newMessage); // Agrega el mensaje al chat
-
-                        // Desplazar hacia el último mensaje
+                        chatMessages.appendChild(newMessage);
                         chatMessages.scrollTop = chatMessages.scrollHeight;
                     }
 
@@ -458,43 +468,59 @@ function responderTicket(event) {
             });
 }
 
+document.addEventListener('DOMContentLoaded', function () {
+    // Verificar el estado del ticket para mostrar/ocultar botones
+    function updateTicketButtons() {
+        // Obtener información del ticket
+        const ticketEstado = document.querySelector('input#estado').value ||
+                document.querySelector('select#estado').value;
 
+        // Botón de cerrar ticket
+        const btnCerrarTicket = document.querySelector('button[data-bs-target="#resolveTicketModal"]');
 
+        if (btnCerrarTicket) {
+            // Solo mostrar si está en progreso
+            if (ticketEstado === 'En Progreso') {
+                btnCerrarTicket.style.display = 'inline-block';
+            } else {
+                btnCerrarTicket.style.display = 'none';
+            }
+        }
+    }
 
+    // Ejecutar al cargar la página
+    updateTicketButtons();
 
+    // Actualizar si cambia el estado
+    const selectEstado = document.querySelector('select#estado');
+    if (selectEstado) {
+        selectEstado.addEventListener('change', updateTicketButtons);
+    }
+});
 
+// Función para verificar la prioridad antes de mostrar el modal de cierre
+function verificarPrioridadYCerrar() {
+    const prioridad = document.getElementById('prioridad').value;
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+    if (prioridad === 'Sin Asignar') {
+        // Mostrar modal de error si no hay prioridad asignada
+        openErrorPriorityModal();
+    } else {
+        // Mostrar modal de confirmación si hay prioridad asignada
+        openResolveTicketModal();
+    }
+}
 
 // Función para abrir el modal de confirmación de cierre
-function openConfirmCloseModal() {
-    const modalOverlay = document.getElementById('confirmCloseModalOverlay');
+function openResolveTicketModal() {
+    const modalOverlay = document.getElementById('resolveTicketModalOverlay');
     modalOverlay.classList.add('active');
     document.body.style.overflow = 'hidden';
 }
 
 // Función para cerrar el modal de confirmación de cierre
-function closeConfirmCloseModal() {
-    const modalOverlay = document.getElementById('confirmCloseModalOverlay');
+function closeResolveTicketModal() {
+    const modalOverlay = document.getElementById('resolveTicketModalOverlay');
     modalOverlay.classList.remove('active');
     document.body.style.overflow = 'auto';
 }
@@ -513,58 +539,42 @@ function closeErrorPriorityModal() {
     document.body.style.overflow = 'auto';
 }
 
-// Elimina la verificación de prioridad y abre directamente la confirmación
-function closeTicket(ticketId) {
-    const ticketPrioridad = document.getElementById('prioridad').value;
-    if (ticketPrioridad === "Sin Asignar") {
-        openErrorPriorityModal();
-    } else {
-        openConfirmCloseModal();
+// Configuración inicial de los modales
+document.addEventListener('DOMContentLoaded', function () {
+    // Configurar el botón de cierre de ticket
+    const btnCerrarTicket = document.getElementById('btnCerrarTicket');
+    if (btnCerrarTicket) {
+        btnCerrarTicket.onclick = verificarPrioridadYCerrar;
     }
-}
 
-function confirmCloseTicket() {
-    const ticketId = document.getElementById('btnCerrarTicket').getAttribute('data-ticket-id');
-    const csrfToken = document.querySelector('input[name="_csrf"]').value;
+    // Cerrar el modal de confirmación al hacer clic fuera del contenido
+    const resolveModalOverlay = document.getElementById('resolveTicketModalOverlay');
+    if (resolveModalOverlay) {
+        resolveModalOverlay.addEventListener('click', function (event) {
+            if (event.target === resolveModalOverlay) {
+                closeResolveTicketModal();
+            }
+        });
+    }
 
-    fetch(`/tickets/cerrar/${ticketId}`, {
-        method: 'POST',
-        headers: {
-            'X-CSRF-TOKEN': csrfToken
-        }
-    }).then(response => {
-        if (response.ok) {
-            window.location.reload();
-        }
-    });
-}
+    // Configurar el botón de cierre en el modal de error
+    const btnCerrarError = document.querySelector('#errorPriorityModalOverlay .btn-primary');
+    if (btnCerrarError) {
+        btnCerrarError.onclick = closeErrorPriorityModal;
+    }
 
+    // Cerrar el modal de error al hacer clic fuera del contenido
+    const errorModalOverlay = document.getElementById('errorPriorityModalOverlay');
+    if (errorModalOverlay) {
+        errorModalOverlay.addEventListener('click', function (event) {
+            if (event.target === errorModalOverlay) {
+                closeErrorPriorityModal();
+            }
+        });
+    }
+});
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-let soportistaSelect;
-
+// Función para abrir el modal de asignación de tickets
 function openAssignTicketsModal() {
     const modalOverlay = document.getElementById('assignTicketsModalOverlay');
     modalOverlay.classList.add('active');
@@ -611,42 +621,22 @@ function openAssignTicketsModal() {
             });
 }
 
+// Función para cerrar el modal de asignación de tickets
 function closeAssignTicketsModal() {
     const modalOverlay = document.getElementById('assignTicketsModalOverlay');
     modalOverlay.classList.remove('active');
     document.body.style.overflow = 'auto';
 }
 
-// Función para cargar los soportistas en el select
-function loadSoportistas() {
-    const soportistaSelect = document.getElementById('soportistaSelect');
-    soportistaSelect.innerHTML = '<option value="">Seleccione un soportista</option>';
-
-    fetch('/usuarios/soportistas')
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error(`Error HTTP: ${response.status}`);
-                }
-                return response.json();
-            })
-            .then(data => {
-                data.forEach(soportista => {
-                    const option = document.createElement('option');
-                    option.value = soportista.idUsuario;
-                    option.textContent = `${soportista.nombre} ${soportista.apellido}`;
-                    soportistaSelect.appendChild(option);
-                });
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                alert('Hubo un error al cargar los soportistas.');
-            });
-}
-
-
-
 // Función para asignar un ticket a un soportista
 function assignTickets() {
+    // Verificar si el modal de asignación de tickets está visible
+    const assignTicketsModal = document.getElementById('assignTicketsModalOverlay');
+    if (!assignTicketsModal || !assignTicketsModal.classList.contains('active')) {
+        console.error('El modal de asignación de tickets no está abierto.');
+        return;
+    }
+
     // Obtener el ID del soportista seleccionado
     const soportistaSelect = document.getElementById('soportistaSelect');
     if (!soportistaSelect || !soportistaSelect.value) {
@@ -719,27 +709,6 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 });
 
-
-// Este script debe ejecutarse cuando el documento esté listo
-document.addEventListener('DOMContentLoaded', function () {
-    // Identificar el botón de confirmación en el modal
-    const confirmBtn = document.querySelector('#assignTicketsModalOverlay .btn-primary');
-    if (confirmBtn) {
-        // Asegurar que el botón tenga un id para referenciarlo fácilmente
-        confirmBtn.id = 'confirmAssignBtn';
-        // Eliminar cualquier onclick anterior
-        confirmBtn.removeAttribute('onclick');
-        // Asignar el nuevo manejador de eventos
-        confirmBtn.addEventListener('click', assignTickets);
-        console.log('Evento asignado al botón de confirmar');
-    } else {
-        console.error('No se encontró el botón de confirmación en el modal');
-    }
-});
-
-
-
-
 // Función para desactivar un ticket
 function desactivarTicket(ticketId) {
     const csrfToken = document.querySelector('input[name="_csrf"]').value;
@@ -774,6 +743,244 @@ function desactivarTicket(ticketId) {
             });
 }
 
+// Función para asignar un ticket a un soportista
+function assignTicketToSupporter() {
+    // Obtener el ID del soportista seleccionado
+    const soportistaSelect = document.getElementById('soportistaSelect');
+    if (!soportistaSelect || !soportistaSelect.value) {
+        alert('Por favor, seleccione un soportista para asignar el ticket.');
+        return;
+    }
+    const soportistaId = soportistaSelect.value;
+
+    // Obtener el ID del ticket
+    const ticketId = document.getElementById('ticketId').value;
+
+    // Obtener el token CSRF
+    const csrfToken = document.querySelector('input[name="_csrf"]').value;
+
+    // Datos para enviar al servidor
+    const data = {
+        soportistaId: soportistaId,
+        ticketId: ticketId
+    };
+
+    // Realizar la petición AJAX
+    fetch('/tickets/asignar', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': csrfToken
+        },
+        body: JSON.stringify(data)
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error(`Error HTTP: ${response.status}`);
+        }
+        return response.json();
+    })
+    .then(data => {
+        if (data.success) {
+            // Cerrar el modal
+            closeAssignTicketsModal();
+            // Mostrar mensaje de éxito
+            alert('Ticket asignado correctamente');
+            // Recargar la página para reflejar los cambios
+            window.location.reload();
+        } else {
+            alert('Error al asignar el ticket: ' + data.error);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Hubo un error al asignar el ticket: ' + error.message);
+    });
+}
+
+// Configurar los event listeners para la asignación de tickets
+document.addEventListener('DOMContentLoaded', function () {
+    // Botón para abrir el modal de asignación
+    const btnAsignarTicket = document.getElementById('asignarTicket');
+    if (btnAsignarTicket) {
+        btnAsignarTicket.addEventListener('click', openAssignTicketsModal);
+    }
+
+    // Botón para confirmar la asignación
+    const btnConfirmarAsignacion = document.getElementById('confirmAssignBtn');
+    if (btnConfirmarAsignacion) {
+        btnConfirmarAsignacion.addEventListener('click', assignTicketToSupporter);
+    }
+
+    // Cerrar el modal al hacer clic fuera del contenido
+    const assignModalOverlay = document.getElementById('assignTicketsModalOverlay');
+    if (assignModalOverlay) {
+        assignModalOverlay.addEventListener('click', function (event) {
+            if (event.target === assignModalOverlay) {
+                closeAssignTicketsModal();
+            }
+        });
+    }
+});
+
+
+
+
+
+function openReabrirTicketModal() {
+    const modal = document.getElementById('reabrirTicketModal');
+    modal.classList.add('active');
+    document.body.style.overflow = 'hidden';
+}
+
+function closeReabrirTicketModal() {
+    const modal = document.getElementById('reabrirTicketModal');
+    modal.classList.remove('active');
+    document.body.style.overflow = 'auto';
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// Función para verificar el estado del ticket y habilitar/deshabilitar botones
+function actualizarEstadoBotones() {
+    const estadoTicket = document.querySelector('input#estado').value ||
+            document.querySelector('select#estado').value;
+    const esSoportista = document.body.getAttribute('data-user-role') === 'ROL_SOPORTISTA';
+
+    // Obtener todos los botones de acción
+    const actionButtons = document.querySelectorAll('.ticket-summary .action-button');
+
+    // Verificar si el ticket está resuelto, desactivado o abierto para soportistas
+    const deshabilitar = estadoTicket === 'Resuelto' || 
+                        estadoTicket === 'Desactivado' || 
+                        (estadoTicket === 'Abierto' && esSoportista);
+
+    // Aplicar el estado a todos los botones
+    actionButtons.forEach(button => {
+        button.disabled = deshabilitar;
+
+        // Aplicar estilos visuales
+        if (deshabilitar) {
+            button.style.opacity = '0.6';
+            button.style.cursor = 'not-allowed';
+        } else {
+            button.style.opacity = '';
+            button.style.cursor = '';
+        }
+    });
+}
+
+// Llamar a la función cuando se carga la página
+document.addEventListener('DOMContentLoaded', function() {
+    actualizarEstadoBotones();
+
+    // También llamar cuando cambia el estado del ticket (si es editable)
+    const selectEstado = document.querySelector('select#estado');
+    if (selectEstado) {
+        selectEstado.addEventListener('change', actualizarEstadoBotones);
+    }
+});
+
+
+
+
+
+
+
+
+// Función para verificar el rol del usuario y estado del ticket
+function verificarPermisosBotones() {
+    const estadoTicket = document.querySelector('input#estado').value ||
+            document.querySelector('select#estado').value;
+    const esSoportista = document.body.getAttribute('data-user-role') === 'ROL_SOPORTISTA';
+
+    // Obtener los botones principales
+    const btnHeredarTicket = document.getElementById('btnHeredarTicket');
+    const btnAsignarPrioridad = document.getElementById('btnAsignarPrioridad');
+
+    // Verificar si el ticket está asignado
+    const ticketAsignado = document.getElementById('asignadoPara').value !== 'Sin Asignar';
+
+    // Si el ticket está resuelto o desactivado, deshabilitar todos los botones
+    if (estadoTicket === 'Resuelto' || estadoTicket === 'Desactivado') {
+        if (btnHeredarTicket)
+            btnHeredarTicket.disabled = true;
+        if (btnAsignarPrioridad)
+            btnAsignarPrioridad.disabled = true;
+
+        // Aplicar estilos a los botones deshabilitados
+        const actionButtons = document.querySelectorAll('.ticket-summary .action-button:disabled');
+        actionButtons.forEach(btn => {
+            btn.style.opacity = '0.6';
+            btn.style.cursor = 'not-allowed';
+        });
+    }
+    // Si el ticket está asignado y no está resuelto/desactivado, habilitar los botones
+    else if (ticketAsignado) {
+        if (btnHeredarTicket)
+            btnHeredarTicket.disabled = false;
+        if (btnAsignarPrioridad)
+            btnAsignarPrioridad.disabled = false;
+
+        // Restaurar estilos de los botones
+        const actionButtons = document.querySelectorAll('.ticket-summary .action-button');
+        actionButtons.forEach(btn => {
+            btn.style.opacity = '';
+            btn.style.cursor = '';
+        });
+    }
+}
+
+
+// Función para verificar el estado del ticket y habilitar/deshabilitar botones
+function actualizarEstadoBotones() {
+    const estadoTicket = document.querySelector('input#estado').value ||
+            document.querySelector('select#estado').value;
+
+    // Obtener todos los botones de acción
+    const actionButtons = document.querySelectorAll('.ticket-summary .action-button');
+
+    // Verificar si el ticket está resuelto o desactivado
+    const deshabilitar = estadoTicket === 'Resuelto' || estadoTicket === 'Desactivado';
+
+    // Aplicar el estado a todos los botones
+    actionButtons.forEach(button => {
+        button.disabled = deshabilitar;
+
+        // Aplicar estilos visuales
+        if (deshabilitar) {
+            button.style.opacity = '0.6';
+            button.style.cursor = 'not-allowed';
+        } else {
+            button.style.opacity = '';
+            button.style.cursor = '';
+        }
+    });
+}
+
+// Llamar a la función cuando se carga la página
+document.addEventListener('DOMContentLoaded', function () {
+    actualizarEstadoBotones();
+
+    // También llamar cuando cambia el estado del ticket (si es editable)
+    const selectEstado = document.querySelector('select#estado');
+    if (selectEstado) {
+        selectEstado.addEventListener('change', actualizarEstadoBotones);
+    }
+});
 
 
 //Revisar este metodo encargado de fijar el resumen del tciket ya que presenta problemas en el responsive

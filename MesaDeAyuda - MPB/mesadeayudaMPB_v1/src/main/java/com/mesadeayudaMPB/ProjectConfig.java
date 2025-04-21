@@ -1,5 +1,8 @@
 package com.mesadeayudaMPB;
 
+import com.mesadeayudaMPB.domain.Usuario;
+import com.mesadeayudaMPB.service.UsuarioService;
+import java.util.Date;
 import java.util.Locale;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
@@ -10,6 +13,7 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 import org.springframework.web.servlet.LocaleResolver;
 import org.springframework.web.servlet.config.annotation.ViewControllerRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
@@ -19,6 +23,9 @@ import org.thymeleaf.extras.java8time.dialect.Java8TimeDialect;
 @Configuration
 @EnableWebSecurity
 public class ProjectConfig implements WebMvcConfigurer {
+
+    @Autowired
+    private UsuarioService usuarioService;
 
     @Override
     public void addViewControllers(ViewControllerRegistry registry) {
@@ -45,6 +52,7 @@ public class ProjectConfig implements WebMvcConfigurer {
                 .formLogin((form) -> form
                 .loginPage("/login")
                 .defaultSuccessUrl("/index", true)
+                .successHandler(authenticationSuccessHandler())
                 .permitAll()
                 )
                 .logout((logout) -> logout
@@ -80,5 +88,20 @@ public class ProjectConfig implements WebMvcConfigurer {
     @Autowired
     public void configureGlobal(AuthenticationManagerBuilder auth) throws Exception {
         auth.userDetailsService(userDetailsService).passwordEncoder(passwordEncoder());
+    }
+
+    private AuthenticationSuccessHandler authenticationSuccessHandler() {
+        return (request, response, authentication) -> {
+            // Actualizar última conexión al autenticarse exitosamente
+            String username = authentication.getName();
+            Usuario usuario = usuarioService.getUsuarioPorCorreo(username);
+
+            if (usuario != null) {
+                usuario.setUltimaConexion(new Date());
+                usuarioService.save(usuario, false);
+            }
+
+            response.sendRedirect("/index");
+        };
     }
 }

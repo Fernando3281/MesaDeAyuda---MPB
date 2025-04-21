@@ -21,11 +21,11 @@
                             <i class="fas fa-info-circle"></i>
                             <div class="popover-container">
                                 <div class="popover">
-                                    <div class="popover-title">Información Importante</div>
+                                    <div class="popover-title">Información Relevante</div>
                                     <div class="popover-content">
                                         <ul>
-                                            <li><strong>Categoría:</strong> Seleccione la opción que mejor describa el ámbito en el que se presenta su situacion.</li>
-                                            <li><strong>Impacto:</strong> Seleccione el nivel según la prioridad y el estado en el que se encuentra su trabajo. Esto nos ayudará a valorar si es necesario ofrecer una respuesta inmediata.</li>
+                                            <li><strong>Categoría:</strong> Según su criterio, seleccione la categoría que corresponda al tipo de su solicitud.</li>
+                                            <li><strong>Impacto:</strong> Según su criterio, seleccione el nivel de impacto que mejor refleje la importancia de su solicitud.</li>
                                         </ul>
                                     </div>
                                 </div>
@@ -37,13 +37,13 @@
                     <form th:action="@{/tickets/guardar}" method="post" enctype="multipart/form-data">
                         <div class="form-group">
                             <label id="txtLayout">Breve Descripción</label>
-                            <input type="text" name="titulo" class="form-control" maxlength="80" required>
+                            <input type="text" name="titulo" class="form-control" maxlength="80" placeholder="Ingrese una breve descripcion sobre su solicitud..." required>
                                 <div class="character-count">0 / 80</div>
                         </div>
 
                         <div class="form-group">
                             <label for="problemDescription" id="txtLayout">Descripción del Problema</label>
-                            <textarea id="problemDescription" name="descripcion" class="form-control" rows="5" required></textarea>
+                            <textarea id="problemDescription" name="descripcion" class="form-control" rows="5" placeholder="Ingrese una descripcion detallada sobre su solicitud..." required></textarea>
                         </div>
 
                         <div class="form-row">
@@ -94,6 +94,31 @@
                             <span class="close-modal">&times;</span>
                             <img id="modalImage" class="modal-content">
                         </div>
+
+                        <!-- Modal de Confirmacion -->
+                        <div id="successModal" class="modal fade" tabindex="-1" aria-hidden="true">
+                            <div class="modal-dialog modal-dialog-centered">
+                                <div class="modal-content">
+                                    <div class="modal-body">
+                                        <!-- Check Animation -->
+                                        <div class="success-checkmark">
+                                            <div class="check-icon">
+                                                <span class="icon-line line-tip"></span>
+                                                <span class="icon-line line-long"></span>
+                                                <div class="icon-circle"></div>
+                                                <div class="icon-fix"></div>
+                                            </div>
+                                        </div>
+                                        <h3>¡Ticket enviado correctamente!</h3>
+                                        <p>Tu ticket ha sido registrado en nuestro sistema y será atendido pronto.</p>
+                                        <button id="confirmButton" class="btn">
+                                            Entendido
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
 
                         <style>
                             /* Estilos para la caja de carga */
@@ -339,12 +364,6 @@
                                 align-items: center;
                             }
 
-                            .modal-content {
-                                max-width: 90%;
-                                max-height: 90vh;
-                                border-radius: 8px;
-                            }
-
                             .close-modal {
                                 position: absolute;
                                 top: 20px;
@@ -359,63 +378,358 @@
                             }
                         </style>
 
-                        <button type="submit" class="btn-submit">
+                        <style>
+                            /* Estilos para la animación de check */
+                            .success-checkmark {
+                                width: 80px;
+                                height: 115px;
+                                margin: 0 auto;
+                            }
+
+                            .check-icon {
+                                width: 80px;
+                                height: 80px;
+                                position: relative;
+                                border-radius: 50%;
+                                box-sizing: content-box;
+                                border: 4px solid #4CAF50;
+                            }
+
+                            .check-icon::before {
+                                top: 3px;
+                                left: -2px;
+                                width: 30px;
+                                transform-origin: 100% 50%;
+                                border-radius: 100px 0 0 100px;
+                            }
+
+                            .check-icon::after {
+                                top: 0;
+                                left: 30px;
+                                width: 60px;
+                                transform-origin: 0 50%;
+                                border-radius: 0 100px 100px 0;
+                                animation: rotate-circle 4.25s ease-in;
+                            }
+
+                            .check-icon::before, .check-icon::after {
+                                content: '';
+                                height: 100px;
+                                position: absolute;
+                                background: linear-gradient(145deg, #f1f4f8, #f8f9fa);
+                                transform: rotate(-45deg);
+                            }
+
+                            .icon-line {
+                                height: 5px;
+                                background-color: #4CAF50;
+                                display: block;
+                                border-radius: 2px;
+                                position: absolute;
+                                z-index: 10;
+                            }
+
+                            .icon-line.line-tip {
+                                top: 46px;
+                                left: 14px;
+                                width: 25px;
+                                transform: rotate(45deg);
+                                animation: icon-line-tip 0.75s;
+                            }
+
+                            .icon-line.line-long {
+                                top: 38px;
+                                right: 8px;
+                                width: 47px;
+                                transform: rotate(-45deg);
+                                animation: icon-line-long 0.75s;
+                            }
+
+                            .icon-circle {
+                                top: -4px;
+                                left: -4px;
+                                z-index: 10;
+                                width: 80px;
+                                height: 80px;
+                                border-radius: 50%;
+                                position: absolute;
+                                box-sizing: content-box;
+                                border: 4px solid rgba(76, 175, 80, .5);
+                            }
+
+                            .icon-fix {
+                                top: 8px;
+                                width: 5px;
+                                left: 26px;
+                                z-index: 1;
+                                height: 85px;
+                                position: absolute;
+                                transform: rotate(-45deg);
+                                background: linear-gradient(145deg, #f1f4f8, #f8f9fa);
+                            }
+
+                            @keyframes rotate-circle {
+                                0% {
+                                    transform: rotate(-45deg);
+                                }
+                                5% {
+                                    transform: rotate(-45deg);
+                                }
+                                12% {
+                                    transform: rotate(-405deg);
+                                }
+                                100% {
+                                    transform: rotate(-405deg);
+                                }
+                            }
+
+                            @keyframes icon-line-tip {
+                                0% {
+                                    width: 0;
+                                    left: 1px;
+                                    top: 19px;
+                                }
+                                54% {
+                                    width: 0;
+                                    left: 1px;
+                                    top: 19px;
+                                }
+                                70% {
+                                    width: 50px;
+                                    left: -8px;
+                                    top: 37px;
+                                }
+                                84% {
+                                    width: 17px;
+                                    left: 21px;
+                                    top: 48px;
+                                }
+                                100% {
+                                    width: 25px;
+                                    left: 14px;
+                                    top: 45px;
+                                }
+                            }
+
+                            @keyframes icon-line-long {
+                                0% {
+                                    width: 0;
+                                    right: 46px;
+                                    top: 54px;
+                                }
+                                65% {
+                                    width: 0;
+                                    right: 46px;
+                                    top: 54px;
+                                }
+                                84% {
+                                    width: 55px;
+                                    right: 0px;
+                                    top: 35px;
+                                }
+                                100% {
+                                    width: 47px;
+                                    right: 8px;
+                                    top: 38px;
+                                }
+                            }
+
+                            /* Estilos para el modal */
+                            .modal {
+                                display: none;
+                                position: fixed;
+                                z-index: 1050;
+                                left: 0;
+                                top: 0;
+                                width: 100%;
+                                height: 100%;
+                                overflow: auto;
+                                background-color: rgba(0, 0, 0, 0.6);
+                                transition: background-color 0.3s ease;
+                                align-items: center;
+                                justify-content: center;
+                                backdrop-filter: blur(5px);
+                            }
+
+
+                            .modal-dialog {
+                                position: absolute;
+                                top: 50%;
+                                left: 50%;
+                                transform: translate(-50%, -0%);
+                                margin: 0;
+                                display: flex;
+                                align-items: center;
+                                justify-content: center;
+                                width: auto;
+                                max-width: 90%;
+                            }
+
+
+                            .modal-content {
+                                width: 550px;
+                                border-radius: 12px;
+                                box-shadow: 0 15px 50px rgba(0,0,0,0.2);
+                                border: none;
+                                overflow: hidden;
+                                position: relative;
+                                background: linear-gradient(145deg, #f0f4f8, #ffffff);
+                            }
+
+                            .modal-body {
+                                display: flex;
+                                flex-direction: column;
+                                align-items: center;
+                                text-align: center;
+                                padding: 2.5rem 2rem;
+                            }
+
+                            .success-checkmark {
+                                margin-bottom: 1.5rem;
+                            }
+
+                            .modal h3 {
+                                color: #2c3e50;
+                                font-weight: 600;
+                                margin-bottom: 1rem;
+                            }
+
+                            .modal p {
+                                color: #6c757d;
+                                margin-bottom: 2rem;
+                                max-width: 350px;
+                            }
+
+                            #confirmButton {
+                                background-color: #07060C;
+                                border: none;
+                                padding: 8px 24px;
+                                border-radius: 6px;
+                                transition: all 0.3s ease;
+                                font-weight: 500;
+                                cursor: pointer;
+                                color: white;
+                            }
+
+                            #confirmButton:hover {
+                                background-color: #2d274e;
+                                box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+                            }
+
+
+                            @media (max-width: 576px) {
+                                .modal-content {
+                                    max-width: 95%;
+                                    margin: 0 auto;
+                                }
+                            }
+                        </style>
+
+                        <button type="submit" id="submitButton" class="btn-submit">
                             Enviar Ticket <i class="fa-solid fa-paper-plane"></i>
                         </button>
                     </form>
                 </div>
+                
+                <style>
+/* Add this CSS to your existing styles */
+.btn-submit {
+    position: relative;
+    background-color: #07060C;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    overflow: hidden;
+    z-index: 1;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-family: 'Poppins', sans-serif;
+}
+
+.btn-submit::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(45deg, 
+        #07060C, 
+        #2d274e, 
+        #4a3f8f, 
+        #2d274e, 
+        #07060C);
+    background-size: 400%;
+    z-index: -1;
+    opacity: 0;
+    transition: all 0.4s ease;
+}
+
+.btn-submit:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 5px 15px rgba(74, 63, 143, 0.4);
+}
+
+.btn-submit:hover::before {
+    opacity: 1;
+    animation: glow 8s linear infinite;
+}
+
+.btn-submit i {
+    transition: transform 0.3s ease;
+}
+
+.btn-submit:hover i {
+    transform: translateX(3px);
+}
+
+@keyframes glow {
+    0% {
+        background-position: 0% 50%;
+    }
+    50% {
+        background-position: 100% 50%;
+    }
+    100% {
+        background-position: 0% 50%;
+    }
+}
+                </style>
+                
+                <script>
+
+                </script>
 
 
                 <div class="sidebarContent">
                     <div class="card">
                         <h2>Tickets Activos</h2>
                         <div class="ticket-list">
-                            <div class="ticket-item">
+                            <div th:each="ticket : ${ticketsAbiertos}" class="ticket-item">
                                 <div class="ticket-header">
-                                    <span class="ticket-id"><i class="fas fa-ticket"></i>#TIC001</span>
-                                    <span class="status-badge">Abierto</span>
+                                    <span class="ticket-id"><i class="fas fa-ticket"></i>
+                                        <span th:text="${ticket.codigo}">#TIC001</span>
+                                    </span>
+                                    <span class="status-badge"><i class="far fa-clock"></i> En Revisión</span>
                                 </div>
-                                <label id="txtLayout">Problema con el sistema de Facturación</label>
+                                <label id="txtLayout" th:text="${ticket.titulo}">Problema con el sistema de Facturación</label>
                                 <div class="ticket-details">
-                                    <div>Prioridad: <span>Baja</span></div>
-                                    <div>Categoría: <span>Hardware</span></div>
-                                    <div class="date">23-08-2024</div>
+                                    <div>Prioridad: <span th:text="${ticket.prioridad}">Baja</span></div>
+                                    <div>Categoría: <span th:text="${ticket.categoria}">Hardware</span></div>
+                                    <div class="date" th:text="${#dates.format(ticket.fechaApertura, 'dd-MM-yyyy')}">23-08-2024</div>
                                 </div>
                             </div>
-                            <div class="ticket-item">
-                                <div class="ticket-header">
-                                    <span class="ticket-id"><i class="fas fa-ticket"></i>#TIC001</span>
-                                    <span class="status-badge">Abierto</span>
-                                </div>
-                                <label id="txtLayout">Problema con el sistema de Facturación</label>
-                                <div class="ticket-details">
-                                    <div>Prioridad: <span>Baja</span></div>
-                                    <div>Categoría: <span>Hardware</span></div>
-                                    <div class="date">23-08-2024</div>
-                                </div>
-                            </div>
-                            <div class="ticket-item">
-                                <div class="ticket-header">
-                                    <span class="ticket-id"><i class="fas fa-ticket"></i>#TIC001</span>
-                                    <span class="status-badge">Abierto</span>
-                                </div>
-                                <label id="txtLayout">Problema con el sistema de Facturación</label>
-                                <div class="ticket-details">
-                                    <div>Prioridad: <span>Baja</span></div>
-                                    <div>Categoría: <span>Hardware</span></div>
-                                    <div class="date">23-08-2024</div>
-                                </div>
-                            </div>
-                            <div class="ticket-item">
-                                <div class="ticket-header">
-                                    <span class="ticket-id"><i class="fas fa-ticket"></i>#TIC001</span>
-                                    <span class="status-badge">Abierto</span>
-                                </div>
-                                <label id="txtLayout">Problema con el sistema de Facturación</label>
-                                <div class="ticket-details">
-                                    <div>Prioridad: <span>Baja</span></div>
-                                    <div>Categoría: <span>Hardware</span></div>
-                                    <div class="date">23-08-2024</div>
+                            <div th:if="${ticketsAbiertos.empty}" class="no-tickets">
+                                <div class="empty-state">
+                                    <div class="empty-icon">
+                                        <i class="fa-solid fa-ticket"></i>
+                                    </div>
+                                    <h3>No tienes tickets pendientes</h3>
+                                    <p>Actualmente no hay solicitudes pendientes en tu cuenta.</p>
                                 </div>
                             </div>
                         </div>
@@ -431,7 +745,9 @@
                             </div>
                             <div class="form-group">
                                 <label id="txtLayout">Número de Teléfono</label>
-                                <input id="txtInput" class="form-control" type="tel" th:value="${'+506 ' + usuario.numeroTelefono}" readonly>
+                                <input id="txtInput" class="form-control" type="tel" 
+                                       th:value="${usuario.numeroTelefono == 0 ? 'Sin Información...' : '+506 ' + usuario.numeroTelefono}" 
+                                       readonly>
                             </div>
                             <div class="form-group">
                                 <label id="txtLayout">Correo Electrónico</label>

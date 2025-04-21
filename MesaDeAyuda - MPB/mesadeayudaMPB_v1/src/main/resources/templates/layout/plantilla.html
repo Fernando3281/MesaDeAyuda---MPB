@@ -12,6 +12,7 @@
         <script th:src="@{/webjars/popper.js/umd/popper.min.js}"></script>
         <script th:src="@{/webjars/bootstrap/js/bootstrap.min.js}"></script>
         <script th:src="@{/js/sidebar.js}"></script>
+        <script th:src="@{/js/breadcrumb.js}"></script>
     </head>
     <body>
         <!-- Fragmento para el header -->
@@ -76,8 +77,7 @@
         <div th:fragment="navbar">
             <nav aria-label="breadcrumb" class="breadcrumb-container">
                 <ol class="breadcrumb">
-                    <li class="breadcrumb-item"><a href="#">Inicio</a></li>
-                    <li class="breadcrumb-item active" aria-current="page">Mi Perfil</li>
+                    <!-- Rutas del breadcrumb -->
                 </ol>
             </nav>
         </div>
@@ -118,7 +118,7 @@
                         </li>
                         <li>
                             <div class="iocn-link">
-                                <a th:href="@{/mensajes/listado}">
+                                <a th:href="@{/mensajes/inbox}">
                                     <i class="fas fa-envelope"></i>
                                     <span class="link_name">Mensajes</span>
                                 </a>
@@ -156,6 +156,10 @@
             </aside>
         </div>
 
+        <!-- Scripts -->
+        <div th:fragment="breadcrumb-scripts">
+            <script th:src="@{/js/breadcrumb.js}"></script>
+        </div>
         <div th:fragment="scripts-table">
             <script th:src="@{/js/tickets-table.js}"></script>
             <script th:src="@{/js/tickets-funciones.js}"></script>
@@ -168,6 +172,9 @@
         </div>
         <div th:fragment="scripts-historial">
             <script th:src="@{/js/historial-funciones.js}"></script>
+        </div>
+        <div th:fragment="scripts-table-usuarios">
+            <script th:src="@{/js/table-usuarios.js}"></script>
         </div>
         <div th:fragment="scripts-perfil">
             <script th:src="@{/js/perfil-funciones.js}"></script>

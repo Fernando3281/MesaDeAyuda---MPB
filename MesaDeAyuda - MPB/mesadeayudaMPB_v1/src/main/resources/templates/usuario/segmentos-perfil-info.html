@@ -22,7 +22,13 @@
                                onchange="previewImage(this)">
                     </div>
                     <div class="profile-info">
-                        <p id="infoUsuario">Usuario</p>
+                        <p id="infoUsuario">
+                            <span th:if="${#lists.contains(usuario.roles.![nombre], 'ROL_ADMINISTRADOR')}">Administrador</span>
+                            <span th:if="${#lists.contains(usuario.roles.![nombre], 'ROL_SOPORTISTA')}">Soportista</span>
+                            <span th:if="${#lists.contains(usuario.roles.![nombre], 'ROL_USUARIO') 
+                                  and not #lists.contains(usuario.roles.![nombre], 'ROL_ADMINISTRADOR') 
+                                  and not #lists.contains(usuario.roles.![nombre], 'ROL_SOPORTISTA')}">Usuario</span>
+                        </p>
                         <div id="infoUsuario">
                             <h3 style="display: inline;" th:text="${usuario.nombre + ' ' + usuario.apellido}"></h3>
                             <p style="display: inline;" th:text="'ID#' + ${usuario.codigo}"></p>
@@ -165,7 +171,13 @@
                                                                             </div>
 
                                                                             <div class="profile-info">
-                                                                                <p id="infoUsuario">Usuario</p>
+                                                                                <p id="infoUsuario">
+                                                                                    <span th:if="${#lists.contains(usuario.roles.![nombre], 'ROL_ADMINISTRADOR')}">Administrador</span>
+                                                                                    <span th:if="${#lists.contains(usuario.roles.![nombre], 'ROL_SOPORTISTA')}">Soportista</span>
+                                                                                    <span th:if="${#lists.contains(usuario.roles.![nombre], 'ROL_USUARIO') 
+                                                                                          and not #lists.contains(usuario.roles.![nombre], 'ROL_ADMINISTRADOR') 
+                                                                                          and not #lists.contains(usuario.roles.![nombre], 'ROL_SOPORTISTA')}">Usuario</span>
+                                                                                </p>
                                                                                 <div id="infoUsuario">
                                                                                     <h3 style="display: inline;" th:text="${usuario.nombre + ' ' + usuario.apellido}"></h3>
                                                                                     <p style="display: inline;" th:text="'ID#' + ${usuario.codigo}"></p>
@@ -254,7 +266,7 @@
                                                                                 <div class="detail-row" style="margin-bottom: 0rem;">
                                                                                     <div class="detail-column">
                                                                                         <label>Correo Electrónico</label>
-                                                                                        <input type="email" name="correoElectronico" th:value="${usuario.correoElectronico}" placeholder="Sin Informacion..." required>
+                                                                                        <input id="email" type="email" name="correoElectronico" th:value="${usuario.correoElectronico}" placeholder="Sin Informacion..." readonly="">
                                                                                     </div>
                                                                                     <div class="detail-column">
                                                                                         <button type="submit" class="btn-guardar-cambios">

@@ -13,6 +13,8 @@ public interface TicketService {
 
     List<Ticket> getTickets();
 
+    List<Ticket> getTicketsPorSolicitanteYEstado(Usuario solicitante, String estado);
+
     Ticket getTicket(Ticket ticket);
 
     Ticket getTicketPorCodigo(String codigo);
@@ -25,4 +27,6 @@ public interface TicketService {
 
     // Agregar este método
     Ticket getTicketPorId(Long idTicket);
+
+    List<Ticket> getTicketsConMensajes(Usuario usuario);
 }

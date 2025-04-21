@@ -175,7 +175,7 @@
 
 .table-resizable th:nth-child(9),
 .table-resizable td:nth-child(9) {
-    min-width: 150px;
+    min-width: 50px;
     text-align: center;
 }
 
@@ -457,7 +457,7 @@
 }
 
 .tickets-table tr:hover {
-    background: #f8f9fa;
+    background: #f5f5f5;
 }
 
 .badge {
@@ -515,6 +515,11 @@
 }
 
 .badge-desactivado {
+    background: #e7e7e7;
+    color: #000;
+}
+
+.badge-cancelado {
     background: #f4a9a9;
     color: #3c0707;
 }

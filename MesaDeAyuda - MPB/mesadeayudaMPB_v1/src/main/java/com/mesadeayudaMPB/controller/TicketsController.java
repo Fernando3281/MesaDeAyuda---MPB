@@ -102,21 +102,34 @@ public class TicketsController {
             if (ticket != null) {
                 // Obtener las imágenes asociadas al ticket (si es necesario)
                 List<ImagenTicket> imagenes = imagenTicketService.obtenerImagenesPorTicket(id);
+                boolean tieneImagenes = !imagenes.isEmpty();
 
-                List<Map<String, Object>> imagenesInfo = imagenes.stream().map(img -> {
+                // Obtener información del usuario autenticado
+                String correoElectronico = authentication.getName();
+                Usuario usuarioActual = usuarioService.getUsuarioPorCorreo(correoElectronico);
+
+                // Verificar si el usuario es soportista
+                boolean esSoportista = usuarioActual.getRoles().stream()
+                        .anyMatch(rol -> "ROL_SOPORTISTA".equals(rol.getNombre()));
+
+                // Agregar los atributos al modelo
+                model.addAttribute("ticket", ticket);
+                model.addAttribute("esSoportista", esSoportista);
+                model.addAttribute("esAdmin", esAdmin(usuarioActual));
+                model.addAttribute("tieneImagenes", tieneImagenes);
+                model.addAttribute("imagenesInfo", imagenes.stream().map(img -> {
                     Map<String, Object> info = new HashMap<>();
                     info.put("id", img.getIdImagen());
                     info.put("nombre", img.getNombreArchivo());
                     info.put("tipo", img.getTipoArchivo());
                     return info;
-                }).collect(Collectors.toList());
+                }).collect(Collectors.toList()));
 
                 // Obtener los mensajes relacionados con el ticket
                 List<Mensajes> mensajes = mensajeService.obtenerMensajesPorTicket(id);
 
                 // Agregar el ticket, las imágenes y los mensajes al modelo
                 model.addAttribute("ticket", ticket);
-                model.addAttribute("imagenesInfo", imagenesInfo);
                 model.addAttribute("tieneImagenes", !imagenes.isEmpty());
                 model.addAttribute("mensajes", mensajes);
 
@@ -124,6 +137,22 @@ public class TicketsController {
             }
         }
         return "redirect:/login";
+    }
+
+    // Método auxiliar para verificar permisos
+    private boolean puedeEditarTicket(Usuario usuario, Ticket ticket) {
+        // El usuario puede editar si:
+        // 1. Es ADMIN
+        // 2. Es el solicitante del ticket
+        // 3. Es el soportista asignado al ticket
+        return esAdmin(usuario)
+                || usuario.equals(ticket.getSolicitante())
+                || usuario.equals(ticket.getAsignadoPara());
+    }
+
+    private boolean esAdmin(Usuario usuario) {
+        return usuario.getRoles().stream()
+                .anyMatch(rol -> "ROL_ADMINISTRADOR".equals(rol.getNombre()));
     }
 
     @GetMapping("/imagenes/{id}")
@@ -152,6 +181,9 @@ public class TicketsController {
             String correoElectronico = authentication.getName();
             Usuario usuario = usuarioService.getUsuarioPorCorreo(correoElectronico);
             if (usuario != null) {
+                // Obtener tickets abiertos del usuario
+                List<Ticket> ticketsAbiertos = ticketService.getTicketsPorSolicitanteYEstado(usuario, "Abierto");
+                model.addAttribute("ticketsAbiertos", ticketsAbiertos);
                 model.addAttribute("usuario", usuario);
                 return "/tickets/nuevo";
             }
@@ -220,14 +252,19 @@ public class TicketsController {
             // Obtener el usuario solicitante (dueño del ticket)
             Usuario usuarioSolicitante = usuarioService.getUsuarioPorId(id);
 
+            // Agregar esta línea para verificar si el usuario es soportista
+            boolean esSoportista = usuarioActual.getRoles().stream()
+                    .anyMatch(rol -> "ROL_SOPORTISTA".equals(rol.getNombre()));
+
+            model.addAttribute("esSoportista", esSoportista);
+
             if (usuarioSolicitante != null) {
                 // Agregar datos al modelo
                 model.addAttribute("usuario", usuarioSolicitante);
                 model.addAttribute("usuarioActual", usuarioActual);
 
-                // Obtener la fecha de última conexión (puedes ajustar esto según tu lógica)
-                LocalDateTime fechaActual = LocalDateTime.now();
-                model.addAttribute("ultimaConexion", fechaActual);
+                // Obtener la fecha de última conexión
+                model.addAttribute("ultimaConexion", usuarioSolicitante.getUltimaConexion());
 
                 // Calcular la fecha de ingreso (sin modificar la base de datos)
                 LocalDateTime fechaIngreso = usuarioSolicitante.getUltimaConexion() != null
@@ -252,35 +289,49 @@ public class TicketsController {
         String correoElectronico = authentication.getName();
         Usuario usuario = usuarioService.getUsuarioPorCorreo(correoElectronico);
 
-        if (usuario != null && usuario.getRoles().stream().anyMatch(rol -> "ROL_SUPPORTER".equals(rol.getNombre()))) {
-            Ticket ticket = ticketService.getTicketPorId(idTicket);
-            if (ticket != null) {
-                // Asignar el ticket al soportista
-                ticket.setAsignadoPara(usuario);
+        if (usuario != null) {
+            // Verificar si el usuario es SOPORTISTA o ADMINISTRADOR
+            boolean esSoportista = usuario.getRoles().stream()
+                    .anyMatch(rol -> "ROL_SOPORTISTA".equals(rol.getNombre()));
+            boolean esAdmin = usuario.getRoles().stream()
+                    .anyMatch(rol -> "ROL_ADMINISTRADOR".equals(rol.getNombre()));
 
-                // Cambiar el estado del ticket a "Pendiente"
-                ticket.setEstado("Pendiente");
+            if (esSoportista || esAdmin) {
+                Ticket ticket = ticketService.getTicketPorId(idTicket);
+                if (ticket != null) {
+                    // Verificar si el ticket ya está asignado a otro usuario
+                    if (ticket.getAsignadoPara() != null && !ticket.getAsignadoPara().equals(usuario)) {
+                        response.put("success", false);
+                        response.put("error", "Este ticket ya está asignado a otro usuario.");
+                        return ResponseEntity.status(HttpStatus.CONFLICT).body(response);
+                    }
 
-                // Actualizar la fecha de actualización
-                ticket.setFechaActualizacion(new Date());
+                    // Asignar el ticket al usuario actual
+                    ticket.setAsignadoPara(usuario);
+                    ticket.setEstado("Pendiente");
+                    ticket.setFechaActualizacion(new Date());
+                    ticketService.save(ticket);
 
-                // Guardar los cambios en el ticket
-                ticketService.save(ticket);
+                    response.put("success", true);
+                    response.put("asignadoParaNombre", usuario.getNombre() + " " + usuario.getApellido());
+                    response.put("habilitarMensajes", true);
+                    response.put("habilitarBotones", true);
 
-                // Construir la respuesta JSON
-                response.put("success", true);
-                response.put("asignadoParaNombre", usuario.getNombre() + " " + usuario.getApellido());
-
-                return ResponseEntity.ok(response);
+                    return ResponseEntity.ok(response);
+                } else {
+                    response.put("success", false);
+                    response.put("error", "Ticket no encontrado.");
+                    return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
+                }
             } else {
                 response.put("success", false);
-                response.put("error", "Ticket no encontrado.");
-                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
+                response.put("error", "No tiene permisos para atender tickets.");
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).body(response);
             }
         } else {
             response.put("success", false);
-            response.put("error", "No tiene permisos para atender tickets.");
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(response);
+            response.put("error", "Usuario no autenticado.");
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
         }
     }
 
@@ -296,9 +347,16 @@ public class TicketsController {
         String correoElectronico = authentication.getName();
         Usuario usuario = usuarioService.getUsuarioPorCorreo(correoElectronico);
 
-        if (usuario != null && usuario.getRoles().stream().anyMatch(rol -> "ROL_SUPPORTER".equals(rol.getNombre()))) {
+        if (usuario != null) {
             Ticket ticket = ticketService.getTicketPorId(idTicket);
             if (ticket != null) {
+                // Verificar que el usuario tenga permiso para responder
+                if (!puedeEditarTicket(usuario, ticket)) {
+                    response.put("success", false);
+                    response.put("error", "No tiene permisos para responder este ticket.");
+                    return ResponseEntity.status(HttpStatus.FORBIDDEN).body(response);
+                }
+
                 Mensajes mensaje = new Mensajes();
                 mensaje.setTicket(ticket);
                 mensaje.setEmisor(usuario);
@@ -319,7 +377,7 @@ public class TicketsController {
                 response.put("mensaje", mensaje.getMensaje());
                 response.put("emisorNombre", mensaje.getEmisor().getNombre() + " " + mensaje.getEmisor().getApellido());
                 response.put("esNotaInterna", mensaje.isEsNotaInterna());
-                response.put("fechaHora", fechaFormateada); // Enviar la fecha formateada
+                response.put("fechaHora", fechaFormateada);
 
                 return ResponseEntity.ok(response);
             } else {
@@ -339,7 +397,7 @@ public class TicketsController {
         String correoElectronico = authentication.getName();
         Usuario usuario = usuarioService.getUsuarioPorCorreo(correoElectronico);
 
-        if (usuario != null && usuario.getRoles().stream().anyMatch(rol -> rol.getNombre().equals("ROL_SUPPORTER"))) {
+        if (usuario != null && usuario.getRoles().stream().anyMatch(rol -> rol.getNombre().equals("ROL_SOPORTISTA"))) {
             Ticket ticket = ticketService.getTicketPorId(idTicket);
             if (ticket != null) {
                 Mensajes mensaje = new Mensajes();
@@ -377,71 +435,88 @@ public class TicketsController {
         String correoElectronico = authentication.getName();
         Usuario usuario = usuarioService.getUsuarioPorCorreo(correoElectronico);
 
-        if (usuario != null && usuario.getRoles().stream().anyMatch(rol -> "ROL_SUPPORTER".equals(rol.getNombre()))) {
-            Ticket ticket = ticketService.getTicketPorId(idTicket);
-            if (ticket != null) {
-                // Asignar la prioridad al ticket
-                ticket.setPrioridad(prioridad);
-                // Actualizar la fecha de actualización
-                ticket.setFechaActualizacion(new Date());
-                ticketService.save(ticket); // Guardar cambios
+        if (usuario != null) {
+            // Verificar si el usuario es SOPORTISTA o ADMINISTRADOR
+            boolean esSoportista = usuario.getRoles().stream().anyMatch(rol -> "ROL_SOPORTISTA".equals(rol.getNombre()));
+            boolean esAdmin = usuario.getRoles().stream().anyMatch(rol -> "ROL_ADMINISTRADOR".equals(rol.getNombre()));
 
-                // Mensaje de éxito
-                redirectAttributes.addFlashAttribute("success", "Prioridad actualizada correctamente.");
+            if (esSoportista || esAdmin) {
+                Ticket ticket = ticketService.getTicketPorId(idTicket);
+
+                if (ticket != null) {
+                    // Si es soportista, verificar que esté asignado a él
+                    if (esSoportista && !usuario.equals(ticket.getAsignadoPara())) {
+                        redirectAttributes.addFlashAttribute("error", "No tienes permisos para asignar prioridad a este ticket.");
+                        return "redirect:/tickets/manager/" + idTicket;
+                    }
+
+                    // Asignar la prioridad al ticket
+                    ticket.setPrioridad(prioridad);
+                    // Actualizar la fecha de actualización
+                    ticket.setFechaActualizacion(new Date());
+                    ticketService.save(ticket); // Guardar cambios
+
+                    // Mensaje de éxito
+                    redirectAttributes.addFlashAttribute("success", "Prioridad actualizada correctamente.");
+                } else {
+                    redirectAttributes.addFlashAttribute("error", "Ticket no encontrado.");
+                }
             } else {
-                redirectAttributes.addFlashAttribute("error", "Ticket no encontrado.");
+                redirectAttributes.addFlashAttribute("error", "No tiene permisos para asignar prioridad.");
             }
         } else {
-            redirectAttributes.addFlashAttribute("error", "No tiene permisos para asignar prioridad.");
+            redirectAttributes.addFlashAttribute("error", "Usuario no autenticado.");
         }
 
         // Redirigir de vuelta a la página del ticket
         return "redirect:/tickets/manager/" + idTicket;
     }
 
-    @PostMapping("/cerrar/{idTicket}")
-@ResponseBody
-public ResponseEntity<Map<String, Object>> cerrarTicket(
-        @PathVariable Long idTicket,
-        Authentication authentication) {
+    @PostMapping("/cerrarTicket")
+    public String cerrarTicket(@RequestParam("idTicket") Long idTicket,
+            @RequestParam(value = "comentario", required = false) String comentarioCierre,
+            Authentication authentication,
+            RedirectAttributes redirectAttributes) {
 
-    Map<String, Object> response = new HashMap<>();
-    String correoElectronico = authentication.getName();
-    Usuario usuario = usuarioService.getUsuarioPorCorreo(correoElectronico);
+        if (authentication != null) {
+            String correoElectronico = authentication.getName();
+            Usuario usuarioActual = usuarioService.getUsuarioPorCorreo(correoElectronico);
 
-    if (usuario != null && usuario.getRoles().stream().anyMatch(rol -> "ROL_SUPPORTER".equals(rol.getNombre()))) {
-        Ticket ticket = ticketService.getTicketPorId(idTicket);
-        if (ticket != null) {
-            // Cambiar el estado del ticket a "Resuelto"
-            ticket.setEstado("Resuelto");
+            if (usuarioActual != null) {
+                Ticket ticket = new Ticket();
+                ticket.setIdTicket(idTicket);
+                Ticket ticketExistente = ticketService.getTicket(ticket);
 
-            // Actualizar la fecha de actualización
-            ticket.setFechaActualizacion(new Date());
+                if (ticketExistente != null) {
+                    // Actualizar el estado del ticket a "Resuelto"
+                    ticketExistente.setEstado("Resuelto");
+                    ticketExistente.setFechaActualizacion(new Date());
 
-            // Guardar los cambios en el ticket
-            ticketService.save(ticket);
+                    // Si no tiene asignado, asignar al usuario actual que lo está cerrando
+                    if (ticketExistente.getAsignadoPara() == null) {
+                        ticketExistente.setAsignadoPara(usuarioActual);
+                    }
 
-            // Construir la respuesta JSON
-            response.put("success", true);
-            return ResponseEntity.ok(response);
-        } else {
-            response.put("success", false);
-            response.put("error", "Ticket no encontrado.");
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
+                    // Guardar el ticket actualizado
+                    ticketService.save(ticketExistente);
+
+                    // Mensaje de éxito
+                    redirectAttributes.addFlashAttribute("success", "Ticket cerrado exitosamente");
+                    return "redirect:/tickets/manager/" + idTicket;
+                } else {
+                    redirectAttributes.addFlashAttribute("error", "No se encontró el ticket");
+                }
+            }
         }
-    } else {
-        response.put("success", false);
-        response.put("error", "No tiene permisos para cerrar tickets.");
-        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(response);
+        return "redirect:/login";
     }
-}
 
     @GetMapping("/usuarios/soportistas")
     @ResponseBody
     public ResponseEntity<List<Map<String, String>>> getSoportistas() {
         // Obtener usuarios con roles ROLE_SUPPORTER o ROLE_ADMIN
         List<Usuario> usuarios = usuarioService.getUsuariosPorRoles(
-                Arrays.asList("ROL_SUPPORTER", "ROL_ADMIN")
+                Arrays.asList("ROL_SOPORTISTA", "ROL_ADMINISTRADOR")
         );
 
         // Mapear a una estructura más simple para el frontend
@@ -468,36 +543,36 @@ public ResponseEntity<Map<String, Object>> cerrarTicket(
         String correoElectronico = authentication.getName();
         Usuario usuario = usuarioService.getUsuarioPorCorreo(correoElectronico);
 
-        if (usuario != null && usuario.getRoles().stream().anyMatch(rol -> "ROL_SUPPORTER".equals(rol.getNombre()))) {
-            String soportistaId = (String) requestBody.get("soportistaId");
-            Long ticketId = Long.parseLong((String) requestBody.get("ticketId"));
+        // Verificar si el usuario es ADMIN
+        boolean isAdmin = usuario.getRoles().stream()
+                .anyMatch(rol -> "ROL_SOPORTISTA".equals(rol.getNombre()));
 
-            Usuario soportista = usuarioService.getUsuarioPorId(Long.parseLong(soportistaId));
-            Ticket ticket = ticketService.getTicketPorId(ticketId);
-
-            if (soportista != null && ticket != null) {
-                // Asignar el ticket al soportista
-                ticket.setAsignadoPara(soportista);
-                // Cambiar el estado del ticket a "Pendiente"
-                ticket.setEstado("Pendiente");
-                // Actualizar la fecha de actualización
-                ticket.setFechaActualizacion(new Date());
-                // Guardar los cambios en el ticket
-                ticketService.save(ticket);
-
-                // Construir la respuesta JSON
-                response.put("success", true);
-                response.put("message", "Ticket asignado correctamente.");
-                return ResponseEntity.ok(response);
-            } else {
-                response.put("success", false);
-                response.put("error", "Soportista o ticket no encontrado.");
-                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
-            }
-        } else {
+        if (!isAdmin) {
             response.put("success", false);
             response.put("error", "No tiene permisos para asignar tickets.");
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body(response);
+        }
+
+        String soportistaId = (String) requestBody.get("soportistaId");
+        Long ticketId = Long.valueOf((String) requestBody.get("ticketId"));
+
+        Usuario soportista = usuarioService.getUsuarioPorId(Long.valueOf(soportistaId));
+        Ticket ticket = ticketService.getTicketPorId(ticketId);
+
+        if (soportista != null && ticket != null) {
+            // Asignar el ticket al soportista
+            ticket.setAsignadoPara(soportista);
+            ticket.setEstado("Pendiente");
+            ticket.setFechaActualizacion(new Date());
+            ticketService.save(ticket);
+
+            response.put("success", true);
+            response.put("message", "Ticket asignado correctamente.");
+            return ResponseEntity.ok(response);
+        } else {
+            response.put("success", false);
+            response.put("error", "Soportista o ticket no encontrado.");
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
         }
     }
 
@@ -512,11 +587,6 @@ public ResponseEntity<Map<String, Object>> cerrarTicket(
         try {
             // Validación robusta del usuario
             Usuario usuario = usuarioService.getUsuarioPorCorreo(authentication.getName());
-            if (usuario == null || usuario.getRoles().stream().noneMatch(rol -> "ROL_SUPPORTER".equals(rol.getNombre()))) {
-                response.put("success", false);
-                response.put("error", "Acceso no autorizado");
-                return ResponseEntity.status(HttpStatus.FORBIDDEN).body(response);
-            }
 
             // Buscar ticket con manejo de excepciones
             Ticket ticket = ticketService.getTicketPorId(idTicket);
@@ -540,5 +610,76 @@ public ResponseEntity<Map<String, Object>> cerrarTicket(
             response.put("error", "Error interno: " + e.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
         }
+    }
+
+    @PostMapping("/reabrir/{idTicket}")
+    public String reabrirTicket(
+            @PathVariable Long idTicket,
+            Authentication authentication,
+            RedirectAttributes redirectAttributes) {
+
+        if (authentication != null) {
+            Ticket ticket = ticketService.getTicketPorId(idTicket);
+            if (ticket != null && "Resuelto".equals(ticket.getEstado())) {
+                ticket.setEstado("Pendiente");
+                ticket.setFechaActualizacion(new Date());
+                ticketService.save(ticket);
+
+                redirectAttributes.addFlashAttribute("success", "Ticket reabierto correctamente");
+                return "redirect:/tickets/manager/" + idTicket;
+            }
+        }
+        redirectAttributes.addFlashAttribute("error", "No se pudo reabrir el ticket");
+        return "redirect:/tickets/manager/" + idTicket;
+    }
+
+    @GetMapping("/conversacion/{idMensaje}")
+    @ResponseBody
+    public ResponseEntity<Map<String, Object>> obtenerConversacionPorMensaje(@PathVariable Long idMensaje, Authentication authentication) {
+        Map<String, Object> response = new HashMap<>();
+
+        // Obtener el mensaje específico
+        Mensajes mensaje = mensajeService.obtenerMensajePorId(idMensaje);
+        if (mensaje == null) {
+            return ResponseEntity.notFound().build();
+        }
+
+        // Obtener todos los mensajes del ticket asociado
+        List<Mensajes> mensajesTicket = mensajeService.obtenerMensajesPorTicket(mensaje.getTicket().getIdTicket());
+
+        // Obtener información del usuario autenticado
+        String correoElectronico = authentication.getName();
+        Usuario usuario = usuarioService.getUsuarioPorCorreo(correoElectronico);
+
+        // Filtrar mensajes según permisos (mostrar notas internas solo para soporte/admin)
+        List<Map<String, Object>> mensajesDTO = mensajesTicket.stream()
+                .filter(m -> !m.isEsNotaInterna()
+                || usuario.getRoles().stream()
+                        .anyMatch(r -> r.getNombre().equals("ROL_SOPORTISTA")
+                        || r.getNombre().equals("ROL_ADMINISTRADOR")))
+                .map(m -> {
+                    Map<String, Object> dto = new HashMap<>();
+                    dto.put("id", m.getIdMensaje());
+                    dto.put("mensaje", m.getMensaje());
+                    dto.put("fechaHora", m.getFechaHora());
+                    dto.put("esNotaInterna", m.isEsNotaInterna());
+                    dto.put("esMensajeSeleccionado", m.getIdMensaje().equals(idMensaje));
+
+                    // Datos del emisor
+                    Map<String, Object> emisor = new HashMap<>();
+                    emisor.put("id", m.getEmisor().getIdUsuario());
+                    emisor.put("nombre", m.getEmisor().getNombre());
+                    emisor.put("apellido", m.getEmisor().getApellido());
+                    dto.put("emisor", emisor);
+
+                    return dto;
+                }).collect(Collectors.toList());
+
+        response.put("conversacion", mensajesDTO);
+        response.put("ticketId", mensaje.getTicket().getIdTicket());
+        response.put("ticketCodigo", mensaje.getTicket().getCodigo());
+        response.put("ticketTitulo", mensaje.getTicket().getTitulo());
+
+        return ResponseEntity.ok(response);
     }
 }

@@ -25,4 +25,10 @@ public class MensajeServiceImpl implements MensajeService {
     public Mensajes guardarMensaje(Mensajes mensaje) {
         return mensajeDao.save(mensaje);
     }
+    
+    @Override
+    @Transactional(readOnly = true)
+    public Mensajes obtenerMensajePorId(Long idMensaje) {
+        return mensajeDao.findById(idMensaje).orElse(null);
+    }
 }

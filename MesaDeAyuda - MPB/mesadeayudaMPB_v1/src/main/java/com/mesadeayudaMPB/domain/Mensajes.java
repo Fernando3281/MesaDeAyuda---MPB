@@ -16,7 +16,7 @@ public class Mensajes {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "id_Ticket", referencedColumnName = "id_ticket")
-    private Ticket ticket; // Relación con Ticket
+    private Ticket ticket;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "id_Emisor", referencedColumnName = "id_Usuario")

@@ -1,10 +1,13 @@
 package com.mesadeayudaMPB.controller;
 
+import com.mesadeayudaMPB.dao.UsuarioDao;
 import com.mesadeayudaMPB.domain.Departamento;
 import com.mesadeayudaMPB.domain.Usuario;
 import com.mesadeayudaMPB.service.DepartamentoService;
 import com.mesadeayudaMPB.service.RegistroService;
 import com.mesadeayudaMPB.service.EmailService;
+import com.mesadeayudaMPB.service.UsuarioService;
+import com.mesadeayudaMPB.service.VerificationService;
 import com.mesadeayudaMPB.service.impl.RegistroServiceImpl;
 import jakarta.servlet.http.HttpSession;
 import java.net.URLEncoder;
@@ -27,9 +30,15 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 @Controller
 @RequestMapping("/registro")
 public class RegistroController {
+    
+    @Autowired
+    private UsuarioDao usuarioDao;
 
     @Autowired
     private RegistroService registroService;
+    
+    @Autowired
+    private VerificationService verificationService;
 
     @Autowired
     private DepartamentoService departamentoService;
@@ -102,36 +111,37 @@ public class RegistroController {
     }
 
     @PostMapping("/verificar")
-    public String verificarCodigo(@RequestParam String code,
-            HttpSession session,
-            RedirectAttributes redirectAttrs) {
-        Usuario pendingUser = (Usuario) session.getAttribute("pendingUser");
-        String storedCode = (String) session.getAttribute("verificationCode");
+public String verificarCodigo(@RequestParam String code,
+        HttpSession session,
+        RedirectAttributes redirectAttrs) {
+    Usuario pendingUser = (Usuario) session.getAttribute("pendingUser");
+    String storedCode = (String) session.getAttribute("verificationCode");
 
-        if (pendingUser == null || storedCode == null) {
+    if (pendingUser == null || storedCode == null) {
+        return "redirect:/registro/nuevo";
+    }
+
+    if (verificationService.verifyCode(storedCode, code)) {
+        // Verificar si el usuario ya existe
+        if (usuarioDao.existsByCorreoElectronico(pendingUser.getCorreoElectronico())) {
+            redirectAttrs.addFlashAttribute("error", "El correo ya está registrado");
             return "redirect:/registro/nuevo";
         }
+        
+        // Registrar al nuevo usuario
+        registroService.registrarNuevoUsuario(pendingUser);
 
-        if (storedCode.equals(code)) {
-            // Registrar al nuevo usuario
-            registroService.registrarNuevoUsuario(pendingUser);
+        // Limpiar sesión
+        session.removeAttribute("pendingUser");
+        session.removeAttribute("verificationCode");
 
-            // Establecer los atributos de sesión para mostrar la información del usuario en el header
-            session.setAttribute("usuarioImagen", pendingUser.getImagen());
-            session.setAttribute("usuarioNombre", pendingUser.getNombre());
-
-            // Limpiar sesión
-            session.removeAttribute("pendingUser");
-            session.removeAttribute("verificationCode");
-
-            // Redirigir al login con un parámetro para indicar registro exitoso
-            return "redirect:/login?registroExitoso=true";
-        } else {
-            redirectAttrs.addFlashAttribute("error", "Código de verificación inválido");
-            redirectAttrs.addAttribute("email", pendingUser.getCorreoElectronico());
-            return "redirect:/registro/verificacion";
-        }
+        return "redirect:/login?registroExitoso=true";
+    } else {
+        redirectAttrs.addFlashAttribute("error", "Código de verificación inválido");
+        redirectAttrs.addAttribute("email", pendingUser.getCorreoElectronico());
+        return "redirect:/registro/verificacion";
     }
+}
 
     // Método para mostrar el formulario de recordar contraseña
     @GetMapping("/recordar")

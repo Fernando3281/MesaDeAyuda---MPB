@@ -362,6 +362,7 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     };
 
+    //Metodo para mostrar y ocultar el popover
     const infoIcon = document.querySelector('.info-icon');
     const popover = document.querySelector('.popover');
 
@@ -402,4 +403,88 @@ document.addEventListener('DOMContentLoaded', function () {
     if ('Notification' in window && Notification.permission !== 'granted' && Notification.permission !== 'denied') {
         Notification.requestPermission();
     }
+});
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+$(document).ready(function () {
+    // Almacenar la URL de referencia al cargar la página
+    const previousPage = document.referrer;
+    sessionStorage.setItem('previousPanel', previousPage);
+
+    // Flag para prevenir múltiples envíos
+    let isSubmitting = false;
+
+    // Inicializar el modal con configuración para evitar cierre accidental
+    var successModal = new bootstrap.Modal(document.getElementById('successModal'), {
+        backdrop: 'static',
+        keyboard: false
+    });
+
+    // Manejar el envío del formulario
+    $('form').on('submit', function (e) {
+        // Prevenir la acción por defecto inmediatamente
+        e.preventDefault();
+
+        // Verificar si ya se está enviando el formulario
+        if (isSubmitting) {
+            return false;
+        }
+
+        // Marcar como enviando
+        isSubmitting = true;
+
+        // Deshabilitar el botón para evitar múltiples envíos
+        const $submitButton = $('#submitButton');
+        $submitButton.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Enviando...');
+
+        // Crear FormData para enviar los archivos
+        var formData = new FormData(this);
+
+        // Enviar el formulario mediante AJAX
+        $.ajax({
+            url: $(this).attr('action'),
+            type: 'POST',
+            data: formData,
+            processData: false,
+            contentType: false,
+            success: function (response) {
+                // Mostrar el modal con la animación
+                successModal.show();
+
+                // Limpiar el formulario si el envío fue exitoso
+                $('form')[0].reset();
+                $('#imagePreviewContainer').empty();
+            },
+            error: function (xhr) {
+                // Mostrar error al usuario
+                alert('Error al enviar el ticket: ' + (xhr.responseJSON?.message || xhr.statusText));
+            },
+        });
+
+        // Retornar falso para asegurar que no se envíe el formulario
+        return false;
+    });
+
+    // Manejar el botón de confirmación
+    $('#confirmButton').on('click', function () {
+        successModal.hide();
+
+        // Obtener la URL almacenada o usar una por defecto
+        const previousPanel = sessionStorage.getItem('previousPanel') || '/index';
+
+        // Redirigir al panel anterior
+        window.location.href = previousPanel;
+    });
 });

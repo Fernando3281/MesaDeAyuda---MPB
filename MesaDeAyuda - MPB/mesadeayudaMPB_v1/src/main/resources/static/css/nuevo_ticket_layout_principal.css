@@ -55,8 +55,8 @@ h1 i {
 
 .description2 {
     color: #666;
-    margin-bottom: 18px;
-    font-size: 12px;
+    margin-bottom: 14px;
+    font-size: 13px;
 }
 
 .form-row {
@@ -177,7 +177,8 @@ textarea.form-control {
     width: 350px;
     display: flex;
     flex-direction: column;
-    height: 100%;
+    min-height: 100%;
+    max-height: 100%;
 }
 
 .card {
@@ -225,10 +226,9 @@ textarea.form-control {
     background: #555;
 }
 
-/* Mantener los estilos existentes para los ticket-item */
 .ticket-item {
-    padding: 20px 0;
-    border-bottom: 1px solid #eee;
+    padding: 15px 0;
+    border-bottom: 1px solid #dedede;
 }
 
 .ticket-item:last-child {
@@ -252,11 +252,13 @@ textarea.form-control {
 }
 
 .status-badge {
-    background: #FFC107;
-    color: #000;
+    background-color: #fff8e6;
+    color: #b45309;
+    border: 1px solid #fde68a;
     padding: 2px 8px;
     border-radius: 12px;
     font-size: 11px;
+    font-weight: 500;
 }
 
 .ticket-item h3 {
@@ -270,7 +272,7 @@ textarea.form-control {
 }
 
 .ticket-details > div {
-    margin-bottom: 2px;
+    margin-bottom: 4px;
 }
 
 .contact-info input {
@@ -288,19 +290,27 @@ textarea.form-control {
     position: relative;
     display: inline-block;
     cursor: pointer;
-    margin-left: 5px; /* Espacio entre el texto y el ícono */
+}
+
+.info-icon i {
+    transition: all 0.2s ease;
+}
+
+.info-icon:hover i {
+    color: #42484d;
 }
 
 .popover-container {
     position: absolute;
     top: 50%;
-    left: 100%; /* Posiciona el popover a la derecha del ícono */
+    left: 100%;
     transform: translateY(-50%);
-    margin-left: 10px; /* Espacio entre el ícono y el popover */
+    margin-left: 10px;
     z-index: 200;
 }
 
 .popover {
+    display: none;
     position: relative;
     width: 480px;
     padding: 15px;
@@ -375,6 +385,38 @@ textarea.form-control {
 
 .info-icon:hover .popover-container {
     display: block;
+}
+
+/* Estilos para el estado vacío */
+.no-tickets {
+    padding: 2.5rem 1rem;
+    text-align: center;
+    border-radius: 8px;
+    margin: 1rem 0;
+    border: 1px dashed #dee2e6;
+}
+
+.empty-state {
+    max-width: 400px;
+    margin: 0 auto;
+}
+
+.empty-icon {
+    font-size: 3rem;
+    color: #adb5bd;
+    margin-bottom: 1rem;
+}
+
+.empty-state h3 {
+    color: #343a40;
+    font-size: 1.20rem;
+    margin-bottom: 0.5rem;
+    font-weight: 500;
+}
+
+.empty-state p {
+    color: #6c757d;
+    margin-bottom: 1rem;
 }
 
 
