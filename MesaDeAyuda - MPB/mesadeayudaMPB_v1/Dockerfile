@@ -8,8 +8,8 @@ WORKDIR /app
 RUN apk add --no-cache maven
 
 # Copiar archivos de configuración de Maven
-COPY "MesaDeAyuda - MPB/mesadeayudaMPB_v1/pom.xml" .
-COPY "MesaDeAyuda - MPB/mesadeayudaMPB_v1/src" ./src
+COPY ["MesaDeAyuda - MPB/mesadeayudaMPB_v1/pom.xml", "."]
+COPY ["MesaDeAyuda - MPB/mesadeayudaMPB_v1/src", "./src"]
 
 # Compilar la aplicación
 RUN mvn clean package -DskipTests
