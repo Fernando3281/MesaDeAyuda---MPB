@@ -7,9 +7,9 @@ WORKDIR /app
 # Instalar Maven para construir la aplicación
 RUN apk add --no-cache maven
 
-# Copiar archivos de configuración de Maven
-COPY pom.xml .
-COPY src ./src
+# Copiar archivos de configuración de Maven (ajustar rutas según estructura)
+COPY ./mesadeayudaMPB_v1/pom.xml .
+COPY ./mesadeayudaMPB_v1/src ./src
 
 # Compilar la aplicación
 RUN mvn clean package -DskipTests
