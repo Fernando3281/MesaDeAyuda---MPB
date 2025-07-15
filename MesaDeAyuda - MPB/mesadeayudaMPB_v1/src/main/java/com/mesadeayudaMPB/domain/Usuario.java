@@ -48,7 +48,7 @@ public class Usuario implements Serializable {
     private String correoElectronico;
 
     @Column(name = "numero_telefono")
-    private int numeroTelefono;
+    private Integer numeroTelefono;
 
     @Column(name = "direccion")
     private String direccion;

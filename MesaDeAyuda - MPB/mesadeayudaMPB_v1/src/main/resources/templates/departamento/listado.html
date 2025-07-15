@@ -10,7 +10,7 @@
         <link rel="stylesheet" th:href="@{/css/table_layout_principal.css}">
     </th:block>
 
-    <th:block th:replace="~{layout/plantilla :: scripts-departamentos}"></th:block>
+    <script th:src="@{/js/table-departamentos.js}" defer></script>
 
     <body>
         <div class="wrapper">
@@ -28,7 +28,7 @@
                 <main class="home-section">
                     <div class="content-wrapper">
                         
-                        <section th:replace="~{departamento/segmentos-departamento :: listadoDepartamentos}"></section>
+                        <section th:replace="~{departamento/segmentos-departamento :: listado-departamentos}"></section>
                         
                     </div>
                 </main>

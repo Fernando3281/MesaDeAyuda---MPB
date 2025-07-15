@@ -3,7 +3,9 @@ package com.mesadeayudaMPB.service;
 import com.mesadeayudaMPB.domain.Ticket;
 import com.mesadeayudaMPB.domain.Usuario;
 import java.util.List;
+import java.util.Map;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 public interface TicketService {
 
@@ -21,12 +23,27 @@ public interface TicketService {
 
     String generarCodigoTicket();
 
-    Page<Ticket> getTicketsPaginados(int page, int size);
+    Page<Ticket> getTicketsPaginados(Pageable pageable);
+
+    Page<Ticket> buscarTickets(String search, Pageable pageable);
 
     List<Ticket> getTicketsPorSolicitante(Usuario solicitante);
 
-    // Agregar este método
     Ticket getTicketPorId(Long idTicket);
 
     List<Ticket> getTicketsConMensajes(Usuario usuario);
+
+    void eliminarTicketsPorUsuario(Long idUsuario);
+
+    List<Ticket> getTicketsPorEstado(String estado);
+
+    List<Ticket> buscarTicketsPorFiltros(Map<String, String> columnFilters, String searchTerm);
+    
+    List<Ticket> buscarTicketsPorFiltrosAvanzados(
+            Map<String, String> columnFilters, 
+            String searchTerm,
+            String fechaAperturaFrom,
+            String fechaAperturaTo,
+            String fechaActualizacionFrom,
+            String fechaActualizacionTo);
 }

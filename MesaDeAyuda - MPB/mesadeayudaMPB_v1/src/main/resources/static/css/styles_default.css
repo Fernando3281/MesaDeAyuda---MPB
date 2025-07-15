@@ -1,12 +1,19 @@
-/*
-Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
-Click nbfs://nbhost/SystemFileSystem/Templates/Other/CascadeStyleSheet.css to edit this template
-*/
 /* 
     Created on : Oct 4, 2024, 1:25:37 PM
     Author     : ferva
 */
 
+.body-unlogged {
+    background-image: url("../img/loginBackground.webp");
+    background-size: cover;
+    background-position: center;
+    margin: 0;
+    padding: 0;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    color: #18181b;
+}
 
 #Title {
     margin-bottom: 20px;
@@ -17,18 +24,12 @@ Click nbfs://nbhost/SystemFileSystem/Templates/Other/CascadeStyleSheet.css to ed
 
 /* //////////////////// Panel Login //////////////////// */
 
-.body-login {
-    background-image: url("../img/loginBackground.webp");
-    background-size: cover;
-    background-position: center;
-}
-
 .login-container {
+    flex: 1;
     display: flex;
     justify-content: center;
     align-items: center;
-    width: 100%;
-    padding: 20px;
+    padding: 60px 20px;
     box-sizing: border-box;
 }
 
@@ -41,8 +42,6 @@ Click nbfs://nbhost/SystemFileSystem/Templates/Other/CascadeStyleSheet.css to ed
     width: 100%;
     max-width: 520px;
     text-align: center;
-    margin-bottom: 40px;
-    margin-top: 30px;
 }
 
 .h1-login {
@@ -83,9 +82,9 @@ Click nbfs://nbhost/SystemFileSystem/Templates/Other/CascadeStyleSheet.css to ed
 
 #label-login {
     display: block;
-    margin-bottom: 0.25rem;
     font-size: 0.9rem;
     color: #666;
+    margin-bottom: 6px
 }
 
 #button-login {
@@ -99,6 +98,7 @@ Click nbfs://nbhost/SystemFileSystem/Templates/Other/CascadeStyleSheet.css to ed
     font-size: 1rem;
     font-weight: 500;
     margin-top: 0.5rem;
+    transition: all 0.2s ease;
 }
 
 #button-register {
@@ -112,6 +112,7 @@ Click nbfs://nbhost/SystemFileSystem/Templates/Other/CascadeStyleSheet.css to ed
     font-size: 1rem;
     font-weight: 500;
     cursor: pointer;
+    transition: all 0.2s ease;
 }
 
 #button-login:hover {
@@ -120,6 +121,18 @@ Click nbfs://nbhost/SystemFileSystem/Templates/Other/CascadeStyleSheet.css to ed
 
 #button-register:hover {
     background-color: #f3f3f3;
+}
+
+.password-container {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.password-container #passwordInput {
+    flex: 1;
+    padding-right: 16px;
 }
 
 .forgot-password {
@@ -153,16 +166,6 @@ Click nbfs://nbhost/SystemFileSystem/Templates/Other/CascadeStyleSheet.css to ed
 
 
 /* //////////////////// Panel Registro //////////////////// */
-.body-registro {
-    background-image: url("../img/loginBackground.webp");
-    background-size: cover;
-    background-position: center;
-    margin: 0;
-    padding: 0;
-    min-height: 100vh;
-    display: flex;
-    flex-direction: column;
-}
 
 .registro-container {
     flex: 1;
@@ -276,7 +279,7 @@ select.form-control, #confirm-password {
 }
 
 .btn-crear-cuenta:hover {
-    background-color: #11214D;
+    background-color: #333;
 }
 
 .link-ya-tengo-cuenta {
@@ -316,22 +319,14 @@ select.form-control, #confirm-password {
 
 
 /* //////////////////// Panel de Verificacion de Registro //////////////////// */
-.verification-body {
-    background-image: url("../img/loginBackground.webp");
-    background-size: cover;
-    background-position: center;
-    margin: 0;
-    padding: 0;
+
+.verification-container {
+    flex: 1;
     display: flex;
     justify-content: center;
     align-items: center;
-    min-height: 100vh;
-}
-
-.verification-container {
-    width: 100%;
-    max-width: 860px;
-    padding: 20px;
+    padding: 60px 20px;
+    box-sizing: border-box;
 }
 
 .verification-form {
@@ -343,7 +338,6 @@ select.form-control, #confirm-password {
     position: relative;
 }
 .verification-form-container {
-
     padding-top: 0px;
     padding-bottom: 20px;
     padding-left: 70px;
@@ -440,3 +434,145 @@ select.form-control, #confirm-password {
         opacity: 1;
     }
 }
+
+
+
+/* Estilos del panel de "recordar.html" para recuperar la contraseña */
+
+.recovery-container {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 60px 20px;
+    box-sizing: border-box;
+}
+
+.recovery-form {
+    background-color: rgba(255, 255, 255, 0.8);
+    backdrop-filter: blur(10px);
+    border-radius: 10px;
+    width: 100%;
+    max-width: 520px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    padding: 2rem;
+    text-align: center;
+    position: relative;
+}
+
+
+
+.municipalidad-logo-recordar {
+    background-image: url('../img/escudo-barva.webp');
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+    width: 80px;
+    height: 80px;
+    margin: 0px auto 1rem;
+}
+
+.recovery-title {
+    color: #333;
+    margin-bottom: 0.5rem;
+    font-weight: 600;
+    font-size: 24px;
+}
+
+.recovery-subtitle {
+    color: #666;
+    margin-bottom: 1rem;
+    font-size: 14px;
+    line-height: 1.4;
+}
+
+.form-elements-recovery {
+    display: flex;
+    flex-direction: column;
+    gap: 1.2rem;
+}
+
+.input-group-recovery {
+    text-align: left;
+}
+
+.input-group-recovery label {
+    display: block;
+    font-size: 14px;
+    color: #333;
+    margin-bottom: 5px;
+    font-weight: 500;
+    line-height: 1.5;
+}
+
+.input-group-recovery input {
+    font-family: 'Poppins', sans-serif;
+    width: 100%;
+    padding: 7px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    font-size: 14px;
+    box-sizing: border-box;
+    transition: border-color 0.3s ease;
+}
+
+.input-group-recovery input:focus {
+    outline: none;
+    border-color: #007bff;
+    box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
+}
+
+.btn-recovery {
+    font-family: 'Poppins', sans-serif;
+    background-color: #000;
+    color: white;
+    border: none;
+    padding: 11px;
+    border-radius: 30px;
+    cursor: pointer;
+    font-size: 16px;
+    font-weight: 500;
+    width: 100%;
+    transition: all 0.3s ease;
+}
+
+.btn-recovery:hover {
+    background-color: #333;
+    transform: translateY(-1px);
+}
+
+.recovery-info {
+    margin-top: 1.5rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid #dcdcdc;
+}
+
+.recovery-links {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    align-items: center;
+}
+
+.recovery-link {
+    color: #666;
+    text-decoration: none;
+    font-size: 14px;
+}
+
+.recovery-link:hover {
+    color: #007bff;
+    text-decoration: underline;
+}
+
+.recovery-icon {
+    background-image: url('../img/key-icon.png');
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+    width: 60px;
+    height: 60px;
+    margin: 0 auto 1rem;
+    opacity: 0.7;
+}
+

@@ -30,10 +30,13 @@
                                   and not #lists.contains(usuario.roles.![nombre], 'ROL_SOPORTISTA')}">Usuario</span>
                         </p>
                         <div id="infoUsuario">
-                            <h3 style="display: inline;" th:text="${usuario.nombre + ' ' + usuario.apellido}"></h3>
+                            <h3 style="display: inline;" th:text="${usuario.nombre} + ${usuario.apellido != null ? ' ' + usuario.apellido : ''}"></h3>
                             <p style="display: inline;" th:text="'ID#' + ${usuario.codigo}"></p>
                         </div>
-                        <p id="infoUsuario"><b>Departamento:</b> <span th:text="${usuario.departamento}"></span></p>
+                        <p id="infoUsuario">
+                            <b>Departamento:</b> 
+                            <span th:text="${usuario.departamento != null and !usuario.departamento.isEmpty()} ? ${usuario.departamento} : 'Sin Información...'"></span>
+                        </p>
                         <p id="infoUsuario">
                             <b>Último Acceso al Sistema:</b>
                             <span th:if="${ultimaConexion != null}" 
@@ -70,13 +73,13 @@
                                 <!-- Si no hay número de teléfono, muestra "Sin Información..." -->
                                 <input type="text" id="inputTelefono" 
                                        th:unless="${usuario.numeroTelefono != null and usuario.numeroTelefono != ''}" 
-                                       value="Sin Información..." 
+                                       placeholder="Sin Informacion..."
                                        readonly>
                                     </div>
                                     </div>
                                     <div class="detail-row" style="margin-bottom: 0rem;">
                                         <div class="detail-column">
-                                            <label>Ocupación o Departamento</label>
+                                            <label>Departamento</label>
                                             <input type="text" th:value="${usuario.departamento}" placeholder="Sin Informacion..." readonly>
                                         </div>
                                         <div class="detail-column">
@@ -89,56 +92,86 @@
                                     </section>
 
                                     <section th:fragment="tickets-section">
+                                        <h2 class="title-recent-ticket mb-3" onclick="window.location.href = '/usuario/historial'">
+                                            Tickets Recientes
+                                            <i class="fa-solid fa-chevron-right hover-arrow"></i>
+                                        </h2>
+                                        <div class="ticket-list">
+                                            <!-- Versión mejorada con clases de estado y prioridad -->
+                                            <div th:each="ticketMap : ${ticketsConAdjuntos}" 
+                                                 class="ticket-item" 
+                                                 th:classappend="'status-' + ${#strings.toLowerCase(ticketMap.ticket.estado).replace(' ', '-')}"
+                                                 th:onclick="|window.location.href='@{/usuario/detalles/}${ticketMap.ticket.idTicket}'|"
+                                                 style="cursor: pointer;">
 
-                                        <h2 class="h4 mb-3">Tickets Recientes</h2>
+                                                <div class="ticket-header">
+                                                    <span class="ticket-id">
+                                                        <div class="ticket-codigo">
+                                                            <i class="fa-solid fa-ticket"></i>
+                                                            <span th:text="${ticketMap.ticket.codigo}">TIC12345678</span>
+                                                        </div>
+                                                        <span class="ticket-attachments" th:if="${ticketMap.tieneArchivos}">
+                                                            <i class="fa-solid fa-paperclip"></i>
+                                                            <span>Archivos Adjuntados</span>
+                                                        </span>
+                                                    </span>
+                                                </div>
 
-                                        <div class="row g-4">
-                                            <div class="col-12">
-                                                <div class="card card-ticket status-abierto">
-                                                    <div class="card-body">
-                                                        <div class="d-flex justify-content-between align-items-center">
-                                                            <span class="text-muted small">#TIC001</span>
-                                                            <span class="badge bg-warning text-dark badge-status">Abierto</span>
-                                                        </div>
-                                                        <h3 class="h5 mb-2">Problema con el sistema de Facturación</h3>
-                                                        <div class="text-muted small">
-                                                            <p class="mb-1">Prioridad: Baja</p>
-                                                            <p class="mb-1">Categoría: Hardware</p>
-                                                            <p class="mb-0">Fecha: 23-08-2024</p>
-                                                        </div>
+                                                <div class="ticket-title" th:text="${ticketMap.ticket.titulo}">Título del ticket</div>
+
+                                                <div class="ticket-description" th:text="${ticketMap.ticket.descripcion}">
+                                                    Descripción completa del ticket que será truncada a dos líneas si es muy larga.
+                                                </div>
+
+                                                <div class="ticket-details">
+                                                    <div class="ticket-info">
+                                                        <span class="ticket-property">
+                                                            <i class="fa-solid fa-tag"></i> Categoría: 
+                                                        </span>
+                                                        <span class="ticket-value" th:text="${ticketMap.ticket.categoria}">Categoría</span>
+                                                    </div>
+
+                                                    <div class="ticket-info">
+                                                        <span class="ticket-property">
+                                                            <i class="fa-solid fa-flag"></i> Prioridad: 
+                                                        </span>
+                                                        <span class="ticket-value" th:text="${ticketMap.ticket.prioridad}">Prioridad</span>
+                                                    </div>
+
+                                                    <div class="ticket-date">
+                                                        <i class="far fa-calendar-alt"></i>
+                                                        <span th:text="${#dates.format(ticketMap.ticket.fechaApertura, 'dd-MM-yyyy')}">Fecha</span>
                                                     </div>
                                                 </div>
-                                            </div>
-                                            <div class="col-12">
-                                                <div class="card card-ticket status-en-progreso">
-                                                    <div class="card-body">
-                                                        <div class="d-flex justify-content-between align-items-center">
-                                                            <span class="text-muted small">#TIC002</span>
-                                                            <span class="badge bg-primary badge-status">En progreso</span>
-                                                        </div>
-                                                        <h3 class="h5 mb-2">Actualización de software requerida</h3>
-                                                        <div class="text-muted small">
-                                                            <p class="mb-1">Prioridad: Media</p>
-                                                            <p class="mb-1">Categoría: Software</p>
-                                                            <p class="mb-0">Fecha: 22-08-2024</p>
-                                                        </div>
-                                                    </div>
+
+                                                <div class="ticket-status">
+                                                    <!-- Iconos específicos por estado -->
+                                                    <i th:class="${ticketMap.ticket.estado == 'En Revisión'} ? 'far fa-clock' : 
+                                                       (${ticketMap.ticket.estado == 'En Progreso'} ? 'fa-solid fa-arrows-rotate' :
+                                                       (${ticketMap.ticket.estado == 'Pendiente'} ? 'fa-solid fa-arrows-rotate' : 
+                                                       (${ticketMap.ticket.estado == 'Resuelto'} ? 'fas fa-check-circle' :
+                                                       (${ticketMap.ticket.estado == 'Cerrado'} ? 'fas fa-lock' :
+                                                       (${ticketMap.ticket.estado == 'Abierto'} ? 'far fa-clock' :
+                                                       (${ticketMap.ticket.estado == 'Cancelado'} ? 'fas fa-times-circle' :
+                                                       (${ticketMap.ticket.estado == 'Desactivado'} ? 'fas fa-ban' : 'far fa-question-circle')))))))"></i>
+
+                                                    <!-- Mapeo de estados -->
+                                                    <span th:text="${ticketMap.ticket.estado == 'Abierto'} ? 'En Revisión' : 
+                                                          (${ticketMap.ticket.estado == 'Pendiente'} ? 'En Progreso' : 
+                                                          (${ticketMap.ticket.estado == 'Resuelto'} ? 'Solucionado' : ${ticketMap.ticket.estado}))">
+                                                        Estado
+                                                    </span>
                                                 </div>
                                             </div>
-                                            <div class="col-12">
-                                                <div class="card card-ticket status-completado">
-                                                    <div class="card-body">
-                                                        <div class="d-flex justify-content-between align-items-center">
-                                                            <span class="text-muted small">#TIC003</span>
-                                                            <span class="badge bg-success badge-status">Completado</span>
-                                                        </div>
-                                                        <h3 class="h5 mb-2">Solicitud de nuevo equipo</h3>
-                                                        <div class="text-muted small">
-                                                            <p class="mb-1">Prioridad: Alta</p>
-                                                            <p class="mb-1">Categoría: Hardware</p>
-                                                            <p class="mb-0">Fecha: 21-08-2024</p>
-                                                        </div>
+
+                                            <!-- Estado vacío -->
+                                            <div th:if="${ticketsConAdjuntos == null or ticketsConAdjuntos.empty}" class="no-tickets">
+                                                <div class="empty-state">
+                                                    <div class="empty-icon">
+                                                        <i class="fas fa-ticket-alt"></i>
                                                     </div>
+                                                    <h3>No tienes tickets recientes</h3>
+                                                    <p>No se encontraron tickets en tu historial reciente.</p>
                                                 </div>
                                             </div>
                                         </div>
@@ -147,7 +180,21 @@
                                     <section th:fragment="perfil-section-editar">
                                         <h2 id="Title">Editar Perfil</h2>
 
+                                        <!-- Modal de envío de correo -->
+                                        <div id="emailSentModal" class="toast-modal toast-success" style="display: none;">
+                                            <div class="toast-content">
+                                                <p class="toast-message">
+                                                    <i class="toast-icon fa-solid fa-envelope-circle-check"></i>
+                                                    <span>Se ha enviado un enlace de cambio de contraseña a tu correo electrónico. Por favor revisa tu bandeja de entrada.</span>
+                                                </p>
+                                                <span class="toast-close" onclick="closeModal('emailSentModal')">
+                                                    <i class="fa-solid fa-xmark"></i>
+                                                </span>
+                                            </div>
+                                        </div>
+
                                         <form th:action="@{/usuario/guardar}" method="post" enctype="multipart/form-data">
+                                            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
                                             <input type="hidden" name="idUsuario" th:value="${usuario.idUsuario}">
                                                 <input type="hidden" name="codigo" th:value="${usuario.codigo}">
                                                     <input type="hidden" name="activo" th:value="${usuario.activo}">
@@ -158,7 +205,7 @@
                                                                     <img th:src="@{/usuario/imagen/{id}(id=${usuario.idUsuario})}" 
                                                                          th:alt="${usuario.nombre}" 
                                                                          id="preview-image"
-                                                                         onerror="this.src='/images/default-profile.jpg'">
+                                                                         onerror="this.src='https://via.placeholder.com/120x120/e9ecef/666?text=Usuario'">
                                                                         <label for="imagenFile" class="image-upload-label">
                                                                             <i class="fa-solid fa-camera"></i>
                                                                         </label>
@@ -179,10 +226,13 @@
                                                                                           and not #lists.contains(usuario.roles.![nombre], 'ROL_SOPORTISTA')}">Usuario</span>
                                                                                 </p>
                                                                                 <div id="infoUsuario">
-                                                                                    <h3 style="display: inline;" th:text="${usuario.nombre + ' ' + usuario.apellido}"></h3>
+                                                                                    <h3 style="display: inline;" th:text="${usuario.nombre} + ${usuario.apellido != null ? ' ' + usuario.apellido : ''}"></h3>
                                                                                     <p style="display: inline;" th:text="'ID#' + ${usuario.codigo}"></p>
                                                                                 </div>
-                                                                                <p id="infoUsuario"><b>Departamento:</b> <span th:text="${usuario.departamento}"></span></p>
+                                                                                <p id="infoUsuario">
+                                                                                    <b>Departamento:</b> 
+                                                                                    <span th:text="${usuario.departamento != null and !usuario.departamento.isEmpty()} ? ${usuario.departamento} : 'Sin Información...'"></span>
+                                                                                </p>
                                                                                 <p id="infoUsuario">
                                                                                     <b>Último Acceso al Sistema:</b>
                                                                                     <span th:if="${ultimaConexion != null}" 
@@ -193,31 +243,55 @@
                                                                                     </span>
                                                                                 </p>
                                                                             </div>
+
                                                                             <button class="btn-update" onclick="window.history.back();">Cancelar</button>
+
                                                                             </div>
+
                                                                             <div class="profile-details">
+                                                                                <!-- Primera fila: Nombre y Apellidos -->
                                                                                 <div class="detail-row">
                                                                                     <div class="detail-column">
-                                                                                        <label>Nombre</label>
-                                                                                        <input type="text" name="nombre" th:value="${usuario.nombre}" maxlength="50" placeholder="Sin Informacion..." required>
+                                                                                        <label for="nombre">Nombre</label>
+                                                                                        <input type="text" 
+                                                                                               id="nombre"
+                                                                                               name="nombre" 
+                                                                                               th:value="${usuario.nombre}" 
+                                                                                               maxlength="50" 
+                                                                                               placeholder="Ingrese su nombre..." 
+                                                                                               required>
                                                                                     </div>
                                                                                     <div class="detail-column">
-                                                                                        <label>Dirección</label>
-                                                                                        <textarea name="direccion" class="form-control" style="height: 140%;" 
-                                                                                                  th:text="${usuario.direccion}" placeholder="Sin Informacion..."></textarea>
+                                                                                        <label for="apellido">Apellidos</label>
+                                                                                        <input type="text" 
+                                                                                               id="apellido"
+                                                                                               name="apellido" 
+                                                                                               th:value="${usuario.apellido}" 
+                                                                                               maxlength="50" 
+                                                                                               placeholder="Ingrese sus apellidos..." 
+                                                                                               required>
                                                                                     </div>
                                                                                 </div>
-                                                                                <div class="detail-row">
-                                                                                    <div class="detail-column" id="columnaTelefono">
-                                                                                        <label>Apellidos</label>
-                                                                                        <input type="text" id="inputTelefono" name="apellido" th:value="${usuario.apellido}" maxlength="50" placeholder="Sin Informacion..." required>
+
+                                                                                <!-- Segunda fila -->
+                                                                                <div class="detail-row single-column">
+                                                                                    <div class="detail-column">
+                                                                                        <label for="direccion">Dirección</label>
+                                                                                        <textarea id="direccion"
+                                                                                                  name="direccion" 
+                                                                                                  class="form-control" 
+                                                                                                  th:text="${usuario.direccion}" 
+                                                                                                  placeholder="Ingrese su dirección completa..."
+                                                                                                  rows="5"></textarea>
                                                                                     </div>
                                                                                 </div>
+
+                                                                                <!-- Tercera fila: Provincia y Departamento -->
                                                                                 <div class="detail-row">
                                                                                     <div class="detail-column">
-                                                                                        <label>Provincia</label>
-                                                                                        <select name="provincia" class="form-select">
-                                                                                            <option value="">Seleccione una provincia</option>
+                                                                                        <label for="provincia">Provincia</label>
+                                                                                        <select id="provincia" name="provincia" class="form-select">
+                                                                                            <option value="">Seleccione una provincia...</option>
                                                                                             <option value="Heredia" th:selected="${usuario.provincia == 'Heredia'}">Heredia</option>
                                                                                             <option value="San José" th:selected="${usuario.provincia == 'San José'}">San José</option>
                                                                                             <option value="Alajuela" th:selected="${usuario.provincia == 'Alajuela'}">Alajuela</option>
@@ -227,50 +301,91 @@
                                                                                             <option value="Limón" th:selected="${usuario.provincia == 'Limón'}">Limón</option>
                                                                                         </select>
                                                                                     </div>
-
                                                                                     <div class="detail-column">
-                                                                                        <label>Departamento</label>
-                                                                                        <select name="departamento" class="form-select form-select-departamento" required>
-                                                                                            <option value="">Seleccione un departamento</option>
-                                                                                            <!-- Iterar sobre la lista de departamentos -->
+                                                                                        <label for="departamento">Departamento</label>
+                                                                                        <select id="departamento" name="departamento" class="form-select" required>
+                                                                                            <option value="">Seleccione un departamento...</option>
                                                                                             <option th:each="departamento : ${departamentos}" 
                                                                                                     th:value="${departamento.nombre}" 
                                                                                                     th:text="${departamento.nombre}"
-                                                                                                    th:selected="${usuario.departamento == departamento.nombre}">
+                                                                                                    th:selected="${usuario.departamento == departamento.nombre}"
+                                                                                                    th:if="${#lists.contains(usuario.roles.![nombre], 'ROL_ADMINISTRADOR') or departamento.visible or usuario.departamento == departamento.nombre}">
                                                                                             </option>
                                                                                         </select>
                                                                                     </div>
                                                                                 </div>
+
+                                                                                <!-- Cuarta fila: Teléfono y Contraseña -->
                                                                                 <div class="detail-row">
                                                                                     <div class="detail-column">
-                                                                                        <label>Número de Teléfono</label>
+                                                                                        <label for="numeroTelefono">Número de Teléfono</label>
                                                                                         <input type="text" 
+                                                                                               id="numeroTelefono"
                                                                                                name="numeroTelefono" 
                                                                                                th:value="${usuario.numeroTelefono}" 
                                                                                                pattern="\d{8}" 
                                                                                                required
                                                                                                maxlength="8"
-                                                                                               placeholder="Sin Informacion..."
+                                                                                               placeholder="Ingrese su numero de telefono..."
                                                                                                oninput="validarTelefono(this)">
                                                                                     </div>
+
                                                                                     <div class="detail-column">
-                                                                                        <label>Contraseña</label>
+                                                                                        <div class="label-with-icon">
+                                                                                            <label for="contrasena">Contraseña</label>
+                                                                                            <span class="password-info-icon">
+                                                                                                <i class="fas fa-info-circle"></i>
+                                                                                                <div class="password-popover-container">
+                                                                                                    <div class="password-popover">
+                                                                                                        <div class="password-popover-title">Información Relevante</div>
+                                                                                                        <div class="password-popover-content">
+                                                                                                            Por seguridad, su contraseña está protegida mediante encriptación. 
+                                                                                                            Si desea modificarla, le enviaremos un enlace de confirmación a su correo electrónico registrado.
+                                                                                                        </div>
+                                                                                                    </div>
+                                                                                                </div>
+                                                                                            </span>
+                                                                                        </div>
+
                                                                                         <div class="password-field">
-                                                                                            <input type="password" value="password" id="passwordInput" th:value="${usuario.contrasena}">
-                                                                                                <button type="button" class="toggle-password" onclick="togglePassword()">
-                                                                                                    <i class="fa-solid fa-eye" id="toggleIcon"></i>
+                                                                                            <meta name="_csrf" th:content="${_csrf.token}"/>
+                                                                                            <meta name="_csrf_header" th:content="${_csrf.headerName}"/>
+                                                                                            <input type="password" 
+                                                                                                   id="passwordInput" 
+                                                                                                   name="contrasena"
+                                                                                                   th:value="${usuario.contrasena}" 
+                                                                                                   class="readonly-field" 
+                                                                                                   placeholder="••••••••••••••••••••••••••••••••••••••••••••••••••••••••" 
+                                                                                                   readonly>
+                                                                                                <button type="button" class="toggle-password" onclick="solicitarCambioContrasena()">
+                                                                                                    <i class="fa-solid fa-key" id="toggleIcon"></i>
+                                                                                                    <div class="password-change-popover-container">
+                                                                                                        <div class="password-change-popover">
+                                                                                                            <div class="password-change-popover-title">Cambiar Contraseña</div>
+                                                                                                        </div>
+                                                                                                    </div>
                                                                                                 </button>
                                                                                         </div>
                                                                                     </div>
                                                                                 </div>
-                                                                                <div class="detail-row" style="margin-bottom: 0rem;">
+
+                                                                                <!-- Quinta fila: Email y Botón Guardar -->
+                                                                                <div class="detail-row">
                                                                                     <div class="detail-column">
-                                                                                        <label>Correo Electrónico</label>
-                                                                                        <input id="email" type="email" name="correoElectronico" th:value="${usuario.correoElectronico}" placeholder="Sin Informacion..." readonly="">
+                                                                                        <label for="correoElectronico">Correo Electrónico</label>
+                                                                                        <input id="correoElectronico" 
+                                                                                               type="email" 
+                                                                                               name="correoElectronico" 
+                                                                                               th:value="${usuario.correoElectronico}" 
+                                                                                               class="readonly-field" 
+                                                                                               placeholder="usuario@ejemplo.com" 
+                                                                                               readonly>
                                                                                     </div>
                                                                                     <div class="detail-column">
+                                                                                        <label>&nbsp;</label> <!-- Espaciador para alinear el botón -->
                                                                                         <button type="submit" class="btn-guardar-cambios">
-                                                                                            Guardar Cambios <i id="iGuardarPerfil" class="fa-solid fa-floppy-disk"></i>
+                                                                                            <i class="fa-solid fa-floppy-disk"></i>
+                                                                                            Guardar Cambios
                                                                                         </button>
                                                                                     </div>
                                                                                 </div>

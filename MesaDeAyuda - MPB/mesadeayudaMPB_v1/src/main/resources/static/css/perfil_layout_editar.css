@@ -12,7 +12,6 @@ Click nbfs://nbhost/SystemFileSystem/Templates/Other/CascadeStyleSheet.css to ed
 .profile-card {
     background: #fff;
     border-radius: 8px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     padding: 15px;
     margin-bottom: 0px;
     border: 2px solid #ced4da;
@@ -48,35 +47,31 @@ Click nbfs://nbhost/SystemFileSystem/Templates/Other/CascadeStyleSheet.css to ed
 .btn-update {
     padding: 8px 16px;
     background-color: #fb4326;
+    width: 170px;
     color: white;
     border: none;
     border-radius: 4px;
     cursor: pointer;
     font-family: 'Poppins', sans-serif;
-    transition: background-color 0.3s ease;
+    transition: background-color 0.2s ease;
 }
 
 .btn-guardar-cambios {
+    width: 100%;
     padding: 8px 16px;
-    background-color: #11101d;
+    background-color: #0069d9;
     color: white;
     border: none;
     border-radius: 4px;
     cursor: pointer;
     font-family: 'Poppins', sans-serif;
-    transition: background-color 0.3s ease;
+    transition: background-color 0.2s ease;
 }
 
 .btn-update {
     position: absolute;
     top: 0;
     right: 0;
-    padding-inline: 45px;
-}
-
-.btn-guardar-cambios {
-    width: 100%;
-    margin-top: 24px;
 }
 
 .btn-update:hover {
@@ -84,7 +79,7 @@ Click nbfs://nbhost/SystemFileSystem/Templates/Other/CascadeStyleSheet.css to ed
 }
 
 .btn-guardar-cambios:hover {
-    background-color: #4e3af8;
+    background-color: #0056b3;
 }
 
 .form-control {
@@ -181,8 +176,11 @@ Click nbfs://nbhost/SystemFileSystem/Templates/Other/CascadeStyleSheet.css to ed
 }
 
 .password-field {
-    position: relative;
     width: 100%;
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 8px;
 }
 
 .detail-column input[type="password"],
@@ -194,7 +192,6 @@ Click nbfs://nbhost/SystemFileSystem/Templates/Other/CascadeStyleSheet.css to ed
     font-size: 15px;
 }
 
-/*PRUEBA ESTILO DE LABEL IMG*/
 .image-upload-container {
     position: relative;
     display: inline-block;
@@ -213,7 +210,7 @@ Click nbfs://nbhost/SystemFileSystem/Templates/Other/CascadeStyleSheet.css to ed
     top: 50%;
     left: 44%;
     transform: translate(-50%, -50%);
-    display: none; /* Inicialmente oculto */
+    display: none;
     background-color: rgba(0, 0, 0, 0.5);
     color: white;
     padding: 10px;
@@ -223,12 +220,187 @@ Click nbfs://nbhost/SystemFileSystem/Templates/Other/CascadeStyleSheet.css to ed
 }
 
 .image-upload-container:hover img {
-    opacity: 0.6; /* Efecto de opacidad al pasar el ratón sobre la imagen */
+    opacity: 0.6;
 }
 
 .image-upload-container:hover .image-upload-label {
-    display: block; /* Mostrar el ícono al hacer hover */
-    transform: translate(-50%, -50%) scale(1.1); /* Efecto de agrandamiento */
+    display: block;
+    transform: translate(-50%, -50%) scale(1.1);
+}
+
+/* Estilos para campos de solo lectura */
+.readonly-field {
+    background-color: #f8f9fa !important;
+    border-color: #e9ecef !important;
+    color: #6c757d !important;
+    cursor: not-allowed !important;
+}
+
+.password-field input[readonly] {
+    background-color: #f8f9fa;
+    border-color: #e9ecef;
+    color: #6c757d;
+    cursor: not-allowed;
+}
+
+/* Estilos para el popover del label contraseña */
+
+.label-with-icon {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 8px;
+}
+
+.label-with-icon label {
+    margin-bottom: 0;
+    font-weight: 500;
+    color: #666;
+    font-size: 0.875rem;
+}
+
+.password-info-icon {
+    position: relative;
+    display: inline-flex;
+    cursor: pointer;
+}
+
+.password-info-icon i {
+    color: #6c757d;
+    font-size: 14px;
+    transition: all 0.2s ease;
+}
+
+.password-info-icon:hover i {
+    color: #42484d;
+}
+
+.password-popover-container {
+    position: absolute;
+    top: 50%;
+    left: 100%;
+    transform: translateY(-50%);
+    margin-left: 10px;
+    z-index: 200;
+}
+
+.password-popover {
+    display: none;
+    position: relative;
+    width: 300px;
+    padding: 15px;
+    background-color: rgba(236, 236, 236, 0.95);
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    font-size: 12px;
+    backdrop-filter: blur(2px);
+}
+
+.password-popover::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: -10px;
+    transform: translateY(-50%);
+    border-width: 5px;
+    border-style: solid;
+    border-color: transparent #e0e0e0 transparent transparent;
+}
+
+.password-popover::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: -9px;
+    transform: translateY(-50%);
+    border-width: 5px;
+    border-style: solid;
+    border-color: transparent rgb(241, 241, 241) transparent transparent;
+}
+
+.password-popover-title {
+    font-weight: bold;
+    margin-bottom: 10px;
+    font-size: 14px;
+    color: #333;
+}
+
+.password-popover-content {
+    font-size: 12px;
+    color: #555;
+    line-height: 1.5;
+}
+
+.password-popover-content ul {
+    padding-left: 20px;
+    margin: 0;
+}
+
+.password-popover-content li {
+    margin-bottom: 8px;
+    position: relative;
+}
+
+.password-popover-content strong {
+    color: #000;
+}
+
+/* Estilos para el popover del botón de cambio de contraseña */
+.password-change-popover-container {
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    margin-bottom: 10px;
+    z-index: 200;
+}
+
+.password-change-popover {
+    display: none;
+    position: relative;
+    width: 150px;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    font-size: 12px;
+    backdrop-filter: blur(2px);
+    background: rgba(17, 17, 17, 0.85);
+    padding: 8px;
+    z-index: 1000;
+    display: none;
+    text-align: center;
+    color: #f0f0f0;
+}
+
+.password-change-popover::before {
+    content: '';
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    border-width: 8px;
+    border-style: solid;
+    border-color: #1d1d1d transparent transparent transparent;
+}
+
+.password-change-popover::after {
+    content: '';
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    margin-top: -1px;
+    border-width: 5px;
+    border-style: solid;
+    border-color: #1d1d1d transparent transparent transparent;
+}
+
+.password-change-popover-title {
+    font-family: 'Poppins', sans-serif;
+    font-size: 12px;
+    font-weight: 400;
+    color: #f0f0f0;
 }
 
 @media (max-width: 1024px) {
@@ -259,6 +431,12 @@ Click nbfs://nbhost/SystemFileSystem/Templates/Other/CascadeStyleSheet.css to ed
     .detail-row {
         flex-direction: column;
         gap: 1rem;
+    }
+    
+    .btn-update {
+        position: static;
+        width: 100%;
+        margin-top: 16px;
     }
 }
 

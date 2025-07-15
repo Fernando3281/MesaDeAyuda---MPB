@@ -14,8 +14,7 @@ Click nbfs://nbhost/SystemFileSystem/Templates/Other/CascadeStyleSheet.css to ed
     padding: 15px;
     background: white;
     border-radius: 8px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-    margin-bottom: 20px;
+    margin-bottom: 35px;
     border: 2px solid #ced4da;
 }
 
@@ -48,16 +47,6 @@ Click nbfs://nbhost/SystemFileSystem/Templates/Other/CascadeStyleSheet.css to ed
     height: 150px;
     object-fit: cover;
     border-radius: 50%;
-}
-
-.btn-update {
-    background-color: #007bff;
-    color: white;
-    border: none;
-    padding: 10px 15px;
-    border-radius: 4px;
-    cursor: pointer;
-    margin-bottom: 50px;
 }
 
 .profile-details {
@@ -106,14 +95,16 @@ Click nbfs://nbhost/SystemFileSystem/Templates/Other/CascadeStyleSheet.css to ed
 .btn-update {
     font-family: 'Poppins', sans-serif;
     position: absolute;
+    width: 170px;
     top: 0;
     right: 0;
     padding: 8px 16px;
-    background-color: #007bff;
+    background-color: #000;
     color: white;
     border: none;
     border-radius: 4px;
     cursor: pointer;
+    transition: background-color 0.2s ease;
 }
 
 .form-control {
@@ -139,10 +130,10 @@ Click nbfs://nbhost/SystemFileSystem/Templates/Other/CascadeStyleSheet.css to ed
 }
 
 .btn-update:hover {
-    background-color: #0056b3;
+    background-color: #333;
 }
 
-/* Profile Details */
+/* Detalles del Perfil */
 .profile-details {
     width: 100%;
 }
@@ -196,57 +187,420 @@ Click nbfs://nbhost/SystemFileSystem/Templates/Other/CascadeStyleSheet.css to ed
     width: 48.50%;
 }
 
-/* Tickets Section */
-.tickets-section {
-    margin-top: 40px;
+.title-recent-ticket {
+    margin: 0;
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    transition: all 0.1s ease;
+    gap: 8px;
+    cursor: pointer;
 }
 
-.card-ticket {
-    background: #fff;
-    border-radius: 8px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-    margin-bottom: 16px;
+.title-recent-ticket:hover {
+    color: #0262ca;
+}
+
+.title-recent-ticket .hover-arrow {
+    font-size: 16px;
+    opacity: 0;
+    transform: translateX(-5px);
+    transition: all 0.3s ease;
+}
+
+.title-recent-ticket:hover .hover-arrow {
+    opacity: 1;
+    transform: translateX(0);
+}
+
+/* ==================== ESTILOS MEJORADOS PARA TICKET ITEMS ==================== */
+
+.ticket-item {
+    position: relative;
+    padding: 20px;
+    padding-right: 140px;
+    background: linear-gradient(135deg, #ffffff 0%, #fafbfc 100%);
+    border-radius: 12px;
+    border: 1px solid #d2d2d2;
+    transition: all 0.3s ease;
     overflow: hidden;
+    min-height: 140px;
+    margin-top: 16px;
 }
 
-.card-ticket .card-body {
-    padding: 16px;
+.ticket-item:hover {
+    border-color: #007bff;
 }
 
-/* Status Styles */
-.status-abierto {
-    border-left: 4px solid #ffc107;
+/* ==================== BORDES LATERALES POR ESTADO ==================== */
+.ticket-item::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 5px;
+    border-radius: 0 3px 3px 0;
 }
 
-.status-en-progreso {
-    border-left: 4px solid #0d6efd;
+/* Estados específicos */
+.ticket-item.status-en-revision::before {
+    background: linear-gradient(180deg, #1D9BE0 0%, #628FAD 100%);
 }
 
-.status-completado {
-    border-left: 4px solid #198754;
+.ticket-item.status-en-progreso::before {
+    background: linear-gradient(180deg, #007BFF 0%, #0056B3 100%);
 }
 
-.badge-status {
+.ticket-item.status-pendiente::before {
+    background: linear-gradient(180deg, #fdb075 0%, #db953a 100%);
+}
+
+.ticket-item.status-resuelto::before {
+    background: linear-gradient(180deg, #79BE9D 0%, #1E7E34 100%);
+}
+
+.ticket-item.status-cerrado::before {
+    background: linear-gradient(180deg, #272727 0%, #424242 100%);
+}
+
+.ticket-item.status-abierto::before {
+    background: linear-gradient(180deg, #17A2B8 0%, #117A8B 100%);
+}
+
+.ticket-item.status-cancelado::before {
+    background: linear-gradient(180deg, #DC3545 0%, #BD2130 100%);
+}
+
+.ticket-item.status-desactivado::before {
+    background: linear-gradient(180deg, #B7B7B7 0%, #959595 100%);
+}
+
+/* ==================== ENCABEZADO DEL TICKET ==================== */
+.ticket-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+}
+
+.ticket-id {
+    display: flex;
+    align-items: center;
+    color: #6c757d;
+    font-size: 13px;
+}
+
+.ticket-id i {
+    margin-right: 6px;
+    color: #495057;
+    font-size: 14px;
+}
+
+.ticket-codigo {
+    background: rgba(108, 117, 125, 0.1);
     padding: 4px 8px;
-    border-radius: 4px;
-    font-size: 0.75rem;
+    border-radius: 6px;
+    font-weight: 600;
+    transition: all 0.2s ease;
+}
+
+.ticket-attachments {
+    color: #4f46e5;
+    font-size: 13px;
+    margin-left: 10px;
+    background: rgba(79, 70, 229, 0.1);
+    padding: 4px 8px;
+    border-radius: 6px;
+    display: inline-flex;
+    align-items: center;
+}
+
+.ticket-attachments i {
+    color: #4f46e5;
+    margin-right: 4px;
+}
+
+/* ==================== CONTENIDO DEL TICKET ==================== */
+.ticket-title {
+    font-size: 16px;
+    font-weight: 600;
+    color: #1a365d; /* Azul oscuro más profesional */
+    margin-bottom: 10px;
+    line-height: 1.4;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    transition: color 0.2s ease;
+}
+
+.ticket-item:hover .ticket-title {
+    color: #4f46e5;
+}
+
+.ticket-item:hover .ticket-codigo {
+    color: #4f46e5;
+}
+
+.ticket-description {
+    font-size: 14px;
+    color: #4a5568; /* Gris azulado más legible */
+    line-height: 1.5;
+    margin-bottom: 16px;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    transition: color 0.2s ease;
+}
+
+.ticket-item:hover .ticket-description {
+    color: #2d3748; /* Color más oscuro al hover */
+}
+
+/* ==================== DETALLES DEL TICKET ==================== */
+.ticket-details {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    font-size: 13px;
+    margin-top: auto;
+    align-items: center;
+}
+
+.ticket-info {
+    display: flex;
+    align-items: center;
+    flex: 1;
+    min-width: 140px;
+    background: rgba(248, 249, 250, 0.8);
+    padding: 6px 10px;
+    border-radius: 6px;
+    border: 1px solid #e3e3e3;
+}
+
+.ticket-property {
+    color: #6c757d;
+    display: flex;
+    align-items: center;
     font-weight: 500;
 }
 
-.bg-warning {
-    background-color: #ffc107 !important;
-    color: #000;
+.ticket-property i {
+    margin-right: 6px;
+    font-size: 13px;
+    color: #adb5bd;
 }
 
-.bg-primary {
-    background-color: #0d6efd !important;
-    color: #fff;
+.ticket-value {
+    color: #495057;
+    font-weight: 600;
+    margin-left: 6px;
 }
 
-.bg-success {
-    background-color: #198754 !important;
-    color: #fff;
+.ticket-date {
+    color: #6c757d;
+    display: flex;
+    align-items: center;
+    font-size: 12px;
+    white-space: nowrap;
+    background: rgba(248, 249, 250, 0.8);
+    padding: 6px 10px;
+    border-radius: 6px;
+    border: 1px solid #e3e3e3;
 }
+
+.ticket-date i {
+    margin-right: 6px;
+    font-size: 13px;
+    color: #adb5bd;
+}
+
+/* ==================== ESTADO DEL TICKET ==================== */
+.ticket-status {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    font-size: 12px;
+    font-weight: 600;
+    padding: 8px 14px;
+    border-radius: 20px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    white-space: nowrap;
+    min-width: 110px;
+    justify-content: center;
+}
+
+/* Estados específicos del ticket-status */
+.ticket-item.status-abierto .ticket-status {
+    background-color: #e0f2fe;
+    color: #0369a1;
+    border: 1px solid #bae6fd;
+}
+
+.ticket-item.status-pendiente .ticket-status {
+    background-color: #fff8e6;
+    color: #b45309;
+    border: 1px solid #fde68a;
+}
+
+.ticket-item.status-resuelto .ticket-status {
+    background-color: #ecfdf5;
+    color: #047857;
+    border: 1px solid #a7f3d0;
+}
+
+.ticket-item.status-cerrado .ticket-status {
+    background-color: #312f2f;
+    color: #fff;
+    border: 1px solid #4c4c4c;
+}
+
+.ticket-item.status-cancelado .ticket-status {
+    background-color: #fee2e2;
+    color: #b91c1c;
+    border: 1px solid #fecaca;
+}
+
+.ticket-item.status-desactivado .ticket-status {
+    background-color: #f3f4f6;
+    color: #4b5563;
+    border: 1px solid #e5e7eb;
+}
+
+/* ==================== ESTADO VACÍO - NO TICKETS ==================== */
+
+.no-tickets {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 300px;
+    padding: 40px 20px;
+    background: #00000004;
+    border: 2px dashed #c9c9c9;
+    border-radius: 12px;
+    margin-top: 20px;
+    position: relative;
+    overflow: hidden;
+}
+
+.no-tickets::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background:
+        radial-gradient(circle at 20% 20%, rgba(79, 70, 229, 0.03) 0%, transparent 50%),
+        radial-gradient(circle at 80% 80%, rgba(0, 123, 255, 0.03) 0%, transparent 50%);
+    pointer-events: none;
+}
+
+.empty-state {
+    text-align: center;
+    max-width: 400px;
+    position: relative;
+    z-index: 1;
+}
+
+.empty-icon {
+    width: 80px;
+    height: 80px;
+    margin: 0 auto 24px;
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 3px solid #dee2e6;
+    position: relative;
+    transition: all 0.3s ease;
+}
+
+.empty-icon::before {
+    content: '';
+    position: absolute;
+    top: -6px;
+    left: -6px;
+    right: -6px;
+    bottom: -6px;
+    background: linear-gradient(135deg, #007bff, #4f46e5);
+    border-radius: 50%;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    z-index: -1;
+}
+
+.empty-icon:hover::before {
+    opacity: 0.1;
+}
+
+.empty-icon i {
+    font-size: 36px;
+    color: #adb5bd;
+    transition: all 0.3s ease;
+}
+
+.empty-icon:hover i {
+    color: #007bff;
+    transform: scale(1.1);
+}
+
+.empty-state h3 {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: #495057;
+    margin-bottom: 12px;
+    line-height: 1.3;
+}
+
+.empty-state p {
+    font-size: 0.95rem;
+    color: #6c757d;
+    line-height: 1.5;
+    margin-bottom: 0;
+}
+
+/* Variante alternativa con botón de acción */
+.empty-state .empty-action {
+    margin-top: 24px;
+}
+
+.empty-state .btn-create-ticket {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 24px;
+    background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+    color: white;
+    text-decoration: none;
+    border-radius: 8px;
+    font-weight: 500;
+    font-size: 0.875rem;
+    transition: all 0.3s ease;
+    border: none;
+    cursor: pointer;
+    box-shadow: 0 2px 4px rgba(0, 123, 255, 0.2);
+}
+
+.empty-state .btn-create-ticket:hover {
+    background: linear-gradient(135deg, #0056b3 0%, #004085 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 123, 255, 0.3);
+    color: white;
+    text-decoration: none;
+}
+
+.empty-state .btn-create-ticket i {
+    font-size: 14px;
+}
+
 
 .text-muted {
     color: #6c757d !important;
@@ -269,10 +623,6 @@ Click nbfs://nbhost/SystemFileSystem/Templates/Other/CascadeStyleSheet.css to ed
 
 .mb-2 {
     margin-bottom: 0.5rem !important;
-}
-
-.mb-3 {
-    margin-bottom: 1rem !important;
 }
 
 .d-flex {
@@ -345,6 +695,39 @@ Click nbfs://nbhost/SystemFileSystem/Templates/Other/CascadeStyleSheet.css to ed
     .tickets-section .card-body {
         padding: 12px;
     }
+
+    .ticket-item {
+        padding: 16px;
+        padding-right: 16px;
+        min-height: auto;
+    }
+
+    .ticket-status {
+        position: static;
+        margin-top: 12px;
+        align-self: flex-start;
+        font-size: 11px;
+        padding: 6px 12px;
+        min-width: 90px;
+    }
+
+    .ticket-details {
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .ticket-info {
+        min-width: auto;
+        flex: none;
+    }
+
+    .ticket-title {
+        font-size: 15px;
+    }
+
+    .ticket-description {
+        font-size: 13px;
+    }
 }
 
 @media (max-width: 480px) {
@@ -378,5 +761,26 @@ Click nbfs://nbhost/SystemFileSystem/Templates/Other/CascadeStyleSheet.css to ed
 
     .small {
         font-size: 0.8125rem;
+    }
+
+    .ticket-item {
+        padding: 12px;
+    }
+
+    .ticket-title {
+        font-size: 14px;
+    }
+
+    .ticket-status {
+        font-size: 10px;
+        padding: 4px 10px;
+    }
+
+    .ticket-id {
+        font-size: 12px;
+    }
+
+    .ticket-attachments {
+        font-size: 11px;
     }
 }

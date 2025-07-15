@@ -32,7 +32,7 @@
                                   and not #lists.contains(usuario.roles.![nombre], 'ROL_SOPORTISTA')}">Usuario</span>
                         </p>
                         <div id="infoUsuario">
-                            <h3 style="display: inline;" th:text="${usuario.nombre + ' ' + usuario.apellido}"></h3>
+                            <h3 style="display: inline;" th:text="${usuario.nombre} + ${usuario.apellido != null ? ' ' + usuario.apellido : ''}"></h3>
                             <p style="display: inline;" th:text="'ID#' + ${usuario.codigo}"></p>
                         </div>
                         <p id="infoUsuario"><b>Departamento:</b> <span th:text="${usuario.departamento}"></span></p>
@@ -58,8 +58,16 @@
                     <div class="detail-row">
                         <div class="detail-column" id="columnaTelefono">
                             <label>Número de Teléfono</label>
-                            <input type="text" id="inputTelefono" th:if="${usuario.numeroTelefono != null and usuario.numeroTelefono != ''}" th:value="${'+506 ' + usuario.numeroTelefono}" readonly>
-                                <input type="text" id="inputTelefono" th:unless="${usuario.numeroTelefono != null and usuario.numeroTelefono != ''}" value="Sin Información..." readonly>
+                            <!-- Verifica si el número de teléfono está presente -->
+                            <input type="text" id="inputTelefono" 
+                                   th:if="${usuario.numeroTelefono != null and usuario.numeroTelefono != ''}" 
+                                   th:value="${'+506 ' + usuario.numeroTelefono}" 
+                                   readonly>
+                                <!-- Si no hay número de teléfono, muestra "Sin Información..." -->
+                                <input type="text" id="inputTelefono" 
+                                       th:unless="${usuario.numeroTelefono != null and usuario.numeroTelefono != ''}" 
+                                       placeholder="Sin Informacion..."
+                                       readonly>
                                     </div>
                                     </div>
                                     <div class="detail-row" style="margin-bottom: 0rem;">
@@ -78,54 +86,80 @@
 
                                     <!-- Sección de Tickets -->
                                     <section th:fragment="tickets-section">
-                                        <h2 class="h4 mb-3">Tickets Recientes</h2>
-                                        <div class="row g-4">
-                                            <div class="col-12">
-                                                <div class="card card-ticket status-abierto">
-                                                    <div class="card-body">
-                                                        <div class="d-flex justify-content-between align-items-center">
-                                                            <span class="text-muted small">#TIC001</span>
-                                                            <span class="badge bg-warning text-dark badge-status">Abierto</span>
+                                        <h2 class="title-ticket mb-3">Tickets Recientes</h2>
+                                        <div class="ticket-list">
+                                            <!-- Versión mejorada con clases de estado y prioridad -->
+                                            <div th:each="ticketMap : ${ticketsConAdjuntos}" 
+                                                 class="ticket-item" 
+                                                 th:classappend="'status-' + ${#strings.toLowerCase(ticketMap.ticket.estado).replace(' ', '-')}">
+
+                                                <div class="ticket-header">
+                                                    <span class="ticket-id">
+                                                        <div class="ticket-codigo">
+                                                            <i class="fa-solid fa-ticket"></i>
+                                                            <span th:text="${ticketMap.ticket.codigo}">TIC12345678</span>
                                                         </div>
-                                                        <h3 class="h5 mb-2">Problema con el sistema de Facturación</h3>
-                                                        <div class="text-muted small">
-                                                            <p class="mb-1">Prioridad: Baja</p>
-                                                            <p class="mb-1">Categoría: Hardware</p>
-                                                            <p class="mb-0">Fecha: 23-08-2024</p>
-                                                        </div>
+                                                        <span class="ticket-attachments" th:if="${ticketMap.tieneArchivos}">
+                                                            <i class="fa-solid fa-paperclip"></i>
+                                                            <span>Archivos Adjuntados</span>
+                                                        </span>
+                                                    </span>
+                                                </div>
+
+                                                <div class="ticket-title" th:text="${ticketMap.ticket.titulo}">Título del ticket</div>
+
+                                                <div class="ticket-description" th:text="${ticketMap.ticket.descripcion}">
+                                                    Descripción completa del ticket que será truncada a dos líneas si es muy larga.
+                                                </div>
+
+                                                <div class="ticket-details">
+                                                    <div class="ticket-info">
+                                                        <span class="ticket-property">
+                                                            <i class="fa-solid fa-tag"></i> Categoría: 
+                                                        </span>
+                                                        <span class="ticket-value" th:text="${ticketMap.ticket.categoria}">Categoría</span>
+                                                    </div>
+
+                                                    <div class="ticket-info">
+                                                        <span class="ticket-property">
+                                                            <i class="fa-solid fa-flag"></i> Prioridad: 
+                                                        </span>
+                                                        <span class="ticket-value" th:text="${ticketMap.ticket.prioridad}">Prioridad</span>
+                                                    </div>
+
+                                                    <div class="ticket-date">
+                                                        <i class="far fa-calendar-alt"></i>
+                                                        <span th:text="${#dates.format(ticketMap.ticket.fechaApertura, 'dd-MM-yyyy')}">Fecha</span>
                                                     </div>
                                                 </div>
-                                            </div>
-                                            <div class="col-12">
-                                                <div class="card card-ticket status-en-progreso">
-                                                    <div class="card-body">
-                                                        <div class="d-flex justify-content-between align-items-center">
-                                                            <span class="text-muted small">#TIC002</span>
-                                                            <span class="badge bg-primary badge-status">En progreso</span>
-                                                        </div>
-                                                        <h3 class="h5 mb-2">Actualización de software requerida</h3>
-                                                        <div class="text-muted small">
-                                                            <p class="mb-1">Prioridad: Media</p>
-                                                            <p class="mb-1">Categoría: Software</p>
-                                                            <p class="mb-0">Fecha: 22-08-2024</p>
-                                                        </div>
-                                                    </div>
+
+                                                <div class="ticket-status">
+                                                    <!-- Iconos específicos por estado -->
+                                                    <i th:class="${ticketMap.ticket.estado == 'En Revisión'} ? 'far fa-clock' : 
+                                                       (${ticketMap.ticket.estado == 'En Progreso'} ? 'fas fa-spinner' :
+                                                       (${ticketMap.ticket.estado == 'Pendiente'} ? 'fas fa-exclamation-circle' : 
+                                                       (${ticketMap.ticket.estado == 'Resuelto'} ? 'fas fa-check-circle' :
+                                                       (${ticketMap.ticket.estado == 'Cerrado'} ? 'fas fa-lock' :
+                                                       (${ticketMap.ticket.estado == 'Abierto'} ? 'fas fa-folder-open' :
+                                                       (${ticketMap.ticket.estado == 'Cancelado'} ? 'fas fa-times-circle' : 'far fa-question-circle'))))))"></i>
+
+                                                    <!-- Mapeo de estados -->
+                                                    <span th:text="${ticketMap.ticket.estado == 'Abierto'} ? 'En Revisión' : 
+                                                          (${ticketMap.ticket.estado == 'Pendiente'} ? 'En Progreso' : 
+                                                          (${ticketMap.ticket.estado == 'Resuelto'} ? 'Solucionado' : ${ticketMap.ticket.estado}))">
+                                                        Estado
+                                                    </span>
                                                 </div>
                                             </div>
-                                            <div class="col-12">
-                                                <div class="card card-ticket status-completado">
-                                                    <div class="card-body">
-                                                        <div class="d-flex justify-content-between align-items-center">
-                                                            <span class="text-muted small">#TIC003</span>
-                                                            <span class="badge bg-success badge-status">Completado</span>
-                                                        </div>
-                                                        <h3 class="h5 mb-2">Solicitud de nuevo equipo</h3>
-                                                        <div class="text-muted small">
-                                                            <p class="mb-1">Prioridad: Alta</p>
-                                                            <p class="mb-1">Categoría: Hardware</p>
-                                                            <p class="mb-0">Fecha: 21-08-2024</p>
-                                                        </div>
+
+                                            <!-- Estado vacío -->
+                                            <div th:if="${ticketsConAdjuntos == null or ticketsConAdjuntos.empty}" class="no-tickets">
+                                                <div class="empty-state">
+                                                    <div class="empty-icon">
+                                                        <i class="fas fa-ticket-alt"></i>
                                                     </div>
+                                                    <h3>No tienes tickets recientes</h3>
+                                                    <p>No se encontraron tickets en tu historial reciente.</p>
                                                 </div>
                                             </div>
                                         </div>

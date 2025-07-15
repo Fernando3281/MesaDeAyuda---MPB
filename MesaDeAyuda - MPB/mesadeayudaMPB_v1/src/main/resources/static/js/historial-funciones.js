@@ -1,4 +1,5 @@
 document.addEventListener('DOMContentLoaded', function () {
+    // Elementos del filtrado
     const filterChips = document.querySelectorAll('.filter-chip');
     const filterDropdowns = document.querySelectorAll('.filter-dropdown');
     const clearFilters = document.getElementById('clearFilters');
@@ -8,13 +9,32 @@ document.addEventListener('DOMContentLoaded', function () {
     const dateFrom = document.getElementById('dateFrom');
     const dateTo = document.getElementById('dateTo');
 
-    // Hide active filters container by default
-    activeFilters.style.display = 'none';
+    // Modal de cancelación
+    const cancelModal = document.getElementById('cancelTicketModal');
+    const confirmCancel = document.getElementById('confirmCancel');
+    const closeCancelModal = document.getElementById('closeCancelModal');
+    let currentTicketId = null;
 
-    // Uncheck all checkboxes by default
+    // Función para obtener CSRF token
+    function getCsrfToken() {
+        const metaTag = document.querySelector('meta[name="_csrf"]');
+        return metaTag ? metaTag.getAttribute('content') : null;
+    }
+
+    // Función para obtener CSRF header
+    function getCsrfHeader() {
+        const metaTag = document.querySelector('meta[name="_csrf_header"]');
+        return metaTag ? metaTag.getAttribute('content') : 'X-CSRF-TOKEN';
+    }
+
+    // Inicialización
+    activeFilters.style.display = 'none';
     document.querySelectorAll('input[type="checkbox"]').forEach(cb => {
         cb.checked = false;
     });
+
+    // 1. Funcionalidad de Filtrado
+    // ----------------------------
 
     // Toggle filter dropdowns
     filterChips.forEach(chip => {
@@ -77,7 +97,7 @@ document.addEventListener('DOMContentLoaded', function () {
             const dateFilterTag = document.createElement('div');
             dateFilterTag.className = 'active-filter-tag';
             dateFilterTag.innerHTML = `
-                ${dateFrom.value} - ${dateTo.value}
+                ${dateFrom.value || '...'} - ${dateTo.value || '...'}
                 <i class="fas fa-times" data-filter="date"></i>
             `;
             activeFilters.appendChild(dateFilterTag);
@@ -196,4 +216,150 @@ document.addEventListener('DOMContentLoaded', function () {
     // Initialize filters and counter
     filterTickets();
     updateActiveFilters();
+
+    // 2. Funcionalidad de Cancelación de Tickets
+    // ------------------------------------------
+
+    // Manejar clic en botones de cancelar
+    document.addEventListener('click', function(e) {
+        if (e.target.classList.contains('cancel-button') || e.target.closest('.cancel-button')) {
+            e.preventDefault();
+            const ticketCard = e.target.closest('.ticket-card');
+            currentTicketId = ticketCard.dataset.id;
+            console.log('Ticket ID para cancelar:', currentTicketId); // Debug
+            showCancelModal();
+        }
+    });
+
+    // Mostrar modal de cancelación
+    function showCancelModal(ticketId) {
+    const ticketCard = document.querySelector(`.ticket-card[data-id="${ticketId}"]`);
+    if (ticketCard) {
+        // Obtener información del ticket
+        const ticketCode = ticketCard.querySelector('.ticket-id span').textContent;
+        const ticketTitle = ticketCard.querySelector('.ticket-content h3').textContent;
+        
+        // Mostrar información en el modal
+        document.getElementById('ticketToCancelCode').textContent = ticketCode;
+        document.getElementById('ticketToCancelTitle').textContent = ticketTitle;
+        
+        currentTicketId = ticketId;
+        document.body.classList.add('modal-open');
+        cancelModal.style.display = 'flex';
+    }
+}
+
+    // Ocultar modal de cancelación
+    function hideCancelModal() {
+        document.body.classList.remove('modal-open');
+        cancelModal.style.display = 'none';
+        currentTicketId = null;
+    }
+
+    // Función para cancelar el ticket
+    function cancelTicket() {
+        if (!currentTicketId) {
+            console.error('No hay ticket ID para cancelar');
+            alert('Error: No se pudo identificar el ticket a cancelar');
+            return;
+        }
+
+        // Mostrar indicador de carga
+        confirmCancel.disabled = true;
+        confirmCancel.innerHTML = '<i class="fa fa-spinner fa-spin"></i> Procesando...';
+        
+        const csrfToken = getCsrfToken();
+        const csrfHeader = getCsrfHeader();
+        
+        if (!csrfToken) {
+            console.error('CSRF token no encontrado');
+            alert('Error de seguridad: Token CSRF no encontrado');
+            confirmCancel.disabled = false;
+            confirmCancel.textContent = 'Confirmar';
+            return;
+        }
+
+        const headers = {
+            'Content-Type': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest'
+        };
+        
+        // Agregar CSRF header
+        headers[csrfHeader] = csrfToken;
+
+        console.log('Enviando petición de cancelación...'); // Debug
+        console.log('URL:', `/tickets/cancelar/${currentTicketId}`); // Debug
+        console.log('Headers:', headers); // Debug
+
+        fetch(`/tickets/cancelar/${currentTicketId}`, {
+            method: 'POST',
+            headers: headers,
+            credentials: 'include'
+        })
+        .then(response => {
+            console.log('Respuesta recibida:', response.status, response.statusText); // Debug
+            
+            // Restaurar botón
+            confirmCancel.disabled = false;
+            confirmCancel.textContent = 'Confirmar';
+            
+            if (!response.ok) {
+                return response.json().then(err => {
+                    console.error('Error del servidor:', err); // Debug
+                    throw new Error(err.error || `Error ${response.status}: ${response.statusText}`);
+                }).catch(parseError => {
+                    console.error('Error parsing JSON:', parseError); // Debug
+                    throw new Error(`Error ${response.status}: ${response.statusText}`);
+                });
+            }
+            return response.json();
+        })
+        .then(data => {
+            console.log('Datos recibidos:', data); // Debug
+            if (data.success) {
+                // Ocultar modal y recargar la página
+                hideCancelModal();
+
+                window.location.reload();
+            } else {
+                throw new Error(data.error || 'Error al cancelar el ticket');
+            }
+        })
+        .catch(error => {
+            console.error('Error completo:', error); // Debug
+            alert('Error al cancelar el ticket: ' + error.message);
+            
+            // Restaurar botón en caso de error
+            confirmCancel.disabled = false;
+            confirmCancel.textContent = 'Confirmar';
+        });
+    }
+
+    // Event listeners para el modal de cancelación
+    if (confirmCancel) {
+        confirmCancel.addEventListener('click', cancelTicket);
+    }
+
+    if (closeCancelModal) {
+        closeCancelModal.addEventListener('click', hideCancelModal);
+    }
+
+    // Cerrar modal al hacer clic fuera
+    if (cancelModal) {
+        cancelModal.addEventListener('click', function(e) {
+            if (e.target === cancelModal) {
+                hideCancelModal();
+            }
+        });
+    }
+
+    // Cerrar modal con ESC
+    document.addEventListener('click', function(e) {
+    if (e.target.classList.contains('cancel-button') || e.target.closest('.cancel-button')) {
+        e.preventDefault();
+        const ticketCard = e.target.closest('.ticket-card');
+        const ticketId = ticketCard.dataset.id;
+        showCancelModal(ticketId);
+    }
+});
 });

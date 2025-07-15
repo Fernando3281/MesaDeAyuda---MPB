@@ -1,10 +1,22 @@
 // breadcrumb.js
 document.addEventListener('DOMContentLoaded', function() {
+    // Verificar si existe el contenedor de breadcrumb antes de continuar
+    const breadcrumbContainer = document.querySelector('.breadcrumb');
+    if (!breadcrumbContainer) {
+        return;
+    }
+
     // Inicializar el sistema de breadcrumb
     initBreadcrumb();
 
     // Actualizar el breadcrumb con la página actual
     updateBreadcrumb();
+
+    // Configurar listeners de navegación
+    setupNavigationListeners();
+
+    // Resetear el breadcrumb cuando se hace clic en el logo o inicio
+    setupLogoClickListeners();
 });
 
 // Objeto con las rutas y sus titulos
@@ -48,6 +60,10 @@ function initBreadcrumb() {
 
 // Función para actualizar el breadcrumb con la página actual
 function updateBreadcrumb() {
+    // Verificar nuevamente si existe el breadcrumb (por si acaso)
+    const breadcrumbContainer = document.querySelector('.breadcrumb');
+    if (!breadcrumbContainer) return;
+
     // Obtener la ruta actual
     const currentPath = window.location.pathname;
     
@@ -119,7 +135,6 @@ function renderBreadcrumb(history) {
     const breadcrumbContainer = document.querySelector('.breadcrumb');
     
     if (!breadcrumbContainer) {
-        console.error('No se encontró el contenedor de breadcrumb');
         return;
     }
     
@@ -169,8 +184,11 @@ function navigateToBreadcrumb(event, index) {
 
 // Función para agregar un listener a todos los enlaces de navegación
 function setupNavigationListeners() {
+    const sidebar = document.querySelector('.sidebar');
+    if (!sidebar) return; // Si no hay sidebar, salir
+    
     // Capturar clics en enlaces del sidebar
-    document.querySelectorAll('.sidebar a').forEach(link => {
+    sidebar.querySelectorAll('a').forEach(link => {
         link.addEventListener('click', function() {
             // Verificar si es un enlace a una ruta principal
             const href = this.getAttribute('href');
@@ -197,8 +215,15 @@ function setupNavigationListeners() {
     });
 }
 
-// Ejecutar la configuración de los listeners cuando el DOM esté listo
-document.addEventListener('DOMContentLoaded', setupNavigationListeners);
+// Función para configurar los listeners del logo
+function setupLogoClickListeners() {
+    const logoLinks = document.querySelectorAll('.logo-details a, .sidebar a[href="/index"]');
+    if (logoLinks.length === 0) return;
+    
+    logoLinks.forEach(link => {
+        link.addEventListener('click', clearBreadcrumbHistory);
+    });
+}
 
 // Función para limpiar el historial de breadcrumb
 function clearBreadcrumbHistory() {
@@ -207,10 +232,55 @@ function clearBreadcrumbHistory() {
     updateBreadcrumb();
 }
 
-// Resetear el breadcrumb cuando se hace clic en el logo o inicio
-document.addEventListener('DOMContentLoaded', function() {
-    const logoLinks = document.querySelectorAll('.logo-details a, .sidebar a[href="/index"]');
-    logoLinks.forEach(link => {
-        link.addEventListener('click', clearBreadcrumbHistory);
+
+
+
+
+
+
+
+
+// Función para actualizar la última conexión
+function actualizarUltimaConexion() {
+    fetch('/usuario/actualizar-ultima-conexion', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': document.querySelector('input[name="_csrf"]').value
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (!data.success) {
+            console.error('Error al actualizar última conexión');
+        }
+    })
+    .catch(error => {
+        console.error('Error en la solicitud:', error);
     });
+}
+
+// Configurar intervalo para actualizar cada 5 minutos (300000 ms)
+let intervaloUltimaConexion;
+
+function iniciarActualizacionConexion() {
+    // Actualizar inmediatamente al cargar
+    actualizarUltimaConexion();
+    
+    // Configurar intervalo para actualizaciones periódicas
+    intervaloUltimaConexion = setInterval(actualizarUltimaConexion, 300000);
+}
+
+// Detener la actualización cuando la pestaña pierde el foco
+document.addEventListener('visibilitychange', function() {
+    if (document.visibilityState === 'hidden') {
+        clearInterval(intervaloUltimaConexion);
+    } else {
+        iniciarActualizacionConexion();
+    }
+});
+
+// Iniciar cuando el DOM esté listo
+document.addEventListener('DOMContentLoaded', function() {
+    iniciarActualizacionConexion();
 });

@@ -1,119 +1,85 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
-    <head>
-        <meta charset="UTF-8">
-        <title>Cambiar Contraseña</title>
-        <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
-        <style>
-            * {
-                margin: 0;
-                padding: 0;
-                box-sizing: border-box;
-            }
-
-            body {
-                font-family: 'Poppins', sans-serif;
-                color: #18181b;
-                line-height: 1.5;
-                -webkit-font-smoothing: antialiased;
-            }
-
-            .container {
-                max-width: 600px;
-                margin: 24px auto;
-                background: white;
-                border-radius: 12px;
-                box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-                border: 2px solid #cfcfec;
-                padding: 32px;
-            }
-
-            .title {
-                font-size: 24px;
-                font-weight: 600;
-                color: #18181b;
-                margin-bottom: 16px;
-            }
-
-            .message {
-                color: #3f3f46;
-                font-size: 16px;
-                margin-bottom: 24px;
-            }
-
-            .form-group {
-                margin-bottom: 16px;
-            }
-
-            .form-group label {
-                display: block;
-                font-size: 14px;
-                color: #71717a;
-                margin-bottom: 8px;
-            }
-
-            .form-group input {
-                width: 100%;
-                padding: 8px;
-                font-size: 16px;
-                border: 1px solid #cfcfec;
-                border-radius: 8px;
-            }
-
-            .form-group button {
-                width: 100%;
-                padding: 12px;
-                font-size: 16px;
-                background-color: #2563eb;
-                color: white;
-                border: none;
-                border-radius: 8px;
-                cursor: pointer;
-            }
-
-            .form-group button:hover {
-                background-color: #1d4ed8;
-            }
-
-            .footer {
-                margin-top: 24px;
-                text-align: center;
-            }
-
-            .footer a {
-                color: #2563eb;
-                text-decoration: none;
-            }
-
-            .footer a:hover {
-                text-decoration: underline;
-            }
-        </style>
+<html xmlns="http://www.w3.org/1999/xhtml" 
+      xmlns:th="http://www.thymeleaf.org">
+    <head th:replace="~{layout/plantilla :: head}">
+        <title>Mesa de Ayuda</title>
     </head>
-    <body>
-        <div class="container">
-            <h2 class="title">Cambiar Contraseña</h2>
-            <p class="message">Ingresa tu nueva contraseña dos veces para confirmar.</p>
 
-            <form th:action="@{/registro/cambiar-contrasena}" method="post">
-                
-                <input type="hidden" name="token" th:value="${token}">
-                <div class="form-group">
-                    <label for="password">Nueva Contraseña</label>
-                    <input type="password" id="password" name="password" required>
-                </div>
-                <div class="form-group">
-                    <label for="confirmPassword">Confirmar Nueva Contraseña</label>
-                    <input type="password" id="confirmPassword" name="confirmPassword" required>
-                </div>
-                <div class="form-group">
-                    <button type="submit">Cambiar Contraseña</button>
-                </div>
-            </form>
+    <script th:src="@{/js/registro.js}" defer></script>
 
-            <div class="footer">
-                <a th:href="@{/login}">Volver al Inicio de Sesión</a>
+    <body class="body-unlogged">
+        <div class="recovery-container">
+            <div class="recovery-form">
+                <!-- Botón de regreso -->
+                <a th:href="@{/login}" class="btn btn-outline-secondary back-button">
+                    <i class="fa-solid fa-arrow-left"></i>
+                </a>
+
+                <!-- Logo de la municipalidad -->
+                <div class="municipalidad-logo-recordar"></div>
+
+                <!-- Titulo y subtitulo -->
+                <h1 class="recovery-title">Cambiar Contraseña</h1>
+                <p class="recovery-subtitle">
+                    Ingresa tu nueva contraseña dos veces para confirmar el cambio de contraseña de acceso al Centro de Soporte.
+                </p>
+
+                <!-- Mostrar errores si existen -->
+                <div th:if="${param.error}" class="alert alert-danger" style="margin-bottom: 1rem; padding: 0.75rem; background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; border-radius: 5px; font-size: 14px;">
+                    <span th:if="${param.error[0] == 'password_mismatch'}">Las contraseñas no coinciden. Por favor, inténtalo de nuevo.</span>
+                    <span th:if="${param.error[0] == 'update_failed'}">Error al actualizar la contraseña. Por favor, inténtalo de nuevo.</span>
+                </div>
+
+                <!-- Formulario -->
+                <form th:action="@{/registro/cambiar-contrasena}" method="post" class="form-elements-recovery">
+                    <input type="hidden" name="token" th:value="${token}">
+
+                        <div class="input-group-recovery">
+                            <label for="password">Nueva Contraseña</label>
+                            <div class="password-container">
+                                <input type="password" 
+                                       id="password" 
+                                       name="password" 
+                                       placeholder="Ingrese su nueva contraseña..." 
+                                       required
+                                       minlength="3">
+                                    <button type="button" class="toggle-password">
+                                        <i class="fa-solid fa-eye" id="toggleIconPassword"></i>
+                                    </button>
+                            </div>
+                        </div>
+
+                        <div class="input-group-recovery">
+                            <label for="confirmPassword">Confirmar Nueva Contraseña</label>
+                            <div class="password-container">
+                                <input type="password" 
+                                       id="confirmPassword" 
+                                       name="confirmPassword" 
+                                       placeholder="Confirme su nueva contraseña..." 
+                                       required
+                                       minlength="3">
+                                    <button type="button" class="toggle-password">
+                                        <i class="fa-solid fa-eye" id="toggleIconConfirmPassword"></i>
+                                    </button>
+                            </div>
+                        </div>
+
+                        <button type="submit" class="btn-recovery">
+                            Cambiar Contraseña
+                        </button>
+                </form>
+
+                <!-- Footer con enlaces -->
+                <div class="recovery-info">
+                    <div class="recovery-links">
+                        <a th:href="@{/login}" class="recovery-link">Volver al Inicio de Sesión</a>
+                    </div>
+                </div>
             </div>
         </div>
+
+        <footer>
+            © 2025 Municipalidad de Barva. Todos los derechos reservados.
+        </footer>
     </body>
 </html>

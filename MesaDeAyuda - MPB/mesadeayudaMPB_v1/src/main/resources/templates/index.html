@@ -1,9 +1,4 @@
 <!DOCTYPE html>
-<!--
-Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
-Click nbfs://nbhost/SystemFileSystem/Templates/Other/html.html to edit this template
--->
-
 <html xmlns="http://www.w3.org/1999/xhtml" 
       xmlns:th="http://www.thymeleaf.org">
     <head th:replace="~{layout/plantilla :: head}">
@@ -23,188 +18,1179 @@ Click nbfs://nbhost/SystemFileSystem/Templates/Other/html.html to edit this temp
                 <!-- Contenido principal -->
                 <main class="home-section">
                     <div class="content-wrapper">
+
+                        <!-- Sección de bienvenida simplificada -->
                         <div class="welcome-section">
-                            <h1>Bienvenido a su Mesa de Ayuda</h1>
-                            <p style="margin-bottom: 20px">Nuestro equipo está aquí para ofrecerle el mejor soporte y apoyo posible.</p>
-                            <a th:href="@{/tickets/nuevo}" class="btn btn-link">Crear Ticket</a>
+                            <h1>Bienvenido a su Centro de Soporte</h1>
+                            <p>Gestiona tus solicitudes de soporte de manera eficiente</p>
+                            <div class="welcome-actions">
+                                <a th:href="@{/tickets/nuevo}" class="btn btn-primary">
+                                    Crear Ticket
+                                </a>
+                            </div>
                         </div>
-                        <h2>Nuestros Servicios</h2>
-                        <div class="services-grid">
-                            <div class="service-card">
-                                <i class="fas fa-plus-circle service-icon"></i>
-                                <h3>Solicitud de Soporte</h3>
-                                <p>Solicite soporte personalizado con nuestro equipo y manténgase en contacto continuo para resolver sus consultas o inconvenientes</p>
+
+                        <!-- Sección de estadísticas con tiempo real -->
+                        <div class="stats-section">
+                            <div class="stat-card" onclick="showTicketsByStatus()">
+                                <div class="stat-icon">
+                                    <i class="fas fa-users"></i>
+                                </div>
+                                <div class="stat-info">
+                                    <span class="stat-number" id="collaborators-count">24</span>
+                                    <span class="stat-label">Colaboradores</span>
+                                </div>
+                                <div class="stat-trend positive">
+                                    <i class="fas fa-arrow-up"></i> 12%
+                                </div>
                             </div>
-                            <div class="service-card">
-                                <i class="fas fa-ticket-alt service-icon"></i>
-                                <h3>Gestion de Tickets</h3>
-                                <p>Administre y realice un seguimiento continuo sobre sus tickets de soporte desde nuestro sistema.</p>
+                            <div class="stat-card urgent" onclick="showPendingTickets()">
+                                <div class="stat-icon pending">
+                                    <i class="fas fa-clock"></i>
+                                </div>
+                                <div class="stat-info">
+                                    <span class="stat-number" id="pending-count">12</span>
+                                    <span class="stat-label">Tickets Pendientes</span>
+                                </div>
+                                <div class="stat-trend negative">
+                                    <i class="fas fa-arrow-down"></i> 8%
+                                </div>
                             </div>
-                            <div class="service-card">
-                                <i class="fas fa-history service-icon"></i>
-                                <h3>Historial de Estado</h3>
-                                <p>Obtenga información sobre operaciones anteriores de soporte con su historial y análisis detallados</p>
+                            <div class="stat-card" onclick="showCompletedTickets()">
+                                <div class="stat-icon completed">
+                                    <i class="fas fa-check-circle"></i>
+                                </div>
+                                <div class="stat-info">
+                                    <span class="stat-number" id="completed-count">85</span>
+                                    <span class="stat-label">Tickets Atendidos</span>
+                                </div>
+                                <div class="stat-trend positive">
+                                    <i class="fas fa-arrow-up"></i> 15%
+                                </div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-icon satisfaction">
+                                    <i class="fas fa-star"></i>
+                                </div>
+                                <div class="stat-info">
+                                    <span class="stat-number">4.8</span>
+                                    <span class="stat-label">Satisfacción</span>
+                                </div>
+                                <div class="stat-trend positive">
+                                    <i class="fas fa-arrow-up"></i> 3%
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Sección de gráficos -->
+                        <div class="charts-section">
+                            <div class="chart-container">
+                                <div class="chart-header">
+                                    <h3>Tickets por Mes</h3>
+                                    <select id="chartPeriod" onchange="updateChart()">
+                                        <option value="6months">Últimos 6 meses</option>
+                                        <option value="year">Último año</option>
+                                        <option value="quarter">Último trimestre</option>
+                                    </select>
+                                </div>
+                                <canvas id="ticketsChart"></canvas>
+                            </div>
+                        </div>
+
+                        <!-- Funciones útiles nuevas -->
+                        <div class="quick-actions-section">
+                            <h2>Acciones Rápidas</h2>
+                            <div class="actions-grid">
+                                <div class="action-card" onclick="searchTickets()">
+                                    <i class="fas fa-search action-icon"></i>
+                                    <h4>Buscar Tickets</h4>
+                                    <p>Encuentra tickets por ID, usuario o descripción</p>
+                                </div>
+                                <div class="action-card" onclick="showMyTickets()">
+                                    <i class="fas fa-user-circle action-icon"></i>
+                                    <h4>Mis Tickets</h4>
+                                    <p>Ver todos mis tickets activos y completados</p>
+                                </div>
+                                <div class="action-card" onclick="showKnowledgeBase()">
+                                    <i class="fas fa-book action-icon"></i>
+                                    <h4>Base de Conocimiento</h4>
+                                    <p>Consulta guías y tutoriales</p>
+                                </div>
+                                <div class="action-card" onclick="showReports()">
+                                    <i class="fas fa-chart-bar action-icon"></i>
+                                    <h4>Reportes</h4>
+                                    <p>Genera reportes personalizados</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Notificaciones en tiempo real -->
+                        <div class="notifications-section">
+                            <div class="notifications-header">
+                                <h2>Notificaciones Recientes</h2>
+                                <button class="btn-clear" onclick="clearNotifications()">
+                                    <i class="fas fa-times"></i> Limpiar
+                                </button>
+                            </div>
+                            <div class="notifications-list" id="notificationsList">
+                                <div class="notification-item new">
+                                    <div class="notification-icon">
+                                        <i class="fas fa-bell"></i>
+                                    </div>
+                                    <div class="notification-content">
+                                        <strong>Ticket #1234 actualizado</strong>
+                                        <p>El ticket sobre "Error de conexión" ha sido asignado a soporte técnico</p>
+                                        <span class="notification-time">Hace 5 minutos</span>
+                                    </div>
+                                </div>
+                                <div class="notification-item">
+                                    <div class="notification-icon">
+                                        <i class="fas fa-check-circle"></i>
+                                    </div>
+                                    <div class="notification-content">
+                                        <strong>Ticket #1230 resuelto</strong>
+                                        <p>Tu solicitud de reseteo de contraseña ha sido completada</p>
+                                        <span class="notification-time">Hace 1 hora</span>
+                                    </div>
+                                </div>
+                                <div class="notification-item">
+                                    <div class="notification-icon">
+                                        <i class="fas fa-info-circle"></i>
+                                    </div>
+                                    <div class="notification-content">
+                                        <strong>Mantenimiento programado</strong>
+                                        <p>Sistema en mantenimiento el domingo 23 de junio de 2:00 AM a 4:00 AM</p>
+                                        <span class="notification-time">Hace 3 horas</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Servicios con diseño minimalista -->
+                        <div class="services-section">
+                            <h2>Servicios</h2>
+                            <div class="services-grid">
+                                <div class="service-card">
+                                    <div class="service-header">
+                                        <i class="fas fa-headset service-icon"></i>
+                                        <h3>Soporte Personalizado</h3>
+                                    </div>
+                                    <p>Solicite soporte personalizado con nuestro equipo y manténgase en contacto continuo para resolver sus consultas o inconvenientes</p>
+                                    <button class="service-btn" onclick="requestPersonalizedSupport()">Solicitar</button>
+                                </div>
+                                <div class="service-card">
+                                    <div class="service-header">
+                                        <i class="fas fa-ticket-alt service-icon"></i>
+                                        <h3>Gestión de Tickets</h3>
+                                    </div>
+                                    <p>Administre y realice un seguimiento continuo sobre sus tickets de soporte desde nuestro sistema.</p>
+                                    <button class="service-btn" onclick="manageTickets()">Gestionar</button>
+                                </div>
+                                <div class="service-card">
+                                    <div class="service-header">
+                                        <i class="fas fa-history service-icon"></i>
+                                        <h3>Historial Detallado</h3>
+                                    </div>
+                                    <p>Obtenga información sobre operaciones anteriores de soporte con su historial y análisis detallados</p>
+                                    <button class="service-btn" onclick="viewHistory()">Ver Historial</button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Sección de FAQ mejorada -->
+                        <div class="faq-section">
+                            <div class="faq-header">
+                                <h2>Preguntas Frecuentes</h2>
+                            </div>
+                            <div class="faq-container" id="faqContainer">
+                                <div class="faq-item" data-keywords="crear ticket nuevo solicitud">
+                                    <div class="faq-question">
+                                        <span>¿Cómo puedo crear un nuevo ticket?</span>
+                                        <i class="fas fa-chevron-down"></i>
+                                    </div>
+                                    <div class="faq-answer">
+                                        Puedes crear un nuevo ticket haciendo clic en el botón "Crear Ticket" en la parte superior o accediendo al menú de tickets.
+                                    </div>
+                                </div>
+                                <div class="faq-item" data-keywords="tiempo respuesta promedio horas">
+                                    <div class="faq-question">
+                                        <span>¿Cuál es el tiempo de respuesta promedio?</span>
+                                        <i class="fas fa-chevron-down"></i>
+                                    </div>
+                                    <div class="faq-answer">
+                                        Nuestro tiempo de respuesta promedio es de 2-4 horas durante horario laboral y 24 horas en fines de semana.
+                                    </div>
+                                </div>
+                                <div class="faq-item" data-keywords="adjuntar archivos documentos pdf jpg">
+                                    <div class="faq-question">
+                                        <span>¿Puedo adjuntar archivos en mis tickets?</span>
+                                        <i class="fas fa-chevron-down"></i>
+                                    </div>
+                                    <div class="faq-answer">
+                                        Sí, puedes adjuntar archivos de hasta 10MB en formatos PDF, DOC, JPG, PNG y ZIP.
+                                    </div>
+                                </div>
+                                <div class="faq-item" data-keywords="verificar estado ticket seguimiento">
+                                    <div class="faq-question">
+                                        <span>¿Cómo puedo verificar el estado de mi ticket?</span>
+                                        <i class="fas fa-chevron-down"></i>
+                                    </div>
+                                    <div class="faq-answer">
+                                        Puedes verificar el estado desde el panel de tickets o recibirás notificaciones por email con cada actualización.
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
                 </main>
             </div>
         </div>
+
+        <!-- Modal para chat rápido -->
+        <div id="quickSupportModal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>Chat de Soporte Rápido</h3>
+                    <span class="close" onclick="closeQuickSupport()">&times;</span>
+                </div>
+                <div class="modal-body">
+                    <div class="chat-container" id="chatContainer">
+                        <div class="chat-message bot">
+                            <div class="message-content">
+                                ¡Hola! Soy el asistente virtual. ¿En qué puedo ayudarte?
+                            </div>
+                            <div class="message-time">Ahora</div>
+                        </div>
+                    </div>
+                    <div class="chat-input">
+                        <input type="text" id="chatInput" placeholder="Escribe tu mensaje..." onkeypress="handleChatInput(event)">
+                            <button onclick="sendChatMessage()"><i class="fas fa-paper-plane"></i></button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <script>
+            // Variables globales para los gráficos
+            let ticketsChart;
+
+            // Inicialización
+            document.addEventListener('DOMContentLoaded', function () {
+                initializeCharts();
+                updateStats();
+                setInterval(updateStats, 30000); // Actualizar cada 30 segundos
+            });
+
+            // Inicializar gráficos
+            function initializeCharts() {
+                // Gráfico de tickets por mes
+                const ctx1 = document.getElementById('ticketsChart').getContext('2d');
+                ticketsChart = new Chart(ctx1, {
+                    type: 'line',
+                    data: {
+                        labels: ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio'],
+                        datasets: [{
+                                label: 'Tickets Creados',
+                                data: [45, 52, 38, 61, 43, 55],
+                                borderColor: '#11214D',
+                                backgroundColor: 'rgba(17, 33, 77, 0.1)',
+                                tension: 0.4
+                            }, {
+                                label: 'Tickets Resueltos',
+                                data: [42, 48, 41, 58, 46, 52],
+                                borderColor: '#10B981',
+                                backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                                tension: 0.4
+                            }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: 'top',
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true
+                            }
+                        }
+                    }
+                });
+            }
+
+            // Actualizar estadísticas
+            function updateStats() {
+                // Simular actualización de datos en tiempo real
+                const collaborators = Math.floor(Math.random() * 5) + 22;
+                const pending = Math.floor(Math.random() * 8) + 8;
+                const completed = Math.floor(Math.random() * 10) + 80;
+
+                document.getElementById('collaborators-count').textContent = collaborators;
+                document.getElementById('pending-count').textContent = pending;
+                document.getElementById('completed-count').textContent = completed;
+            }
+
+            // Funciones de interacción
+            function openQuickSupport() {
+                document.getElementById('quickSupportModal').style.display = 'block';
+            }
+
+            function closeQuickSupport() {
+                document.getElementById('quickSupportModal').style.display = 'none';
+            }
+
+            function sendChatMessage() {
+                const input = document.getElementById('chatInput');
+                const message = input.value.trim();
+                if (message) {
+                    addChatMessage(message, 'user');
+                    input.value = '';
+                    // Simular respuesta del bot
+                    setTimeout(() => {
+                        const responses = [
+                            'Gracias por tu consulta. Un agente te contactará pronto.',
+                            'He registrado tu solicitud. ¿Necesitas algo más?',
+                            'Entiendo tu problema. Te ayudo a crear un ticket.',
+                            'Perfecto, he tomado nota. ¿Es urgente?'
+                        ];
+                        const randomResponse = responses[Math.floor(Math.random() * responses.length)];
+                        addChatMessage(randomResponse, 'bot');
+                    }, 1000);
+                }
+            }
+
+            function addChatMessage(message, type) {
+                const container = document.getElementById('chatContainer');
+                const messageDiv = document.createElement('div');
+                messageDiv.className = `chat-message ${type}`;
+                messageDiv.innerHTML = `
+                    <div class="message-content">${message}</div>
+                    <div class="message-time">Ahora</div>
+                `;
+                container.appendChild(messageDiv);
+                container.scrollTop = container.scrollHeight;
+            }
+
+            function handleChatInput(event) {
+                if (event.key === 'Enter') {
+                    sendChatMessage();
+                }
+            }
+
+            // Funciones de las acciones rápidas
+            function searchTickets() {
+                alert('Función de búsqueda de tickets - Integrar con backend');
+            }
+
+            function showMyTickets() {
+                window.location.href = '/tickets/mis-tickets';
+            }
+
+            function showKnowledgeBase() {
+                window.location.href = '/knowledge-base';
+            }
+
+            function showReports() {
+                window.location.href = '/reports';
+            }
+
+            // Funciones de servicios
+            function requestPersonalizedSupport() {
+                window.location.href = '/support/personalizado';
+            }
+
+            function manageTickets() {
+                window.location.href = '/tickets';
+            }
+
+            function viewHistory() {
+                window.location.href = '/history';
+            }
+
+            // Limpiar notificaciones
+            function clearNotifications() {
+                const notificationsList = document.getElementById('notificationsList');
+                notificationsList.innerHTML = '<p class="no-notifications">No hay notificaciones nuevas</p>';
+            }
+
+            // Actualizar gráfico según período
+            function updateChart() {
+                const period = document.getElementById('chartPeriod').value;
+                // Aquí se actualizaría el gráfico según el período seleccionado
+                console.log('Actualizando gráfico para período:', period);
+            }
+
+            // FAQ toggle functionality (existente)
+            document.querySelectorAll('.faq-question').forEach(question => {
+                question.addEventListener('click', () => {
+                    const faqItem = question.parentElement;
+                    const answer = faqItem.querySelector('.faq-answer');
+                    const icon = question.querySelector('i');
+
+                    faqItem.classList.toggle('active');
+
+                    if (faqItem.classList.contains('active')) {
+                        answer.style.maxHeight = '55px';
+                        icon.style.transform = 'rotate(180deg)';
+                    } else {
+                        answer.style.maxHeight = '0';
+                        icon.style.transform = 'rotate(0deg)';
+                    }
+                });
+            });
+
+            // Funciones para mostrar detalles de estadísticas
+            function showTicketsByStatus() {
+                alert('Mostrar detalles de colaboradores - Integrar con vista detallada');
+            }
+
+            function showPendingTickets() {
+                window.location.href = '/tickets?status=pending';
+            }
+
+            function showCompletedTickets() {
+                window.location.href = '/tickets?status=completed';
+            }
+        </script>
     </body>
 </html>
 
-
-
 <style>
-
     :root {
-        --white: #ffffff;
+        --primary-color: #11214D;
+        --secondary-color: #A9B2CA;
+        --success-color: #10B981;
+        --warning-color: #F59E0B;
+        --danger-color: #EF4444;
+        --text-color: #1F2937;
+        --text-light: #6B7280;
+        --bg-light: #F9FAFB;
+        --white: #FFFFFF;
+        --border-color: #E5E7EB;
     }
 
-    .content-wrapper {
-        max-width: 100%;
-        padding: 2rem;
-    }
-    .welcome-section {
-        background-image: url('../img/Imagen3home.jpeg'); /* Ruta a la imagen */
-        background-size: cover; /* Ajusta la imagen para que cubra toda la sección */
-        background-position: center; /* Centra la imagen */
-        background-repeat: no-repeat; /* Evita que la imagen se repita */
-        border-radius: 12px;
-        padding: 3rem 2rem;
-        text-align: center;
+    /* Sección de estadísticas mejorada */
+    .stats-section {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 1.5rem;
         margin-bottom: 3rem;
+    }
+
+    .stat-card {
+        background: var(--white);
+        border-radius: 12px;
+        padding: 1.5rem;
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        border: 1px solid var(--border-color);
+        transition: all 0.3s ease;
+        cursor: pointer;
         position: relative;
         overflow: hidden;
-
     }
 
-    .welcome-section h1, .welcome-section p {
-        color: black; /* Cambia el color del texto para que contraste con la imagen de fondo */
+    .stat-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
     }
 
-    h1 {
-        font-size: 2.5rem;
+    .stat-card.urgent {
+        border-left: 4px solid var(--danger-color);
+    }
+
+    .stat-icon {
+        width: 50px;
+        height: 50px;
+        border-radius: 10px;
+        background-color: var(--primary-color);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--white);
+        font-size: 1.25rem;
+    }
+
+    .stat-icon.pending {
+        background-color: var(--warning-color);
+    }
+
+    .stat-icon.completed {
+        background-color: var(--success-color);
+    }
+
+    .stat-icon.satisfaction {
+        background-color: #8B5CF6;
+    }
+
+    .stat-info {
+        display: flex;
+        flex-direction: column;
+        flex: 1;
+    }
+
+    .stat-number {
+        font-size: 2rem;
         font-weight: 700;
+        color: var(--text-color);
+        line-height: 1;
+    }
+
+    .stat-label {
+        font-size: 0.875rem;
+        color: var(--text-light);
+        margin-top: 0.25rem;
+    }
+
+    .stat-trend {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 2px;
+    }
+
+    .stat-trend.positive {
+        color: var(--success-color);
+    }
+
+    .stat-trend.negative {
+        color: var(--danger-color);
+    }
+
+    /* Sección de gráficos */
+    .charts-section {
+        display: grid;
+        gap: 2rem;
+        margin-bottom: 3rem;
+    }
+
+    .chart-container {
+        background: var(--white);
+        border-radius: 12px;
+        padding: 1.5rem;
+        border: 1px solid var(--border-color);
+        height: 350px;
+    }
+
+    .chart-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1rem;
+    }
+
+    .chart-header h3 {
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: var(--text-color);
+        margin: 0;
+    }
+
+    .chart-header select {
+        padding: 0.5rem;
+        border: 1px solid var(--border-color);
+        border-radius: 6px;
+        background: var(--white);
+        color: var(--text-color);
+    }
+
+    /* Acciones rápidas */
+    .quick-actions-section {
+        margin-bottom: 3rem;
+    }
+
+    .quick-actions-section h2 {
+        font-size: 1.75rem;
+        font-weight: 600;
+        color: var(--text-color);
+        margin-bottom: 2rem;
+    }
+
+    .actions-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 1.5rem;
+    }
+
+    .action-card {
+        background: var(--white);
+        border-radius: 12px;
+        padding: 2rem;
+        text-align: center;
+        border: 1px solid var(--border-color);
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+
+    .action-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        border-color: var(--primary-color);
+    }
+
+    .action-icon {
+        font-size: 2.5rem;
+        color: var(--primary-color);
+        margin-bottom: 1rem;
+    }
+
+    .action-card h4 {
+        font-size: 1.25rem;
+        font-weight: 600;
         color: var(--text-color);
         margin-bottom: 0.5rem;
     }
 
-    p {
-        font-size: 1.1rem;
+    .action-card p {
         color: var(--text-light);
+        font-size: 0.9rem;
+        line-height: 1.4;
+    }
+
+    /* Notificaciones */
+    .notifications-section {
+        background: var(--white);
+        border-radius: 12px;
+        padding: 2rem;
+        border: 1px solid var(--border-color);
+        margin-bottom: 3rem;
+    }
+
+    .notifications-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1.5rem;
+    }
+
+    .notifications-header h2 {
+        font-size: 1.75rem;
+        font-weight: 600;
+        color: var(--text-color);
+        margin: 0;
+    }
+
+    .btn-clear {
+        background: transparent;
+        border: 1px solid var(--border-color);
+        padding: 0.5rem 1rem;
+        border-radius: 6px;
+        cursor: pointer;
+        color: var(--text-light);
+        font-size: 0.875rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        transition: all 0.3s ease;
+    }
+
+    .btn-clear:hover {
+        border-color: var(--danger-color);
+        color: var(--danger-color);
+    }
+
+    .notifications-list {
+        max-height: 300px;
+        overflow-y: auto;
+    }
+
+    .notification-item {
+        display: flex;
+        gap: 1rem;
+        padding: 1rem;
+        border-bottom: 1px solid var(--border-color);
+        transition: all 0.3s ease;
+    }
+
+    .notification-item:last-child {
+        border-bottom: none;
+    }
+
+    .notification-item:hover {
+        background-color: var(--bg-light);
+    }
+
+    .notification-item.new {
+        background-color: rgba(17, 33, 77, 0.05);
+        border-left: 3px solid var(--primary-color);
+    }
+
+    .notification-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background-color: var(--bg-light);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--primary-color);
+        flex-shrink: 0;
+    }
+
+    .notification-content {
+        flex: 1;
+    }
+
+    .notification-content strong {
+        color: var(--text-color);
+        font-weight: 600;
+        display: block;
+        margin-bottom: 0.25rem;
+    }
+
+    .notification-content p {
+        color: var(--text-light);
+        font-size: 0.9rem;
+        margin: 0 0 0.5rem 0;
+        line-height: 1.4;
+    }
+
+    .notification-time {
+        font-size: 0.8rem;
+        color: var(--text-light);
+    }
+
+    .no-notifications {
+        text-align: center;
+        color: var(--text-light);
+        font-style: italic;
+        padding: 2rem;
+    }
+
+    /* Sección de bienvenida mejorada */
+    .welcome-section {
+        background: linear-gradient(135deg, var(--primary-color) 0%, #5574b3 100%);
+        border-radius: 16px;
+        padding: 3rem 2rem;
+        text-align: center;
+        margin-bottom: 3rem;
+        color: var(--white);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .welcome-section::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-image: url('../img/Imagen3home.jpeg');
+        background-size: cover;
+        background-position: center;
+        opacity: 0.2;
+        z-index: 1;
+    }
+
+    .welcome-section * {
+        position: relative;
+        z-index: 2;
+    }
+
+    .welcome-section h1 {
+        font-size: 2.5rem;
+        font-weight: 700;
+        margin-bottom: 0.5rem;
+        color: var(--white);
+    }
+
+    .welcome-section p {
+        font-size: 1.1rem;
+        margin-bottom: 2rem;
+        opacity: 0.9;
         max-width: 600px;
         margin-left: auto;
         margin-right: auto;
     }
 
+    .welcome-actions {
+        display: flex;
+        gap: 1rem;
+        justify-content: center;
+        flex-wrap: wrap;
+    }
+
     .btn {
-        padding: 10px 20px;
-        border: 2px solid #A9B2CA; /* Color del borde */
-        background-color: rgba(203, 209, 235, 0.1); /* Opacidad al fondo */
-        border-radius: 5px; /* Bordes redondeados */
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 12px 34px;
+        text-decoration: none;
+        font-weight: 600;
+        font-size: 1rem;
+        transition: all 0.3s ease;
+        border: 2px solid transparent;
+        border-radius: 8px;
         cursor: pointer;
-        transition: background-color 0.3s ease, color 0.3s ease; /* Añadir transición para el color */
-        backdrop-filter: blur(3px); /* Aplicar desenfoque */
-
+        backdrop-filter: blur(3px);
     }
 
-
-    .btn-link {
-        text-decoration: none; /* Sin subrayado en el enlace */
-        color: #000; /* Color del texto en negro */
-        font-size: 16px; /* Tamaño del texto */
-        display: block; /* Para que el enlace cubra todo el botón */
-        max-width: 200px;
-        margin-left: auto;
-        margin-right: auto;
-        text-align: center; /* Centrar el texto dentro del botón */
+    .btn-primary {
+        background: transparent;
+        color: var(--white);
+        border-color: var(--white);
     }
 
-    /* Hover para el botón */
-    .btn:hover {
-        background-color: #11214D; /* Cambia el color de fondo al hacer hover */
-        border: 2px solid #11214D; /* Color del borde */
-        opacity: 1.0;
+    .btn-primary:hover {
+        background: var(--white);
+        color: var(--primary-color);
+        transform: translateY(-1px);
     }
 
-    /* Hover para el enlace dentro del botón */
-    .btn:hover .btn-link {
-        color: #fff; /* Cambia el color del texto a blanco al hacer hover */
+    /* Servicios mejorados */
+    .services-section {
+        margin-bottom: 3rem;
     }
 
-    /* Asegurarse que el texto es visible en estado normal */
-    .btn-link {
-        color: #11214D; /* Color negro */
-    }
-
-    /* Hover adicional en el botón */
-    .btn:hover {
-        color: #fff; /* Asegura que el botón también cambie el texto a blanco */
-    }
-
-
-    h2 {
-        text-align: center;
+    .services-section h2 {
+        font-size: 1.75rem;
+        font-weight: 600;
         color: var(--text-color);
         margin-bottom: 2rem;
-        font-size: 2rem;
-        font-weight: 600;
+        text-align: left;
     }
 
     .services-grid {
         display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-        gap: 2rem;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 1.5rem;
     }
 
     .service-card {
-        background-color: var(--white);
-        border-radius: 15px;
-        padding: 35px;
-        text-align: center;
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        transition: box-shadow 0.3s ease;
+        background: var(--white);
+        border-radius: 12px;
+        padding: 2rem;
+        border: 1px solid var(--border-color);
+        transition: all 0.3s ease;
+        display: flex;
+        flex-direction: column;
     }
 
     .service-card:hover {
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.0);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        border-color: var(--secondary-color);
+    }
+
+    .service-header {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        margin-bottom: 1rem;
     }
 
     .service-icon {
-        font-size: 3rem;
-        color: #11214D;
-        margin-bottom: 15px;
+        font-size: 1.5rem;
+        color: var(--primary-color);
     }
 
     .service-card h3 {
-        font-size: 1.3rem;
+        font-size: 1.25rem;
         color: var(--text-color);
-        margin-bottom: 10px;
+        margin: 0;
         font-weight: 600;
     }
 
     .service-card p {
         font-size: 0.95rem;
         color: var(--text-light);
+        line-height: 1.5;
+        margin: 0 0 1.5rem 0;
+        flex: 1;
+    }
+
+    .service-btn {
+        background: var(--primary-color);
+        color: var(--white);
+        border: none;
+        padding: 0.75rem 1.5rem;
+        border-radius: 6px;
+        cursor: pointer;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        align-self: flex-start;
+    }
+
+    .service-btn:hover {
+        background: #0d1a3f;
+        transform: translateY(-1px);
+    }
+
+    /* FAQ mejorada */
+    .faq-section {
+        background: var(--white);
+        border-radius: 16px;
+        padding: 2.5rem;
+        border: 1px solid var(--border-color);
+    }
+
+    .faq-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 2rem;
+        flex-wrap: wrap;
+        gap: 1rem;
+    }
+
+    .faq-header h2 {
+        font-size: 1.75rem;
+        font-weight: 600;
+        color: var(--text-color);
+        margin: 0;
+    }
+
+    .faq-item {
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        margin-bottom: 1rem;
+        overflow: hidden;
+        transition: all 0.3s ease;
+    }
+
+    .faq-item:hover {
+        border-color: var(--secondary-color);
+    }
+
+    .faq-question {
+        padding: 1.25rem;
+        cursor: pointer;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        background: var(--bg-light);
+        font-weight: 500;
+        color: var(--text-color);
+        transition: all 0.3s ease;
+    }
+
+    .faq-question:hover {
+        background-color: #f3f4f6;
+    }
+
+    .faq-question i {
+        transition: transform 0.3s ease;
+        color: var(--text-light);
+    }
+
+    .faq-answer {
+        padding: 0 1.25rem;
+        max-height: 0;
+        overflow: hidden;
+        transition: all 0.3s ease;
+        background: var(--white);
+        color: var(--text-light);
         line-height: 1.6;
     }
 
+    .faq-item.active .faq-answer {
+        padding: 1.25rem;
+    }
+
+    /* Modal para chat */
+    .modal {
+        display: none;
+        position: fixed;
+        z-index: 1000;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0,0,0,0.5);
+    }
+
+    .modal-content {
+        background-color: var(--white);
+        margin: 5% auto;
+        border-radius: 12px;
+        width: 90%;
+        max-width: 500px;
+        max-height: 80vh;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .modal-header {
+        padding: 1.5rem;
+        border-bottom: 1px solid var(--border-color);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .modal-header h3 {
+        margin: 0;
+        color: var(--text-color);
+        font-weight: 600;
+    }
+
+    .close {
+        font-size: 1.5rem;
+        cursor: pointer;
+        color: var(--text-light);
+        transition: color 0.3s ease;
+    }
+
+    .close:hover {
+        color: var(--text-color);
+    }
+
+    .modal-body {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        max-height: 500px;
+    }
+
+    .chat-container {
+        flex: 1;
+        padding: 1rem;
+        overflow-y: auto;
+        max-height: 400px;
+    }
+
+    .chat-message {
+        margin-bottom: 1rem;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .chat-message.user {
+        align-items: flex-end;
+    }
+
+    .chat-message.bot {
+        align-items: flex-start;
+    }
+
+    .message-content {
+        background: var(--bg-light);
+        padding: 0.75rem 1rem;
+        border-radius: 12px;
+        max-width: 80%;
+        word-wrap: break-word;
+    }
+
+    .chat-message.user .message-content {
+        background: var(--primary-color);
+        color: var(--white);
+    }
+
+    .message-time {
+        font-size: 0.75rem;
+        color: var(--text-light);
+        margin-top: 0.25rem;
+    }
+
+    .chat-input {
+        padding: 1rem;
+        border-top: 1px solid var(--border-color);
+        display: flex;
+        gap: 0.5rem;
+    }
+
+    .chat-input input {
+        flex: 1;
+        padding: 0.75rem;
+        border: 1px solid var(--border-color);
+        border-radius: 6px;
+        font-size: 0.9rem;
+    }
+
+    .chat-input button {
+        background: var(--primary-color);
+        color: var(--white);
+        border: none;
+        padding: 0.75rem 1rem;
+        border-radius: 6px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+
+    .chat-input button:hover {
+        background: #0d1a3f;
+    }
+
+    /* Responsive */
     @media (max-width: 768px) {
         .content-wrapper {
             padding: 1rem;
+        }
+
+        .stats-section {
+            grid-template-columns: 1fr;
+        }
+
+        .charts-section {
+            grid-template-columns: 1fr;
         }
 
         .welcome-section {
             padding: 2rem 1rem;
         }
 
-        h1 {
+        .welcome-section h1 {
             font-size: 2rem;
+        }
+
+        .welcome-actions {
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .actions-grid {
+            grid-template-columns: 1fr;
         }
 
         .services-grid {
             grid-template-columns: 1fr;
+        }
+
+        .faq-section {
+            padding: 1.5rem;
+        }
+
+        .faq-header {
+            flex-direction: column;
+            align-items: stretch;
+        }
+
+        .modal-content {
+            margin: 10% auto;
+            width: 95%;
+        }
+    }
+
+    @media (max-width: 480px) {
+        .stat-card {
+            flex-direction: column;
+            text-align: center;
+        }
+
+        .stat-info {
+            align-items: center;
+        }
+
+        .service-header {
+            flex-direction: column;
+            text-align: center;
+        }
+
+        .faq-question {
+            padding: 1rem;
+        }
+
+        .chart-container {
+            height: 250px;
         }
     }
 </style>

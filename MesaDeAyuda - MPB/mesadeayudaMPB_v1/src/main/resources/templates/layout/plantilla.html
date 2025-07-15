@@ -1,8 +1,10 @@
 <!DOCTYPE html>
 <html xmlns="http://www.w3.org/1999/xhtml" 
-      xmlns:th="http://www.thymeleaf.org">
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/thymeleaf-extras-springsecurity6">
     <head>
-        <title>Mesa de Ayuda</title>
+        <title>Centro de Soporte</title>
+        <link rel="icon" th:href="@{/img/icono.ico}" type="image/x-icon">
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <link th:href="@{/css/layout_default.css}" rel="stylesheet" type="text/css" />
@@ -11,6 +13,7 @@
         <script th:src="@{/webjars/jquery/jquery.min.js}"></script>
         <script th:src="@{/webjars/popper.js/umd/popper.min.js}"></script>
         <script th:src="@{/webjars/bootstrap/js/bootstrap.min.js}"></script>
+        <script th:src="@{/webjars/chartjs/3.9.1/dist/chart.min.js}"></script>
         <script th:src="@{/js/sidebar.js}"></script>
         <script th:src="@{/js/breadcrumb.js}"></script>
     </head>
@@ -21,7 +24,7 @@
                 <button class="mobile-toggle">
                     <i class="fas fa-bars"></i>
                 </button>
-                <h1>Mesa de Ayuda</h1>
+                <h1>Centro de Soporte</h1>
             </div>
             <div class="header-right">
                 <a th:href="@{/tickets/nuevo}">
@@ -31,13 +34,15 @@
                     <i class="fas fa-bell"></i>
                 </button>
                 <div class="user-profile">
-                    <div class="user-profile">
                         <div class="user-profile-content">
                             <img th:src="@{/usuario/imagen/{id}(id=${session.usuarioId})}" 
                                  th:alt="${session.usuarioNombre}"
                                  onerror="this.src='/images/default-profile.jpg'"/>
+                            
+                            <div class="content-dropdown">
                             <span class="user-name" th:text="${session.usuarioNombre}">Usuario</span>
                             <i class="fas fa-chevron-down"></i>
+                            </div>
                         </div>
                         <div class="dropdown-menu">
                             <ul class="list">
@@ -69,7 +74,6 @@
                                 <form id="logoutForm" method="post" th:action="@{/logout}" style="display: none;"></form>
                             </ul>   
                         </div>
-                    </div>
                 </div>
         </header>
 
@@ -87,7 +91,7 @@
             <aside class="sidebar close">
                 <div class="logo-details">
                     <a th:href="@{/index}">
-                        <img th:src="@{/img/escudo-barva.webp}" alt="Logo" class="logo_img" />
+                        <img th:src="@{/img/letras-blancas-copia.webp}" alt="Logo" class="logo_img" />
                     </a>
                 </div>
                 <sidebar>
@@ -112,7 +116,9 @@
                             <ul class="sub-menu">
                                 <li><a class="link_name">Tickets</a></li>
                                 <li><a th:href="@{/tickets/nuevo}">Nuevo Ticket</a></li>
-                                <li><a th:href="@{/tickets/listado}">Mis Tickets</a></li>
+                                <li><a th:href="@{/tickets/listado}">Ver Todos</a></li>
+                                <li><a href="">Sin Asignar</a></li>
+                                <li><a href="">Mis Tickets</a></li>
                                 <li><a th:href="@{/usuario/historial}">Historial</a></li>
                             </ul>
                         </li>
@@ -129,7 +135,7 @@
                             </ul>
                         </li>
                         <li>
-                            <a th:href="@{/tickets/reporte-manager}">
+                            <a th:href="@{/reportes/listado}">
                                 <i class="fas fa-file-alt"></i>
                                 <span class="link_name">Reportes</span>
                             </a>
@@ -167,8 +173,8 @@
         <div th:fragment="nuevo-ticket-scripts">
             <script th:src="@{/js/nuevo-ticket.js}"></script>
         </div>
-        <div th:fragment="script-mostrar-contraseña">
-            <script th:src="@{/js/mostrar-contraseña.js}"></script>
+        <div th:fragment="detalle-ticket-scripts">
+            <script th:src="@{/js/usuario-detalle.js}"></script>
         </div>
         <div th:fragment="scripts-historial">
             <script th:src="@{/js/historial-funciones.js}"></script>

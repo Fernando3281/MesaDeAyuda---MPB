@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+    <head th:replace="~{layout/plantilla :: head}">
+        <title>Mesa de Ayuda</title>
+    </head>
+
+    <body>
+        <div class="wrapper">
+            <!-- Incluye el sidebar -->
+            <div th:replace="~{layout/plantilla :: sidebar}"></div>
+
+            <div class="main-content">
+                <div th:replace="~{layout/plantilla :: header}"></div>
+
+                <!-- Incluye el navbar -->
+                <div th:replace="~{layout/plantilla :: navbar}"></div>
+
+                <!-- Contenido principal -->
+                <main class="home-section">
+                    <div class="content-wrapper">
+
+                        <section th:replace="~{reportes/segmentos-reportes :: dashboard-reportes}"></section>
+
+                    </div>
+                </main>
+            </div>
+        </div>
+    </body>
+</html>

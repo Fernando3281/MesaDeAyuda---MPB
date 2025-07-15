@@ -1,19 +1,12 @@
-//NO SE ESTA UTILIZANDO
+//NO SE UTILIZA PERO PUEDE SER APLICADO EN FUTURO PARA IMPLEMENTAR UN SISTEMA CRUD SOBRE LA TABLA DE ROLES Y ASI GESTIONAR DIFERENTES PERMISOS.
 
 package com.mesadeayudaMPB.controller;
 
-import com.mesadeayudaMPB.service.RolService;
-import com.mesadeayudaMPB.service.UsuarioService;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/rol")
 public class RolesController {
 
-    @Autowired
-    private RolService rolService;
 
-    @Autowired
-    private UsuarioService usuarioService;
 }

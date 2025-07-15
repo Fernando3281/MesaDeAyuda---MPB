@@ -59,4 +59,20 @@ public interface UsuarioService {
 
     // Nuevo método para paginación
     Page<Usuario> getUsuariosPaginados(int page, int size);
+
+    Page<Usuario> getUsuariosPaginadosOrdenadosPorId(int page, int size);
+
+    Page<Usuario> buscarUsuarios(String query, int page, int size);
+
+    Page<Usuario> buscarUsuariosPorEstado(String query, boolean activo, int page, int size);
+
+    Page<Usuario> getUsuariosPorEstado(boolean activo, int page, int size);
+
+    Page<Usuario> getUsuariosPorRol(String rol, int page, int size);
+
+    Page<Usuario> buscarUsuariosPorRol(String query, String rol, int page, int size);
+
+    Page<Usuario> getUsuariosPorEstadoYRol(boolean activo, String rol, int page, int size);
+
+    Page<Usuario> buscarUsuariosPorEstadoYRol(String query, boolean activo, String rol, int page, int size);
 }

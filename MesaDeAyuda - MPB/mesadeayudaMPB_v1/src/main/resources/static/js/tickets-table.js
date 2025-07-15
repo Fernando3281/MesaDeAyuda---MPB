@@ -1,3 +1,4 @@
+//tickets-table.js
 function handleTableResize() {
     const table = document.querySelector('.table-resizable');
     const tableContainer = document.querySelector('.table-container');
@@ -240,4 +241,116 @@ function adjustTableWidth() {
 }
 
 
-//AJUUSTAR DE MAYOR A MENOR
+document.addEventListener("DOMContentLoaded", function() {
+    // Configuración del ordenamiento
+    const table = document.querySelector('.tickets-table');
+    const sortIcons = document.querySelectorAll('.sort-icon');
+    let currentSort = {
+        column: null,
+        direction: 'asc' // 'asc' o 'desc'
+    };
+
+    // Función para actualizar los iconos de ordenamiento
+    function updateSortIcons(activeColumn, direction) {
+        sortIcons.forEach(icon => {
+            icon.className = 'fas fa-sort sort-icon';
+            if (icon.getAttribute('data-column') === activeColumn) {
+                icon.className = direction === 'asc' 
+                    ? 'fas fa-sort-up sort-icon' 
+                    : 'fas fa-sort-down sort-icon';
+            }
+        });
+    }
+
+    // Función para ordenar la tabla
+    function sortTable(columnName, direction) {
+        const tbody = table.querySelector('tbody');
+        const rows = Array.from(tbody.querySelectorAll('tr:not([colspan])'));
+        
+        if (rows.length === 0) return;
+
+        rows.sort((rowA, rowB) => {
+            let valueA, valueB;
+            const cellA = getCellValue(rowA, columnName);
+            const cellB = getCellValue(rowB, columnName);
+
+            // Manejo especial para fechas
+            if (columnName === 'fechaApertura' || columnName === 'fechaActualizacion') {
+                const dateA = parseDate(cellA);
+                const dateB = parseDate(cellB);
+                return direction === 'asc' ? dateA - dateB : dateB - dateA;
+            }
+
+            // Ordenamiento alfanumérico por defecto
+            return direction === 'asc' 
+                ? cellA.localeCompare(cellB) 
+                : cellB.localeCompare(cellA);
+        });
+
+        // Reconstruir la tabla
+        tbody.innerHTML = '';
+        rows.forEach(row => tbody.appendChild(row));
+        
+        // Actualizar el estado de ordenamiento
+        currentSort.column = columnName;
+        currentSort.direction = direction;
+        updateSortIcons(columnName, direction);
+    }
+
+    // Función auxiliar para obtener el valor de una celda basado en el nombre de la columna
+    function getCellValue(row, columnName) {
+        const cells = row.querySelectorAll('td');
+        switch(columnName) {
+            case 'codigo':
+                return cells[1].textContent.trim();
+            case 'fechaApertura':
+                return cells[2].textContent.trim();
+            case 'titulo':
+                return cells[3].textContent.trim();
+            case 'solicitante':
+                return cells[4].textContent.trim();
+            case 'prioridad':
+                return cells[5].textContent.trim();
+            case 'estado':
+                return cells[6].textContent.trim();
+            case 'categoria':
+                return cells[7].textContent.trim();
+            case 'asignadoPara':
+                return cells[8].textContent.trim();
+            case 'fechaActualizacion':
+                return cells[9].textContent.trim();
+            default:
+                return '';
+        }
+    }
+
+    // Función para parsear fechas en formato dd/MM/yyyy
+    function parseDate(dateStr) {
+        if (!dateStr) return new Date(0);
+        
+        // Separar fecha y hora si existen
+        const parts = dateStr.split('\n');
+        const datePart = parts[0].trim();
+        
+        const [day, month, year] = datePart.split('/');
+        return new Date(year, month - 1, day);
+    }
+
+    // Event listeners para los iconos de ordenamiento
+    sortIcons.forEach(icon => {
+        icon.addEventListener('click', function() {
+            const columnName = this.getAttribute('data-column');
+            
+            // Determinar la dirección del ordenamiento
+            let direction = 'asc';
+            if (currentSort.column === columnName) {
+                direction = currentSort.direction === 'asc' ? 'desc' : 'asc';
+            }
+            
+            sortTable(columnName, direction);
+        });
+    });
+
+    // Orden inicial por fecha de apertura descendente
+    sortTable('fechaApertura', 'desc');
+});

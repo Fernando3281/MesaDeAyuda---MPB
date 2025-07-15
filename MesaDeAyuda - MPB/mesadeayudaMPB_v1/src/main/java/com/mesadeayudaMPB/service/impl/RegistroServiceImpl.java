@@ -65,6 +65,7 @@ public class RegistroServiceImpl implements RegistroService {
         return usuarioDao.existsByCodigo(codigo);
     }
 
+    //Genera el codigo para el nuevo usuario
     public String generarCodigoUnico() {
         String CARACTERES = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
         StringBuilder codigo = new StringBuilder();
@@ -87,7 +88,7 @@ public class RegistroServiceImpl implements RegistroService {
         }
     }
 
-    // Método para cargar la imagen predeterminada
+    // Metodo para cargar la imagen predeterminada
     @Override
     public byte[] obtenerImagenDefault() {
         try {
@@ -101,7 +102,7 @@ public class RegistroServiceImpl implements RegistroService {
     }
 
     public Usuario prepararNuevoUsuario(Usuario usuario) {
-        // Generar código único
+        // Aqui inicializa la funcion para establecer el codigo unico al usuario
         String codigoUnico = generarCodigoUnico();
         while (existeCodigo(codigoUnico)) {
             codigoUnico = generarCodigoUnico();

@@ -1,10 +1,7 @@
 package com.mesadeayudaMPB.service.impl;
 
 import com.mesadeayudaMPB.dao.UsuarioDao;
-import com.mesadeayudaMPB.domain.Rol;
 import com.mesadeayudaMPB.domain.Usuario;
-import com.mesadeayudaMPB.service.UsuarioService;
-import com.mesadeayudaMPB.service.UsuarioService;
 import jakarta.servlet.http.HttpSession;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.GrantedAuthority;
@@ -17,7 +14,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
-import java.util.List;
 
 @Service
 public class UsuarioDetailsServiceImpl implements UserDetailsService {

@@ -3,28 +3,57 @@ document.addEventListener('DOMContentLoaded', function () {
     const previewContainer = document.getElementById('imagePreviewContainer');
     const uploadBox = document.getElementById('uploadBox');
     const uploadText = document.getElementById('uploadText');
-    const maxImages = 2;
+    const maxFiles = 2;
     const maxSizeMB = 5;
-    const maxSizeBytes = maxSizeMB * 1024 * 1024; // 5MB en bytes
+    const maxSizeBytes = maxSizeMB * 1024 * 1024;
 
-    // Configuración de estado de imágenes
-    const imageState = {
+    // Función para abrir el modal de imagen
+    function openModal(imgSrc) {
+        const modal = document.getElementById('imageModal');
+        const modalImg = document.getElementById('modalImage');
+        modal.style.display = 'block';
+        modalImg.src = imgSrc;
+    }
+
+    // Función para abrir el modal de PDF
+    function openPdfModal(pdfUrl) {
+        const modal = document.getElementById('pdfModal');
+        const modalContent = document.getElementById('pdfModalContent');
+        modal.style.display = 'block';
+        modalContent.src = pdfUrl;
+    }
+
+    // Función para cerrar el modal de imagen
+    document.querySelector('.close-modal').addEventListener('click', () => {
+        const modal = document.getElementById('imageModal');
+        modal.style.display = 'none';
+    });
+
+    // Función para cerrar el modal de PDF
+    document.querySelector('.close-pdf-modal').addEventListener('click', () => {
+        const modal = document.getElementById('pdfModal');
+        modal.style.display = 'none';
+        document.getElementById('pdfModalContent').src = '';
+    });
+
+    // Configuración de estado de archivos
+    const fileState = {
         files: [],
 
-        // Método para agregar imagen
-        addImage(file) {
-            if (this.files.length >= maxImages) {
-                this.showNotification(`No se pueden agregar más de ${maxImages} imágenes`);
+        // Método para agregar archivo
+        addFile(file) {
+            if (this.files.length >= maxFiles) {
+                this.showNotification(`No se pueden agregar más de ${maxFiles} archivos`);
                 return false;
             }
 
-            if (!this.validateImage(file)) {
+            if (!this.validateFile(file)) {
                 return false;
             }
 
             this.files.push(file);
             this.toggleUploadText();
-            this.updateHoverState(); // Actualizar estado del hover
+            this.updateHoverState();
             return true;
         },
 
@@ -34,38 +63,46 @@ document.addEventListener('DOMContentLoaded', function () {
             uploadBox.classList.remove('drag-over');
         },
 
-        // Método para eliminar imagen
-        removeImage(index) {
+        // Método para eliminar archivo
+        removeFile(index) {
+            // Liberar URL de objeto si es un PDF
+            if (this.files[index].type === 'application/pdf') {
+                const pdfPreviews = document.querySelectorAll('.pdf-preview');
+                if (pdfPreviews[index]) {
+                    const pdfUrl = pdfPreviews[index].getAttribute('data-pdf-url');
+                    if (pdfUrl)
+                        URL.revokeObjectURL(pdfUrl);
+                }
+            }
+
             this.files.splice(index, 1);
             this.renderPreviews();
             this.updateInputFiles();
             this.toggleUploadText();
-            this.updateHoverState(); // Actualizar estado del hover
+            this.updateHoverState();
         },
 
-        // Actualizar el estado del hover basado en si hay archivos o no
+        // Actualizar el estado del hover
         updateHoverState() {
-            if (this.files.length >= maxImages) {
-                // Solo deshabilitar hover cuando se alcanza el máximo de imágenes
-                uploadBox.classList.add('has-images');
+            if (this.files.length >= maxFiles) {
+                uploadBox.classList.add('has-files');
                 this.resetUploadBoxStyle();
             } else {
-                // Permitir hover cuando hay espacio para más imágenes
-                uploadBox.classList.remove('has-images');
+                uploadBox.classList.remove('has-files');
             }
         },
 
-        // Validar imagen
-        validateImage(file) {
-            const allowedTypes = ['image/jpeg', 'image/png', 'image/gif'];
+        // Validar archivo
+        validateFile(file) {
+            const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'application/pdf'];
 
             if (!allowedTypes.includes(file.type)) {
-                this.showNotification('Solo se permiten imágenes JPG, PNG y GIF');
+                this.showNotification('Solo se permiten imágenes JPG, PNG, GIF y archivos PDF');
                 return false;
             }
 
             if (file.size > maxSizeBytes) {
-                this.showNotification(`La imagen "${file.name}" excede el tamaño máximo de ${maxSizeMB}MB`);
+                this.showNotification(`El archivo "${file.name}" excede el tamaño máximo de ${maxSizeMB}MB`);
                 return false;
             }
 
@@ -77,97 +114,141 @@ document.addEventListener('DOMContentLoaded', function () {
             previewContainer.innerHTML = '';
 
             this.files.forEach((file, index) => {
-                const reader = new FileReader();
-                reader.onload = (e) => {
-                    const previewWrapper = document.createElement('div');
-                    previewWrapper.className = 'image-preview-wrapper';
+                const previewWrapper = document.createElement('div');
+                previewWrapper.className = 'file-preview-wrapper';
+
+                if (file.type.startsWith('image/')) {
+                    // Procesar como imagen
+                    const reader = new FileReader();
+                    reader.onload = (e) => {
+                        const imgSrc = e.target.result; // Guardamos la URL de la imagen
+
+                        previewWrapper.innerHTML = `
+                            <div class="image-preview" data-img-src="${imgSrc}">
+                                <img src="${imgSrc}" alt="Preview" data-index="${index}">
+                                <div class="image-preview-overlay">
+                                    <button type="button" class="delete-image-btn" data-index="${index}">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </div>
+                                <div class="image-name">${this.truncateFileName(file.name)}</div>
+                            </div>
+                        `;
+
+                        // Evento para abrir el modal
+                        previewWrapper.querySelector('.image-preview').addEventListener('click', (e) => {
+                            if (!e.target.closest('.delete-image-btn')) {
+                                const imgSrc = e.currentTarget.getAttribute('data-img-src');
+                                openModal(imgSrc);
+                            }
+                        });
+
+                        // Evento para eliminar
+                        previewWrapper.querySelector('.delete-image-btn').addEventListener('click', (e) => {
+                            e.stopPropagation();
+                            const indexToRemove = e.currentTarget.dataset.index;
+                            this.removeFile(indexToRemove);
+                        });
+
+                        previewContainer.appendChild(previewWrapper);
+                    };
+                    reader.readAsDataURL(file);
+                } else if (file.type === 'application/pdf') {
+                    // Procesar como PDF
+                    const pdfUrl = URL.createObjectURL(file);
+                    const fileName = this.truncateFileName(file.name);
+
                     previewWrapper.innerHTML = `
-                        <div class="image-preview">
-                            <img src="${e.target.result}" alt="Preview" data-index="${index}">
-                            <button type="button" class="delete-image-btn" data-index="${index}">
-                                <i class="fas fa-trash"></i>
-                            </button>
-                            <div class="image-name">${file.name}</div>
+                        <div class="pdf-preview" data-pdf-url="${pdfUrl}">
+                            <div class="pdf-thumbnail">
+                                <i class="fas fa-file-pdf pdf-icon"></i>
+                            </div>
+                            <div class="pdf-preview-overlay">
+                                <button type="button" class="delete-image-btn" data-index="${index}">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                            <div class="image-name">${fileName}</div>
                         </div>
                     `;
 
-                    previewWrapper.querySelector('.delete-image-btn').addEventListener('click', (e) => {
-                        const indexToRemove = e.currentTarget.dataset.index;
-                        this.removeImage(indexToRemove);
+                    // Abrir PDF al hacer clic en la miniatura
+                    previewWrapper.querySelector('.pdf-preview').addEventListener('click', (e) => {
+                        // Evitar que se active cuando se hace clic en el botón de eliminar
+                        if (!e.target.closest('.delete-image-btn')) {
+                            const pdfUrl = e.currentTarget.getAttribute('data-pdf-url');
+                            openPdfModal(pdfUrl);
+                        }
                     });
 
-                    previewWrapper.querySelector('img').addEventListener('click', (e) => {
-                        const imgSrc = e.target.src;
-                        openModal(imgSrc);
+                    previewWrapper.querySelector('.delete-image-btn').addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        const indexToRemove = e.currentTarget.dataset.index;
+                        this.removeFile(indexToRemove);
                     });
 
                     previewContainer.appendChild(previewWrapper);
-                };
-                reader.readAsDataURL(file);
+                }
             });
+        },
+
+        // Acortar nombres de archivo largos
+        truncateFileName(name) {
+            if (name.length > 20) {
+                return name.substring(0, 17) + '...';
+            }
+            return name;
         },
 
         // Actualizar input de archivos
         updateInputFiles() {
             const dataTransfer = new DataTransfer();
             this.files.forEach(file => {
-                dataTransfer.items.add(new File([file], file.name, {
-                    type: file.type,
-                    lastModified: file.lastModified
-                }));
+                dataTransfer.items.add(file);
             });
             imageInput.files = dataTransfer.files;
         },
 
-        // Manejar selección de archivos (MODIFICADO)
+        // Manejar selección de archivos
         handleFileSelection(newFiles) {
-            const availableSlots = maxImages - this.files.length;
+            const availableSlots = maxFiles - this.files.length;
 
-            // Detener completamente si no hay slots disponibles
             if (availableSlots <= 0) {
-                this.showNotification(`No se pueden agregar más de ${maxImages} imágenes`);
+                this.showNotification(`No se pueden agregar más de ${maxFiles} archivos`);
                 return;
             }
 
-            // Verificar si se están intentando subir más archivos de los permitidos
             if (newFiles.length > availableSlots) {
-                this.showNotification(`Solo puedes agregar ${availableSlots} imagen(es) más. El máximo permitido es ${maxImages}.`);
+                this.showNotification(`Solo puedes agregar ${availableSlots} archivo(s) más. El máximo permitido es ${maxFiles}.`);
             }
 
-            // Tomar solo la cantidad de archivos permitidos
             const filesToAdd = Array.from(newFiles).slice(0, availableSlots);
-
-            // Verificar el tamaño de cada archivo antes de procesarlo
             let hasOversizedFiles = false;
             let hasInvalidTypes = false;
             let validFiles = [];
 
             filesToAdd.forEach(file => {
-                // Verificar tamaño
                 if (file.size > maxSizeBytes) {
                     hasOversizedFiles = true;
-                    this.showNotification(`La imagen "${file.name}" excede el tamaño máximo de ${maxSizeMB}MB`);
+                    this.showNotification(`El archivo "${file.name}" excede el tamaño máximo de ${maxSizeMB}MB`);
                     return;
                 }
 
-                // Verificar tipo
-                const allowedTypes = ['image/jpeg', 'image/png', 'image/gif'];
+                const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'application/pdf'];
                 if (!allowedTypes.includes(file.type)) {
                     hasInvalidTypes = true;
                     return;
                 }
 
-                // Si pasa ambas validaciones, agregar al array de archivos válidos
                 validFiles.push(file);
             });
 
             if (hasInvalidTypes) {
-                this.showNotification('Solo se permiten imágenes JPG, PNG y GIF');
+                this.showNotification('Solo se permiten imágenes JPG, PNG, GIF y archivos PDF');
             }
 
-            // Procesar solo los archivos válidos
             validFiles.forEach(file => {
-                this.addImage(file);
+                this.addFile(file);
             });
 
             this.renderPreviews();
@@ -176,98 +257,39 @@ document.addEventListener('DOMContentLoaded', function () {
 
         // Mostrar/ocultar texto de subida
         toggleUploadText() {
-            if (this.files.length > 0) {
-                uploadText.style.display = 'none';
-            } else {
-                uploadText.style.display = 'flex';
-            }
+            uploadText.style.display = this.files.length > 0 ? 'none' : 'flex';
         },
 
-        // Nuevo método para mostrar notificaciones del navegador
+        // Mostrar notificaciones
         showNotification(message) {
-            // Verificar si las notificaciones están soportadas
-            if (!('Notification' in window)) {
-                console.log('Este navegador no soporta notificaciones');
-                alert(message); // Fallback a alert tradicional
-                return;
-            }
-
-            // Verificar permisos de notificación
-            if (Notification.permission === 'granted') {
-                // Si ya tenemos permiso, crear y mostrar la notificación
-                const notification = new Notification('Mesa de Ayuda', {
-                    body: message,
-                    icon: '/favicon.ico' // Puedes cambiar esto a la ruta de tu favicon
-                });
-
-                // Cerrar la notificación después de 5 segundos
-                setTimeout(() => {
-                    notification.close();
-                }, 5000);
-            } else if (Notification.permission !== 'denied') {
-                // Si no se ha pedido permiso, pedirlo
-                Notification.requestPermission().then(permission => {
-                    if (permission === 'granted') {
-                        // Si nos dan permiso, mostrar la notificación
-                        const notification = new Notification('Mesa de Ayuda', {
-                            body: message,
-                            icon: '/favicon.ico'
-                        });
-
-                        // Cerrar la notificación después de 5 segundos
-                        setTimeout(() => {
-                            notification.close();
-                        }, 5000);
-                    } else {
-                        // Si nos niegan el permiso, fallback a alert
-                        alert(message);
-                    }
-                });
-            } else {
-                // Si ya nos han negado el permiso, fallback a alert
-                alert(message);
-            }
+            alert(message);
         }
     };
 
-    // Función para abrir el modal
-    function openModal(imgSrc) {
-        const modal = document.getElementById('imageModal');
-        const modalImg = document.getElementById('modalImage');
-        modal.style.display = 'block';
-        modalImg.src = imgSrc;
-    }
-
-    // Función para cerrar el modal
-    document.querySelector('.close-modal').addEventListener('click', () => {
-        const modal = document.getElementById('imageModal');
-        modal.style.display = 'none';
-    });
-
-    // Eventos de arrastre (MODIFICADOS)
+    // Eventos de arrastre
     ['dragenter', 'dragover'].forEach(eventName => {
         uploadBox.addEventListener(eventName, (e) => {
             e.preventDefault();
             e.stopPropagation();
 
-            // Solo agregar la clase si no hay imágenes
-            if (!uploadBox.classList.contains('has-images')) {
-                // Verificar que es una imagen válida (incluyendo PNG y GIF)
-                if (e.dataTransfer.items && e.dataTransfer.items.length > 0) {
-                    let isValid = Array.from(e.dataTransfer.items).some(item => {
-                        return item.kind === 'file' &&
-                                (item.type === 'image/jpeg' ||
-                                        item.type === 'image/png' ||
-                                        item.type === 'image/gif');
-                    });
+            if (!uploadBox.classList.contains('has-files')) {
+                let isValid = false;
 
-                    if (isValid) {
-                        uploadBox.classList.add('drag-over');
-                        uploadBox.style.borderColor = '#0d6efd';
-                        uploadBox.style.backgroundColor = '#f1f8ff';
-                    }
-                } else {
-                    // Fallback si no podemos verificar el tipo (comportamiento anterior)
+                if (e.dataTransfer.items) {
+                    isValid = Array.from(e.dataTransfer.items).some(item => {
+                        return item.kind === 'file' && (
+                                item.type.startsWith('image/') ||
+                                item.type === 'application/pdf'
+                                );
+                    });
+                } else if (e.dataTransfer.files) {
+                    isValid = Array.from(e.dataTransfer.files).some(file => {
+                        return file.type.startsWith('image/') ||
+                                file.type === 'application/pdf';
+                    });
+                }
+
+                if (isValid) {
                     uploadBox.classList.add('drag-over');
                     uploadBox.style.borderColor = '#0d6efd';
                     uploadBox.style.backgroundColor = '#f1f8ff';
@@ -281,57 +303,42 @@ document.addEventListener('DOMContentLoaded', function () {
             e.preventDefault();
             e.stopPropagation();
             uploadBox.classList.remove('drag-over');
-            // Solo restaurar estilos si no hay imágenes
-            if (!uploadBox.classList.contains('has-images')) {
+
+            if (!uploadBox.classList.contains('has-files')) {
                 uploadBox.style.borderColor = '#ccc';
                 uploadBox.style.backgroundColor = '#f8f9fa';
             }
         });
     });
 
-    // Manejar soltar archivos (MODIFICADO)
+    // Manejar soltar archivos
     uploadBox.addEventListener('drop', (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-
-        uploadBox.classList.remove('drag-over');
-
-        // Validar número de archivos incluso antes de procesarlos
         if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
-            const totalFiles = imageState.files.length + e.dataTransfer.files.length;
+            const totalFiles = fileState.files.length + e.dataTransfer.files.length;
 
-            if (totalFiles > maxImages) {
-                imageState.showNotification(`No se pueden agregar más de ${maxImages} imágenes`);
+            if (totalFiles > maxFiles) {
+                fileState.showNotification(`No se pueden agregar más de ${maxFiles} archivos`);
             } else {
-                imageState.handleFileSelection(e.dataTransfer.files);
+                fileState.handleFileSelection(e.dataTransfer.files);
             }
-        }
-
-        // Restaurar estilos
-        if (!uploadBox.classList.contains('has-images')) {
-            uploadBox.style.borderColor = '#ccc';
-            uploadBox.style.backgroundColor = '#f8f9fa';
         }
     });
 
     // Evento de cambio de input
     imageInput.addEventListener('change', (e) => {
-        imageState.handleFileSelection(e.target.files);
+        fileState.handleFileSelection(e.target.files);
     });
 
-    // Eventos de hover (mouseenter/mouseleave)
+    // Eventos de hover
     uploadBox.addEventListener('mouseenter', function () {
-        // Modificar para permitir hover incluso con una imagen
-        // siempre que no se haya alcanzado el máximo de imágenes
-        if (imageState.files.length < maxImages) {
+        if (fileState.files.length < maxFiles) {
             uploadBox.style.borderColor = '#0d6efd';
             uploadBox.style.backgroundColor = '#f1f8ff';
         }
     });
 
     uploadBox.addEventListener('mouseleave', function () {
-        // Modificar también aquí con la misma lógica
-        if (imageState.files.length < maxImages) {
+        if (fileState.files.length < maxFiles) {
             uploadBox.style.borderColor = '#ccc';
             uploadBox.style.backgroundColor = '#f8f9fa';
         }
@@ -348,21 +355,22 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
-    // Configuración del modal y otros elementos
-    const modal = document.getElementById('imageModal');
-    const closeBtn = document.querySelector('.close-modal');
-
-    closeBtn.onclick = function () {
-        modal.style.display = 'none';
-    };
-
+    // Cerrar modales al hacer clic fuera
     window.onclick = function (event) {
-        if (event.target === modal) {
-            modal.style.display = 'none';
+        const imageModal = document.getElementById('imageModal');
+        const pdfModal = document.getElementById('pdfModal');
+
+        if (event.target === imageModal) {
+            imageModal.style.display = 'none';
+        }
+
+        if (event.target === pdfModal) {
+            pdfModal.style.display = 'none';
+            document.getElementById('pdfModalContent').src = '';
         }
     };
 
-    //Metodo para mostrar y ocultar el popover
+    // Método para mostrar y ocultar el popover
     const infoIcon = document.querySelector('.info-icon');
     const popover = document.querySelector('.popover');
 
@@ -376,115 +384,399 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
-    // También debes agregar un poco de CSS para esto
-    // Puedes añadir estas reglas a tu archivo CSS o insertarlas dinámicamente:
-    const style = document.createElement('style');
-    style.textContent = `
-        .upload-box.has-images {
-            pointer-events: auto !important; /* Permitir eventos para los botones de eliminar */
-        }
-        
-        .upload-box.has-images #imageInput {
-            pointer-events: none; /* Desactivar eventos para el input cuando hay imágenes */
-        }
-        
-        /* Asegúrate de permitir clicks en los botones de eliminar */
-        .upload-box.has-images .delete-image-btn {
-            pointer-events: auto !important;
-        }
-        
-        .upload-box.has-images img {
-            pointer-events: auto !important;
-        }
-    `;
-    document.head.appendChild(style);
-
     // Solicitar permiso para notificaciones al cargar la página
     if ('Notification' in window && Notification.permission !== 'granted' && Notification.permission !== 'denied') {
         Notification.requestPermission();
     }
-});
 
+    // =============================================
+    // FUNCIONALIDAD PARA ASIGNAR SOPORTISTA (MODIFICADA)
+    // =============================================
 
+    const btnAsignarSoportista = document.getElementById('btnAsignarSoportista');
+    const infoSoportista = document.getElementById('infoSoportista');
+    const infoText = document.getElementById('infoText');
+    const confirmarAsignacion = document.getElementById('confirmarAsignacion');
+    const asignadoParaId = document.getElementById('asignadoParaId');
+    const btnCambiarSoportista = document.getElementById('btnCambiarSoportista');
+    const btnEliminarSoportista = document.getElementById('btnEliminarSoportista');
+    const searchSoportista = document.getElementById('searchSoportista');
+    const btnClearSearch = document.getElementById('btnClearSearch');
+    const soportistasList = document.getElementById('soportistasList');
+    const modalElement = document.getElementById('asignarSoportistaModal');
 
+    // Variables para almacenar la selección
+    let selectedSoportistaId = null;
+    let selectedSoportistaName = null;
 
+    // Inicializar estados de los botones
+    function initSoportistaButtons() {
+        if (asignadoParaId && asignadoParaId.value) {
+            if (btnAsignarSoportista) btnAsignarSoportista.disabled = true;
+            if (btnCambiarSoportista) btnCambiarSoportista.disabled = false;
+            if (btnEliminarSoportista) btnEliminarSoportista.disabled = false;
 
+            // Actualizar el texto del botón con el nombre del soportista asignado
+            const selectedItem = document.querySelector(`.soportista-item[data-id="${asignadoParaId.value}"]`);
+            if (selectedItem) {
+                const name = selectedItem.querySelector('.soportista-name').textContent;
+                document.getElementById('nombreSoportista').textContent = name;
+            }
+        } else {
+            if (btnAsignarSoportista) btnAsignarSoportista.disabled = false;
+            if (btnCambiarSoportista) btnCambiarSoportista.disabled = true;
+            if (btnEliminarSoportista) btnEliminarSoportista.disabled = true;
+        }
+    }
 
+    // Configurar el modal para no afectar el body
+    function configureModal() {
+        if (!modalElement) return;
+        
+        // Eliminar la clase 'fade' si existe para evitar animaciones
+        modalElement.classList.remove('fade');
 
+        // Configurar eventos personalizados
+        modalElement.addEventListener('show.bs.modal', function () {
+            // Limpiar estilos del body
+            document.body.style.overflow = '';
+            document.body.style.paddingRight = '';
+        });
 
+        modalElement.addEventListener('shown.bs.modal', function () {
+            // Enfocar el campo de búsqueda al abrir
+            if (searchSoportista) {
+                searchSoportista.focus();
+            }
+        });
 
+        modalElement.addEventListener('hidden.bs.modal', function () {
+            // Limpiar estilos del body
+            document.body.style.overflow = '';
+            document.body.style.paddingRight = '';
 
+            // Limpiar selección
+            document.querySelectorAll('.soportista-item').forEach(item => {
+                item.classList.remove('active');
+            });
+            selectedSoportistaId = null;
+            selectedSoportistaName = null;
+            if (infoSoportista) infoSoportista.style.display = 'none';
 
+            // Limpiar búsqueda si existe
+            if (searchSoportista) {
+                searchSoportista.value = '';
+                filterSoportistas('');
+            }
+        });
+    }
 
+    // Función para abrir el modal
+    function openAssignModal() {
+        if (!modalElement) return;
+        
+        const modal = new bootstrap.Modal(modalElement, {
+            backdrop: true,
+            keyboard: true,
+            focus: true
+        });
+        modal.show();
+    }
 
+    // Función para filtrar soportistas
+    function filterSoportistas(searchTerm) {
+        const items = document.querySelectorAll('.soportista-item');
+        let hasMatches = false;
 
-$(document).ready(function () {
-    // Almacenar la URL de referencia al cargar la página
-    const previousPage = document.referrer;
-    sessionStorage.setItem('previousPanel', previousPage);
+        items.forEach(item => {
+            const name = item.querySelector('.soportista-name')?.textContent.toLowerCase() || '';
+            const code = item.querySelector('.soportista-code')?.textContent.toLowerCase() || '';
+            const roles = Array.from(item.querySelectorAll('.role-badge')).map(badge =>
+                badge.textContent.toLowerCase()
+            ).join(' ');
 
-    // Flag para prevenir múltiples envíos
+            const searchLower = searchTerm.toLowerCase();
+            const itemText = `${name} ${code} ${roles}`;
+
+            if (itemText.includes(searchLower)) {
+                item.style.display = 'flex';
+                hasMatches = true;
+            } else {
+                item.style.display = 'none';
+            }
+        });
+
+        // Mostrar mensaje si no hay coincidencias
+        const noResults = document.getElementById('noResults');
+        if (!hasMatches && searchTerm) {
+            if (!noResults && soportistasList) {
+                const noResultsDiv = document.createElement('div');
+                noResultsDiv.id = 'noResults';
+                noResultsDiv.className = 'alert alert-warning mt-2';
+                noResultsDiv.textContent = 'No se encontraron colaboradores que coincidan con la búsqueda';
+                soportistasList.appendChild(noResultsDiv);
+            }
+        } else if (noResults) {
+            noResults.remove();
+        }
+    }
+
+    // Función para resetear la selección de soportista
+    function resetSoportistaSelection() {
+        if (asignadoParaId) asignadoParaId.value = '';
+        const nombreSoportista = document.getElementById('nombreSoportista');
+        if (nombreSoportista) nombreSoportista.textContent = 'Asignar a soportista...';
+        selectedSoportistaId = null;
+        selectedSoportistaName = null;
+
+        if (btnAsignarSoportista) btnAsignarSoportista.disabled = false;
+        if (btnCambiarSoportista) btnCambiarSoportista.disabled = true;
+        if (btnEliminarSoportista) btnEliminarSoportista.disabled = true;
+    }
+
+    // Inicialización
+    initSoportistaButtons();
+    configureModal();
+
+    // Evento para seleccionar soportista (delegación de eventos)
+    if (soportistasList) {
+        soportistasList.addEventListener('click', function (e) {
+            const item = e.target.closest('.soportista-item');
+            if (!item)
+                return;
+
+            // Remover selección previa
+            document.querySelectorAll('.soportista-item').forEach(i => i.classList.remove('active'));
+
+            // Agregar selección al item clickeado
+            item.classList.add('active');
+            selectedSoportistaId = item.getAttribute('data-id');
+            selectedSoportistaName = item.querySelector('.soportista-name').textContent;
+
+            // Mostrar información del soportista seleccionado
+            const codigo = item.querySelector('.soportista-code').textContent;
+
+            if (infoText) infoText.textContent = `Asignar el ticket a: ${selectedSoportistaName} (${codigo})`;
+            if (infoSoportista) infoSoportista.style.display = 'block';
+        });
+    }
+
+    // Configurar eventos de búsqueda
+    if (searchSoportista) {
+        searchSoportista.addEventListener('input', function () {
+            filterSoportistas(this.value);
+        });
+    }
+
+    if (btnClearSearch) {
+        btnClearSearch.addEventListener('click', function () {
+            if (searchSoportista) {
+                searchSoportista.value = "";
+                filterSoportistas("");
+                searchSoportista.focus();
+            }
+        });
+    }
+
+    // Confirmar asignación
+    if (confirmarAsignacion) {
+        confirmarAsignacion.addEventListener('click', function () {
+            if (selectedSoportistaId) {
+                if (asignadoParaId) asignadoParaId.value = selectedSoportistaId;
+                const nombreSoportista = document.getElementById('nombreSoportista');
+                if (nombreSoportista) nombreSoportista.textContent = selectedSoportistaName;
+
+                if (btnAsignarSoportista) btnAsignarSoportista.disabled = true;
+                if (btnCambiarSoportista) btnCambiarSoportista.disabled = false;
+                if (btnEliminarSoportista) btnEliminarSoportista.disabled = false;
+
+                if (modalElement) {
+                    const modal = bootstrap.Modal.getInstance(modalElement);
+                    if (modal) modal.hide();
+                }
+            } else {
+                alert('Por favor seleccione un colaborador');
+            }
+        });
+    }
+
+    // Evento para cambiar soportista
+    if (btnCambiarSoportista) {
+        btnCambiarSoportista.addEventListener('click', function (e) {
+            e.preventDefault();
+            openAssignModal();
+        });
+    }
+
+    // Evento para eliminar soportista
+    if (btnEliminarSoportista) {
+        btnEliminarSoportista.addEventListener('click', function (e) {
+            e.preventDefault();
+            resetSoportistaSelection();
+        });
+    }
+
+    // Evento del botón principal de asignar
+    if (btnAsignarSoportista) {
+        btnAsignarSoportista.addEventListener('click', function (e) {
+            if (!this.disabled) {
+                openAssignModal();
+            }
+        });
+    }
+
+    // =============================================
+    // FUNCIONALIDAD ADICIONAL
+    // =============================================
+
+    // Script para el desplegable de campos de administrador
+    const toggleBtn = document.getElementById('adminFieldsToggle');
+    const adminFields = document.getElementById('adminFields');
+
+    if (toggleBtn && adminFields) {
+        toggleBtn.addEventListener('click', function () {
+            this.classList.toggle('active');
+            adminFields.classList.toggle('active');
+        });
+    }
+
+    // =============================================
+    // MANEJO DEL FORMULARIO CON MODAL DE CONFIRMACIÓN
+    // =============================================
+    
+    // Variables para el control del envío
     let isSubmitting = false;
+    const successModal = document.getElementById('successModal');
+    let bootstrapSuccessModal = null;
 
-    // Inicializar el modal con configuración para evitar cierre accidental
-    var successModal = new bootstrap.Modal(document.getElementById('successModal'), {
-        backdrop: 'static',
-        keyboard: false
-    });
+    // Inicializar el modal de éxito
+    if (successModal) {
+        bootstrapSuccessModal = new bootstrap.Modal(successModal, {
+            backdrop: 'static',
+            keyboard: false
+        });
+    }
 
-    // Manejar el envío del formulario
-    $('form').on('submit', function (e) {
-        // Prevenir la acción por defecto inmediatamente
-        e.preventDefault();
+    // Función para mostrar el modal de éxito
+    function showSuccessModal() {
+        if (bootstrapSuccessModal) {
+            bootstrapSuccessModal.show();
+        }
+    }
 
-        // Verificar si ya se está enviando el formulario
+    // Función para limpiar el formulario después del envío exitoso
+    function resetForm() {
+        const form = document.querySelector('form[action="/tickets/guardar"]');
+        if (form) {
+            form.reset();
+        }
+        
+        // Limpiar previsualizaciones de archivos
+        if (previewContainer) {
+            previewContainer.innerHTML = '';
+        }
+        
+        // Resetear estado de archivos
+        fileState.files = [];
+        fileState.toggleUploadText();
+        fileState.updateHoverState();
+
+        // Limpiar selección de soportista si existe
+        resetSoportistaSelection();
+    }
+
+    // Función para manejar el envío del formulario
+    function handleFormSubmit(event) {
+        event.preventDefault();
+        
         if (isSubmitting) {
+            return false;
+        }
+
+        const form = event.target.closest('form') || document.querySelector('form[action="/tickets/guardar"]');
+        const submitButton = document.getElementById('submitButton');
+
+        // Validación del formulario
+        if (!form.checkValidity()) {
+            form.reportValidity();
             return false;
         }
 
         // Marcar como enviando
         isSubmitting = true;
+        if (submitButton) {
+            submitButton.disabled = true;
+            submitButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Enviando...';
+        }
 
-        // Deshabilitar el botón para evitar múltiples envíos
-        const $submitButton = $('#submitButton');
-        $submitButton.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Enviando...');
+        // Crear FormData
+        const formData = new FormData(form);
 
-        // Crear FormData para enviar los archivos
-        var formData = new FormData(this);
-
-        // Enviar el formulario mediante AJAX
-        $.ajax({
-            url: $(this).attr('action'),
-            type: 'POST',
-            data: formData,
-            processData: false,
-            contentType: false,
-            success: function (response) {
-                // Mostrar el modal con la animación
-                successModal.show();
-
-                // Limpiar el formulario si el envío fue exitoso
-                $('form')[0].reset();
-                $('#imagePreviewContainer').empty();
-            },
-            error: function (xhr) {
-                // Mostrar error al usuario
-                alert('Error al enviar el ticket: ' + (xhr.responseJSON?.message || xhr.statusText));
-            },
+        // Realizar petición AJAX
+        fetch(form.action, {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => {
+            if (response.ok) {
+                // Si la respuesta es exitosa, mostrar el modal
+                showSuccessModal();
+                resetForm();
+            } else {
+                // Si hay error, intentar obtener el mensaje de error
+                return response.text().then(text => {
+                    throw new Error(`Error ${response.status}: ${text || response.statusText}`);
+                });
+            }
+        })
+        .catch(error => {
+            console.error('Error al enviar el ticket:', error);
+            alert('Error al enviar el ticket: ' + error.message);
+        })
+        .finally(() => {
+            // Restaurar botón y estado
+            isSubmitting = false;
+            if (submitButton) {
+                submitButton.disabled = false;
+                submitButton.innerHTML = 'Enviar Ticket <i class="fa-solid fa-paper-plane"></i>';
+            }
         });
 
-        // Retornar falso para asegurar que no se envíe el formulario
         return false;
-    });
+    }
 
-    // Manejar el botón de confirmación
-    $('#confirmButton').on('click', function () {
-        successModal.hide();
+    // Prevenir el envío tradicional del formulario
+    const form = document.querySelector('form[action="/tickets/guardar"]');
+    if (form) {
+        form.addEventListener('submit', handleFormSubmit);
+    }
 
-        // Obtener la URL almacenada o usar una por defecto
-        const previousPanel = sessionStorage.getItem('previousPanel') || '/index';
+    // Manejar click del botón de envío
+    const submitButton = document.getElementById('submitButton');
+    if (submitButton) {
+        submitButton.addEventListener('click', function(event) {
+            event.preventDefault();
+            handleFormSubmit(event);
+        });
+    }
 
-        // Redirigir al panel anterior
-        window.location.href = previousPanel;
-    });
+    // Manejar el botón de confirmación del modal de éxito
+    const confirmButton = document.getElementById('confirmButton');
+    if (confirmButton) {
+        confirmButton.addEventListener('click', function() {
+            if (bootstrapSuccessModal) {
+                bootstrapSuccessModal.hide();
+            }
+            
+            // Redirigir a la página anterior o a la página de listado
+            const previousPage = sessionStorage.getItem('previousPanel') || '/tickets/listado';
+            window.location.href = previousPage;
+        });
+    }
+
+    // Guardar página anterior para redirección
+    const previousPage = document.referrer;
+    if (previousPage) {
+        sessionStorage.setItem('previousPanel', previousPage);
+    }
 });

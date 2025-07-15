@@ -48,7 +48,6 @@
 
 .ticket-counter:hover {
     background: rgba(79, 70, 229, 0.15);
-    transform: translateY(-1px);
 }
 
 .counter-number {
@@ -599,8 +598,8 @@
 }
 
 .priority-medio {
-    background-color: #fef3c7;
-    color: #92400e;
+    background-color: #fff8e6;
+    color: #984607;
     border: 1px solid #fde68a;
 }
 
@@ -611,11 +610,10 @@
 }
 
 .priority-critico {
-    background-color: #450a0a;
-    color: #fef2f2;
+    background-color: #5b1111;
+    color: #fdf1f1;
     border: 1px solid #7f1d1d;
 }
-
 /* Colores para los iconos de bandera según prioridad */
 .priority-sin-asignar i.fa-flag {
     color: #4b5563;
@@ -626,7 +624,7 @@
 }
 
 .priority-medio i.fa-flag {
-    color: #92400e;
+    color: #984607;
 }
 
 .priority-alto i.fa-flag {
@@ -634,7 +632,7 @@
 }
 
 .priority-critico i.fa-flag {
-    color: #fef2f2;
+    color: #fdf1f1;
 }
 
 /* Etiquetas de estado y prioridad */
@@ -657,15 +655,15 @@
 
 /* Mejoras en los estados */
 .status-abierto {
-    background-color: #fff8e6;
-    color: #b45309;
-    border: 1px solid #fde68a;
-}
-
-.status-pendiente {
     background-color: #e0f2fe;
     color: #0369a1;
     border: 1px solid #bae6fd;
+}
+
+.status-pendiente {
+    background-color: #fff8e6;
+    color: #984607;
+    border: 1px solid #fde68a;
 }
 
 .status-resuelto {
@@ -675,6 +673,18 @@
 }
 
 .status-cerrado {
+    background-color: #312f2f;
+    color: #fff;
+    border: 1px solid #4c4c4c;
+}
+
+.status-cancelado {
+    background-color: #fee2e2;
+    color: #b91c1c;
+    border: 1px solid #fecaca;
+}
+
+.status-desactivado {
     background-color: #f3f4f6;
     color: #4b5563;
     border: 1px solid #e5e7eb;
@@ -763,32 +773,6 @@
     color: #4b5563;
 }
 
-/* Iconos de categoría personalizados */
-.category-tag i.fa-desktop {
-    color: #4f46e5;
-}
-
-/* Añadir diferentes iconos para cada categoría */
-.ticket-card[data-category="hardware"] .category-tag i::before {
-    content: "\f108"; /* fa-desktop */
-    color: #4f46e5;
-}
-
-.ticket-card[data-category="Cajas"] .category-tag i::before {
-    content: "\f085"; /* fa-cogs */
-    color: #2563eb;
-}
-
-.ticket-card[data-category="Software"] .category-tag i::before {
-    content: "\f1eb"; /* fa-wifi */
-    color: #7c3aed;
-}
-
-.ticket-card[data-category="Bancos"] .category-tag i::before {
-    content: "\f233"; /* fa-server */
-    color: #0891b2;
-}
-
 /* Botones en el footer */
 .footer-buttons {
     display: flex;
@@ -836,11 +820,11 @@
     .ticket-list {
         grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
     }
-    
+
     .ticket-content h3 {
         font-size: 15px;
     }
-    
+
     .ticket-content p {
         font-size: 13px;
     }
@@ -850,12 +834,12 @@
     .ticket-card {
         height: 260px;
     }
-    
+
     .ticket-content {
         height: 120px;
         padding: 14px;
     }
-    
+
     .ticket-footer {
         padding: 12px 14px;
     }
@@ -865,26 +849,26 @@
     .ticket-list {
         grid-template-columns: 1fr;
     }
-    
+
     .ticket-card {
         min-height: 220px;
     }
-    
+
     .ticket-content h3 {
         -webkit-line-clamp: 2;
         min-height: 42px;
     }
-    
+
     .ticket-content p {
         -webkit-line-clamp: 2;
         min-height: 40px;
     }
-    
+
     .footer-buttons {
         flex-direction: column;
         gap: 8px;
     }
-    
+
     .button-32 {
         width: 100%;
     }
@@ -897,11 +881,11 @@
         word-break: break-word;
         overflow-wrap: break-word;
     }
-    
+
     .ticket-id span {
         font-size: 13px;
     }
-    
+
     .status, .priority, .category-tag {
         font-size: 11px;
         padding: 4px 8px;
@@ -913,23 +897,23 @@
     .ticket-list {
         grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
     }
-    
+
     .ticket-card {
         height: auto;
         min-height: 240px;
     }
-    
+
     .ticket-content {
         height: auto;
         min-height: 110px;
     }
-    
+
     .ticket-footer {
         flex-direction: column;
         align-items: flex-start;
         gap: 10px;
     }
-    
+
     .footer-buttons {
         width: 100%;
         justify-content: space-between;
@@ -1023,6 +1007,7 @@
     min-height: calc(100vh - 300px);
     max-height: 600px;
     border: 2px dashed #d2d7f6;
+    border-radius: 12px;
     box-sizing: border-box;
 }
 
@@ -1101,6 +1086,123 @@
     font-weight: 500;
     transition: all 0.2s ease;
     box-shadow: 0 2px 4px rgba(79, 70, 229, 0.2);
+}
+
+/* Estilos para el modal de cancelación */
+.file-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: none;
+    justify-content: center;
+    align-items: center;
+    z-index: 1005;
+    backdrop-filter: blur(4px);
+}
+
+.modal-container {
+    background-color: white;
+    border-radius: 12px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+    max-width: 500px;
+    width: 90%;
+    max-height: 90vh;
+    overflow-y: auto;
+    position: relative;
+    animation: fadeIn 0.2s ease;
+}
+
+@keyframes modalFadeIn {
+    from {
+        opacity: 0;
+        transform: scale(0.9) translateY(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+    }
+}
+
+.modal-container h3 {
+    font-size: 18px;
+    font-weight: 600;
+    color: #2c3e50;
+    margin: 0 0 10px 0;
+    text-align: center;
+}
+
+
+.modal-container p {
+    font-size: 14px;
+    color: #6c757d;
+    line-height: 1.5;
+    margin: 0 0 0px 0;
+    text-align: center;
+    word-break: break-word;
+}
+
+.modal-container::before {
+    content: '';
+    display: block;
+    width: 80px;
+    height: 80px;
+    background-color: #fee2e2;
+    border-radius: 50%;
+    margin: 0 auto 20px auto;
+    position: relative;
+    background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%23dc2626"><path d="M7 4V2C7 1.45 7.45 1 8 1H16C16.55 1 17 1.45 17 2V4H20C20.55 4 21 4.45 21 5S20.55 6 20 6H19V19C19 20.1 18.1 21 17 21H7C5.9 21 5 20.1 5 19V6H4C3.45 6 3 5.55 3 5S3.45 4 4 4H7ZM9 3V4H15V3H9ZM7 6V19H17V6H7ZM9 8V17H11V8H9ZM13 8V17H15V8H13Z"/></svg>');
+    background-size: 36px 36px;
+    background-repeat: no-repeat;
+    background-position: center;
+}
+
+.modal-container > div {
+    padding: 10px;
+}
+
+/* Botones del modal */
+.modal-container .btn {
+    padding: 10px 20px;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 500;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    min-width: 100px;
+}
+
+.modal-container .btn-primary {
+    background-color: #dc2626;
+    color: white;
+}
+
+.modal-container .btn-primary:hover {
+    background-color: #b91c1c;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(220, 38, 38, 0.3);
+}
+
+.modal-container .btn-secondary {
+    background-color: #f8f9fa;
+    color: #6c757d;
+    border: 1px solid #dee2e6;
+}
+
+.modal-container .btn-secondary:hover {
+    background-color: #e9ecef;
+    border-color: #adb5bd;
+}
+
+/* Contenedor de botones */
+.modal-container div[style*="margin-top"] {
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+    margin-top: 20px !important;
 }
 
 .create-ticket-btn:hover {

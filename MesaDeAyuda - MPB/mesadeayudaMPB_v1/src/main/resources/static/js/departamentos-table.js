@@ -169,5 +169,53 @@ function handleTableResize() {
     adjustTableWidth();
 }
 
-// Inicializar cuando el DOM esté cargado
-document.addEventListener('DOMContentLoaded', handleTableResize);
+
+
+
+// Funcion para manejar el toggle de visibilidad
+function handleVisibilityToggle() {
+    const toggles = document.querySelectorAll('.toggle-visibilidad');
+    
+    const csrfToken = document.querySelector('meta[name="_csrf"]')?.content || 
+                     document.querySelector('input[name="_csrf"]')?.value || 
+                     '';
+    
+    toggles.forEach(toggle => {
+        toggle.addEventListener('change', async function() {
+            const id = this.getAttribute('data-id');
+            const isVisible = this.checked;
+            
+            try {
+                const response = await fetch(`/departamento/toggle-visibilidad/${id}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'X-CSRF-TOKEN': csrfToken
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const data = await response.json();
+                
+                if (!data.success) {
+                    this.checked = !isVisible;
+                    console.error('Error del servidor:', data.message);
+                    alert(data.message || 'Error al cambiar visibilidad');
+                }
+            } catch (error) {
+                console.error('Error en la solicitud:', error);
+                this.checked = !isVisible;
+                alert('Error al comunicarse con el servidor. Por favor intente nuevamente.');
+            }
+        });
+    });
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    handleTableResize();
+    handleVisibilityToggle();
+});

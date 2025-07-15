@@ -7,6 +7,8 @@
 
     <body>
         <section th:fragment="historial">
+            <meta name="_csrf" th:content="${_csrf.token}"/>
+            <meta name="_csrf_header" th:content="${_csrf.headerName}"/>
             <div class="ticket-list-container">
                 <div class="ticket-list-header">
                     <div class="header-left">
@@ -95,7 +97,7 @@
                 <div class="ticket-list" id="ticketList">
                     <!-- Mostrar tickets si existen -->
                     <div th:each="ticket : ${tickets}" class="ticket-card" 
-                         th:data-id="${ticket.codigo}" 
+                         th:data-id="${ticket.idTicket}" 
                          th:data-priority="${ticket.prioridad}" 
                          th:data-category="${ticket.categoria}" 
                          th:data-status="${ticket.estado}">
@@ -120,7 +122,9 @@
                                     </span>
                                 </div>
                             </div>
-                            <span class="date" th:text="${#dates.format(ticket.fechaApertura, 'dd-MM-yyyy')}">24-08-2024</span>
+                            <span class="date">
+                                Fecha: <span th:text="${#dates.format(ticket.fechaApertura, 'dd-MM-yyyy')}">24-08-2024</span>
+                            </span>
                         </div>
                         <div class="ticket-content">
                             <h3 th:text="${ticket.titulo}">Título del Ticket</h3>
@@ -128,12 +132,12 @@
                         </div>
                         <div class="ticket-footer">
                             <div class="category-tag">
-                                <i class="fas fa-desktop"></i>
+                                <i class="fa-solid fa-tag"></i>
                                 <span th:text="${ticket.categoria}">Categoría</span>
                             </div>
                             <div class="footer-buttons">
                                 <button class="button-32" th:onclick="|window.location.href='@{/usuario/detalles/{id}(id=${ticket.idTicket})}'|">Ver Detalles</button>
-                                <button class="button-32 cancel-button">Cancelar</button>
+                                <button class="button-32 cancel-button" th:if="${ticket.estado == 'Abierto' and ticket.asignadoPara == null}">Cancelar</button>
                             </div>
                         </div>
                     </div>
@@ -157,11 +161,28 @@
                     </div>
                 </div>
             </div>
+
+            <!-- Modal de confirmación para cancelar ticket -->
+<div id="cancelTicketModal" class="file-modal" style="display: none;">
+    <div class="modal-container" style="text-align: center; padding: 30px;">
+        <h3>
+            ¿Estás seguro de cancelar el ticket: 
+            <span id="ticketToCancelCode" style="color: #4f46e5; font-weight: bold;"></span>?
+        </h3>
+        <p>El ticket <strong id="ticketToCancelTitle"></strong> será marcado como cancelado. Esta acción no se puede deshacer.</p>
+        <div style="margin-top: 20px;">
+            <button id="confirmCancel" class="btn btn-primary">Confirmar</button>
+            <button id="closeCancelModal" class="btn btn-secondary">Cerrar</button>
+        </div>
+    </div>
+</div>
         </section>
 
         <section th:fragment="ticket-detalle">
+            <meta name="_csrf" th:content="${_csrf.token}"/>
+            <meta name="_csrf_header" th:content="${_csrf.headerName}"/>
             <div class="back-button-container" style="margin-bottom: 15px;">
-                <a href="javascript:void(0);" onclick="window.history.back();" class="btn btn-outline-secondary back-button">
+                <a onclick="window.location.href = '/usuario/historial'" class="btn btn-outline-secondary back-button">
                     <i class="fa-solid fa-arrow-left"></i>
                 </a>
                 <h2 id="Title" style="margin: initial;">Detalles del Ticket</h2>
@@ -175,14 +196,20 @@
                               (ticket.estado == 'Abierto' ? 'en-revision' : 
                               ticket.estado == 'Pendiente' ? 'en-progreso' : 
                               ticket.estado == 'Resuelto' ? 'solucionado' : 
+                              ticket.estado == 'Desactivado' ? 'desactivado' : 
+                              ticket.estado == 'Cancelado' ? 'cancelado' : 
                               'cerrado')}">
                             <i th:class="${ticket.estado == 'Abierto' ? 'far fa-clock' : 
                                ticket.estado == 'Pendiente' ? 'fa-solid fa-arrows-rotate' : 
                                ticket.estado == 'Resuelto' ? 'fas fa-check-circle' : 
+                               ticket.estado == 'Desactivado' ? 'fas fa-ban' : 
+                               ticket.estado == 'Cancelado' ? 'fas fa-times-circle' : 
                                'fas fa-lock'}"></i>
                             <span th:text="${ticket.estado == 'Abierto' ? 'En Revisión' : 
                                   ticket.estado == 'Pendiente' ? 'En Progreso' : 
                                   ticket.estado == 'Resuelto' ? 'Solucionado' : 
+                                  ticket.estado == 'Desactivado' ? 'Desactivado' : 
+                                  ticket.estado == 'Cancelado' ? 'Cancelado' : 
                                   'Cerrado'}">Estado</span>
                         </span>
                     </div>
@@ -224,9 +251,11 @@
                         </div>
                         <div class="files-grid">
                             <div th:each="imagen : ${imagenes}" class="file-item" 
-                                 th:data-src="@{/imagenes/ver/{id}(id=${imagen.idImagen})}">
-                                <i class="far fa-file-image file-icon"></i>
-                                <span class="file-name" th:text="${imagen.nombreArchivo}">Imagen1.jpg</span>
+                                 th:data-src="@{/archivos/ver/{id}(id=${imagen.idArchivo})}"
+                                 th:data-type="${imagen.tipoArchivo.startsWith('image/') ? 'image' : 'pdf'}"
+                                 th:data-filename="${imagen.nombreArchivo}">
+                                <i th:class="${imagen.tipoArchivo.startsWith('image/') ? 'far fa-file-image file-icon' : 'far fa-file-pdf file-icon'}"></i>
+                                <span class="file-name" th:text="${imagen.nombreArchivo}">ImagenEjemplo.jpg</span>
                             </div>
                         </div>
                     </div>
@@ -236,7 +265,7 @@
                          th:if="${ticket.estado == 'Abierto'
                          and ticket.asignadoPara == null}">
                         <div class="cancel-button-container">
-                            <button class="cancel-button">
+                            <button class="btn cancel-button">
                                 <i class="fa-solid fa-trash-can"></i> Cancelar Solicitud
                             </button>
                         </div>
@@ -265,23 +294,23 @@
 
                         <!-- Campos de información -->
                         <div class="info-field">
-                            <label>Identificación</label>
-                            <input type="text" readonly th:value="${ticket.asignadoPara.codigo}" placeholder="ID">
+                            <label>Codigo de Identificación</label>
+                            <input class="form-control" type="text" readonly th:value="${ticket.asignadoPara.codigo}" placeholder="ID">
                         </div>
 
                         <div class="info-field">
                             <label>Departamento</label>
-                            <input type="text" readonly th:value="${ticket.asignadoPara.departamento}" placeholder="Departamento">
+                            <input class="form-control" type="text" readonly th:value="${ticket.asignadoPara.departamento}" placeholder="Departamento">
                         </div>
 
                         <div class="info-field">
                             <label>Numero de Teléfono</label>
-                            <input type="text" readonly th:value="${ticket.asignadoPara.numeroTelefono}" placeholder="Sin teléfono registrado">
+                            <input class="form-control" type="text" readonly th:value="${ticket.asignadoPara.numeroTelefono}" placeholder="Telefono no disponible">
                         </div>
 
                         <div class="info-field">
                             <label>Correo Electrónico</label>
-                            <input type="text" readonly th:value="${ticket.asignadoPara.correoElectronico}" placeholder="Sin correo registrado">
+                            <input class="form-control" type="text" readonly th:value="${ticket.asignadoPara.correoElectronico}" placeholder="Sin correo registrado">
                         </div>
 
                         <!-- Contador de tickets -->
@@ -297,128 +326,91 @@
 
                     <!-- Mostrar mensaje cuando no hay soportista asignado -->
                     <div th:unless="${ticket.asignadoPara != null}" class="manager-content">
-                        <div class="manager-icon"><i class="fas fa-headset"></i></div>
+                        <div class="manager-icon">
+                            <i th:class="${ticket.estado == 'Cancelado' ? 'fas fa-times-circle' : 
+                               ticket.estado == 'Resuelto' ? 'fas fa-check-circle' : 
+                               ticket.estado == 'Desactivado' ? 'fas fa-ban' : 
+                               ticket.estado == 'Cerrado' ? 'fas fa-lock' : 
+                               'fas fa-headset'}"></i>
+                        </div>
                         <div class="manager-status">
                             <strong th:text="${ticket.estado == 'Abierto' ? 'Su ticket está en revisión.' : 
                                     ticket.estado == 'Pendiente' ? 'Su ticket está en progreso.' : 
                                     ticket.estado == 'Resuelto' ? 'Su ticket ha sido solucionado.' : 
+                                    ticket.estado == 'Cancelado' ? 'Su ticket ha sido cancelado.' :
+                                    ticket.estado == 'Desactivado' ? 'Su ticket ha sido desactivado.' :
+                                    ticket.estado == 'Cerrado' ? 'Su ticket ha sido cerrado.' :
                                     'Su ticket ha sido cerrado.'}">Estado del ticket</strong>
-                            <p>Pronto un soportista se pondrá en contacto con usted.</p>
+                            <p th:text="${ticket.estado == 'Cancelado' ? 'Su solicitud ha sido cancelada. Si necesita asistencia o tiene alguna consulta, puede crear un nuevo ticket.' : 
+                               ticket.estado == 'Resuelto' ? 'Su solicitud ha sido resuelto exitosamente. Si persiste algún inconveniente, puede crear un nuevo ticket.' :
+                               ticket.estado == 'Desactivado' ? 'Su ticket ha sido desactivado. Para obtener soporte, por favor cree un nuevo ticket.' :
+                               ticket.estado == 'Cerrado' ? 'Su ticket ha sido cerrado. Si necesita asistencia adicional, puede crear un nuevo ticket.' :
+                               'Pronto un soportista se pondrá en contacto con usted.'}">Mensaje del ticket</p>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Modal para vista previa de imágenes -->
-            <div id="imageModal" class="image-modal">
-                <span class="close-modal"><i class="fa-solid fa-xmark"></i></span>
-                <div class="modal-content-container">
-                    <img id="modalImage" class="modal-content">
-                        <div id="modalFileName" class="file-name-modal"></div>
+            <!-- Modal de confirmación para cancelar ticket -->
+            <div id="cancelTicketModal" class="file-modal" style="display: none;">
+                <div class="modal-container" style="text-align: center; padding: 30px;">
+                    <h3>¿Estás seguro de cancelar este ticket?</h3>
+                    <p>El ticket será marcado como cancelado. Esta accion no se puede deshacer</p>
+                    <div style="margin-top: 20px;">
+                        <button id="confirmCancel" class="btn btn-primary">Confirmar</button>
+                        <button id="closeCancelModal" class="btn btn-secondary">Cerrar</button>
+                    </div>
                 </div>
             </div>
 
-            <script>
-                document.addEventListener('DOMContentLoaded', function () {
-                    // Obtener elementos del DOM
-                    const modal = document.getElementById('imageModal');
-                    const modalImg = document.getElementById('modalImage');
-                    const modalFileName = document.getElementById('modalFileName');
-                    const closeBtn = document.querySelector('.close-modal');
-                    const fileItems = document.querySelectorAll('.file-item');
-                    const body = document.body;
-
-                    // Precargar imagen para evitar saltos
-                    function preloadImage(url) {
-                        return new Promise((resolve, reject) => {
-                            const img = new Image();
-                            img.onload = () => resolve(url);
-                            img.onerror = () => reject();
-                            img.src = url;
-                        });
-                    }
-
-                    // Configurar evento de clic para los items de archivo
-                    fileItems.forEach(item => {
-                        item.addEventListener('click', async function (e) {
-                            // Evitar abrir el modal si se hizo clic en el botón eliminar
-                            if (!e.target.closest('.delete-button')) {
-                                const imgSrc = this.getAttribute('data-src');
-                                const fileName = this.querySelector('.file-name').textContent;
-
-                                // Establecer texto del nombre del archivo
-                                modalFileName.textContent = fileName;
-
-                                try {
-                                    // Precargar la imagen antes de mostrar el modal
-                                    await preloadImage(imgSrc);
-
-                                    // Establecer la fuente de la imagen
-                                    modalImg.src = imgSrc;
-
-                                    // Agregar clase para prevenir scroll en el body
-                                    body.classList.add('modal-open');
-
-                                    // Mostrar el modal con flexbox para centrado
-                                    modal.style.display = 'flex';
-                                } catch (error) {
-                                    console.error('Error al cargar la imagen:', error);
-                                    alert('No se pudo cargar la imagen. Por favor, inténtelo nuevamente.');
-                                }
-                            }
-                        });
-                    });
-
-                    // Función para cerrar el modal
-                    function closeModal() {
-                        modal.style.display = 'none';
-                        body.classList.remove('modal-open');
-                    }
-
-                    // Cerrar modal al hacer clic en la X
-                    closeBtn.addEventListener('click', closeModal);
-
-                    // Cerrar modal al hacer clic fuera de la imagen
-                    modal.addEventListener('click', function (e) {
-                        if (e.target === modal) {
-                            closeModal();
-                        }
-                    });
-
-                    // Cerrar modal con tecla ESC
-                    document.addEventListener('keydown', function (e) {
-                        if (e.key === 'Escape' && modal.style.display === 'flex') {
-                            closeModal();
-                        }
-                    });
-
-                    // Manejar cambios de tamaño de ventana
-                    window.addEventListener('resize', function () {
-                        if (modal.style.display === 'flex') {
-                            // Ajustar tamaño de la imagen si es necesario
-                            modalImg.style.maxHeight = '85vh';
-                            modalImg.style.maxWidth = '95%';
-                        }
-                    });
-                });
-            </script>
+            <!-- Modal para vista previa de archivos -->
+            <div id="fileModal" class="file-modal">
+                <span class="close-modal"><i class="fa-solid fa-xmark"></i></span>
+                <div class="modal-content-container">
+                    <!-- Contenedor para imágenes -->
+                    <img id="modalFileImage" class="modal-content" style="display: none;">
+                        <!-- Contenedor para PDFs -->
+                        <iframe id="modalFilePdf" class="modal-content" style="width: 1300px;; height: 90vh; display: block; border: none;"></iframe>
+                        <div id="modalFileName" class="file-name-modal"></div>
+                </div>
+            </div>
         </section>
 
 
         <section th:fragment="usuarios-listado">
+
+            <!-- Mensaje de Exito -->
+            <div th:if="${mensaje}" class="alert alert-success" role="alert">
+                <span th:text="${mensaje}"></span>
+            </div>
+
             <div class="container-fluid">
-                <h2 class="mb-4">Administrar Colaboradores</h2>
+                <div class="search-section">
+                    <div class="search-container">
+                        <i class="fas fa-search search-icon"></i>
+                        <input type="text" class="search-input" placeholder="Buscar por nombre, código, correo, teléfono..." 
+                               id="searchInput" th:value="${searchQuery}">
+                    </div>
+                    <div class="action-buttons">
+                        <!-- Filtro por estado -->
+                        <select id="statusFilter" class="status-filter">
+                            <option value="">Todos los estados</option>
+                            <option value="activo" th:selected="${estadoFiltro == 'activo'}">Activos</option>
+                            <option value="inactivo" th:selected="${estadoFiltro == 'inactivo'}">Inactivos</option>
+                        </select>
 
-                <!-- Mensaje de Exito -->
-                <div th:if="${mensaje}" class="alert alert-success" role="alert">
-                    <span th:text="${mensaje}"></span>
-                </div>
+                        <!-- Nuevo filtro por rol -->
+                        <select id="roleFilter" class="status-filter">
+                            <option value="">Todos los roles</option>
+                            <option value="ROL_ADMINISTRADOR" th:selected="${rolFiltro == 'ROL_ADMINISTRADOR'}">Administradores</option>
+                            <option value="ROL_SOPORTISTA" th:selected="${rolFiltro == 'ROL_SOPORTISTA'}">Soportistas</option>
+                            <option value="ROL_USUARIO" th:selected="${rolFiltro == 'ROL_USUARIO'}">Usuarios</option>
+                        </select>
 
-                <!-- Boton para agregar un nuevo usuario -->
-                <div class="mb-3">
-                    <button id="btnCreateUser" class="btn btn-primary" onclick="openNeonModal('neonCreateModal')">
-                        <i class="fas fa-plus"></i> Agregar Nuevo Usuario
-                    </button>
+                        <button id="btnCreateUser" class="btn btn-primary" onclick="openNeonModal('neonCreateModal')">
+                            <i class="fas fa-plus"></i> Agregar Nuevo Usuario
+                        </button>
+                    </div>
                 </div>
 
                 <!-- Pagination Header -->
@@ -426,10 +418,10 @@
                     <div class="pagination-left">
                         <span>Mostrar</span>
                         <select id="recordsPerPage" class="records-select">
-                            <option value="10">10</option>
-                            <option value="20">20</option>
-                            <option value="50">50</option>
-                            <option value="100">100</option>
+                            <option value="15" th:selected="${pageSize == 15}">15</option>
+                            <option value="30" th:selected="${pageSize == 30}">30</option>
+                            <option value="50" th:selected="${pageSize == 50}">50</option>
+                            <option value="100" th:selected="${pageSize == 100}">100</option>
                         </select>
                         <span>registros por página</span>
                     </div>
@@ -576,13 +568,13 @@
                                         <span th:unless="${usuario.imagen != null}" class="badge badge-desactivado" style="display: block; text-align: center;">Sin imagen</span>
                                 </td>
                                 <td th:text="${usuario.codigo} ?: 'Sin código'"></td>
-                                <td th:text="${usuario.nombre + ' ' + usuario.apellido} ?: 'Sin nombre'"></td>
-                                <td th:text="${usuario.correoElectronico} ?: 'Sin correo'"></td>
-                                <td th:text="${usuario.departamento} ?: 'Sin dpto.'"></td>
-                                <td th:text="${usuario.numeroTelefono == '0' ? 'Sin teléfono' : usuario.numeroTelefono}"></td>
+                                <td th:text="${usuario.nombre + (usuario.apellido != null and !usuario.apellido.isEmpty() ? ' ' + usuario.apellido : '')}"></td>
+                                <td th:text="${usuario.correoElectronico} ?: 'Sin correo...'"></td>
+                                <td th:text="${usuario.departamento} ?: 'Sin dpto...'"></td>
+                                <td th:text="${usuario.numeroTelefono != null} ? ${usuario.numeroTelefono} : 'Sin Numero...'"></td>
                                 <td>
                                     <th:block th:if="${#lists.isEmpty(usuario.roles)}">
-                                        <span class="badge badge-desactivado">Sin rol</span>
+                                        <span class="badge badge-desactivado">Sin rol...</span>
                                     </th:block>
                                     <span th:each="rol : ${usuario.roles}" 
                                           th:text="${rol.nombre}" 
@@ -592,15 +584,20 @@
                                     <span th:text="${usuario.activo ? 'Activo' : 'Inactivo'}" 
                                           th:class="${usuario.activo ? 'badge badge-resuelto' : 'badge badge-cancelado'}"></span>
                                 </td>
-                                <td th:text="${usuario.ultimaConexion != null} ? ${#dates.format(usuario.ultimaConexion, 'dd/MM/yyyy HH:mm')} : 'Sin conexión'"></td>
+                                <td th:text="${usuario.ultimaConexion != null} ? ${#dates.format(usuario.ultimaConexion, 'dd/MM/yyyy HH:mm:ss')} : 'Sin conexión'"></td>
                                 <td>
                                     <div style="display: flex; gap: 5px;">
-                                        <button class="btn" style="padding: 4px 8px;" 
+                                        <!-- Botón Editar -->
+                                        <button th:if="${(usuarioLogueado.roles.?[nombre == 'ROL_ADMINISTRADOR'].size() > 0) || (usuario.idUsuario == usuarioLogueado.idUsuario)}" 
+                                                class="btn" style="padding: 4px 8px;" 
                                                 th:data-id="${usuario.idUsuario}" 
                                                 data-action="edit">
                                             <i class="fas fa-edit"></i>
                                         </button>
-                                        <a th:href="@{'/usuario/eliminar/' + ${usuario.idUsuario}}" 
+
+                                        <!-- Botón Eliminar -->
+                                        <a th:if="${(usuarioLogueado.roles.?[nombre == 'ROL_ADMINISTRADOR'].size() > 0) &amp;&amp; (usuario.idUsuario != usuarioLogueado.idUsuario)}" 
+                                           th:href="@{'/usuario/eliminar/' + ${usuario.idUsuario}}" 
                                            class="btn" style="padding: 4px 8px;">
                                             <i class="fas fa-trash"></i>
                                         </a>
@@ -608,7 +605,7 @@
                                 </td>
                             </tr>
                             <tr th:if="${#lists.isEmpty(usuarios)}">
-                                <td colspan="11" style="text-align: center;">No hay usuarios registrados</td>
+                                <td colspan="11" style="text-align: center;">No se encontraron usuarios en el sistema</td>
                             </tr>
                         </tbody>
                     </table>
@@ -627,42 +624,49 @@
                             <div class="row">
                                 <div class="col-md-6">
                                     <div class="form-group mb-3">
-                                        <label for="nombre">Nombre:</label>
+                                        <label for="nombre">Nombre: <span class="text-danger">*</span></label>
                                         <input type="text" class="form-control" id="nombre" name="nombre" required>
                                     </div>
                                 </div>
                                 <div class="col-md-6">
                                     <div class="form-group mb-3">
                                         <label for="apellido">Apellido:</label>
-                                        <input type="text" class="form-control" id="apellido" name="apellido" required>
+                                        <input type="text" class="form-control" id="apellido" name="apellido" placeholder="Opcional">
                                     </div>
                                 </div>
                             </div>
                             <div class="form-group mb-3">
-                                <label for="correoElectronico">Correo Electrónico:</label>
+                                <label for="correoElectronico">Correo Electrónico: <span class="text-danger">*</span></label>
                                 <input type="email" class="form-control" id="correoElectronico" name="correoElectronico" required>
+                            </div>
+                            <div class="form-group mb-3">
+                                <label for="departamento">Departamento: <span class="text-danger">*</span></label>
+                                <select class="form-control" id="departamento" name="departamento" required>
+                                    <option value="">Seleccionar departamento</option>
+                                    <option th:each="dep : ${departamentos}" th:value="${dep}" th:text="${dep}"></option>
+                                </select>
+                            </div>
+                            <div class="form-group mb-3">
+                                <label for="contrasena">Contraseña: <span class="text-danger">*</span></label>
+                                <input type="password" class="form-control" id="contrasena" name="contrasena" required minlength="3">
                             </div>
                             <div class="row">
                                 <div class="col-md-6">
                                     <div class="form-group mb-3">
-                                        <label for="departamento">Departamento:</label>
-                                        <select class="form-control" id="departamento" name="departamento">
-                                            <option value="">Seleccionar departamento</option>
-                                            <option th:each="dep : ${departamentos}" th:value="${dep}" th:text="${dep}"></option>
-                                        </select>
+                                        <label for="numeroTelefono">Teléfono:</label>
+                                        <input type="text" class="form-control" id="numeroTelefono" name="numeroTelefono" placeholder="Opcional">
                                     </div>
                                 </div>
                                 <div class="col-md-6">
                                     <div class="form-group mb-3">
-                                        <label for="numeroTelefono">Teléfono:</label>
-                                        <input type="text" class="form-control" id="numeroTelefono" name="numeroTelefono">
+                                        <label for="rol">Rol:</label>
+                                        <select class="form-control" id="rol" name="rol">
+                                            <option value="ROL_USUARIO" selected>Usuario</option>
+                                            <option value="ROL_ADMINISTRADOR">Administrador</option>
+                                            <option value="ROL_SOPORTISTA">Soportista</option>
+                                        </select>
                                     </div>
                                 </div>
-                            </div>
-                            <!-- En el modal de creación -->
-                            <div class="form-group mb-3">
-                                <label for="contrasena">Contraseña:</label>
-                                <input type="password" class="form-control" id="contrasena" name="contrasena" required>
                             </div>
                             <div class="form-group mb-3">
                                 <label for="imagenFile">Imagen de Perfil:</label>
@@ -673,7 +677,7 @@
                                     <label class="form-check-label" for="activo">Usuario Activo</label>
                             </div>
                             <div class="neon-modal-footer">
-                                <button type="button" class="btn btn-secondary" onclick="closeNeonModal('neonCreateModal')">Cancelar</button>
+                                <button type="button" class="btn btn-secondary" id="close-modal" onclick="closeNeonModal('neonCreateModal')">Cancelar</button>
                                 <button type="submit" class="btn btn-primary">Guardar</button>
                             </div>
                         </form>
@@ -689,7 +693,7 @@
                         <span class="close-modal" onclick="closeNeonModal('neonEditModal')">&times;</span>
                     </div>
                     <div class="neon-modal-body">
-                        <form id="formEditUser" th:action="@{/usuario/editar}" method="post" enctype="multipart/form-data">
+                        <form id="formEditUser" th:action="@{/usuario/actualizar}" method="post" enctype="multipart/form-data">
                             <input type="hidden" id="editUserId" name="idUsuario">
                                 <div class="row">
                                     <div class="col-md-6">
@@ -701,7 +705,7 @@
                                     <div class="col-md-6">
                                         <div class="form-group mb-3">
                                             <label for="editApellido">Apellido:</label>
-                                            <input type="text" class="form-control" id="editApellido" name="apellido" required>
+                                            <input type="text" class="form-control" id="editApellido" name="apellido">
                                         </div>
                                     </div>
                                 </div>
@@ -752,7 +756,7 @@
                                         <label class="form-check-label" for="editActivo">Usuario Activo</label>
                                 </div>
                                 <div class="neon-modal-footer">
-                                    <button type="button" class="btn btn-secondary" onclick="closeNeonModal('neonEditModal')">Cancelar</button>
+                                    <button type="button" class="btn btn-secondary" id="close-modal" onclick="closeNeonModal('neonEditModal')">Cancelar</button>
                                     <button type="submit" class="btn btn-primary">Guardar Cambios</button>
                                 </div>
                         </form>
@@ -774,7 +778,7 @@
                             <input type="hidden" id="deleteUserId" name="id">
                                 <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
                                 <div class="neon-modal-footer">
-                                    <button type="button" class="btn btn-secondary" onclick="closeNeonModal('neonDeleteModal')">Cancelar</button>
+                                    <button type="button" class="btn btn-secondary" id="close-modal" onclick="closeNeonModal('neonDeleteModal')">Cancelar</button>
                                     <button type="submit" class="btn btn-danger">Eliminar</button>
                                 </div>
                         </form>
@@ -814,500 +818,6 @@
                     </span>
                 </div>
             </div>
-
-            <!-- Estilos CSS para los modales -->
-            <style>
-                .neon-modal {
-                    display: none;
-                    position: fixed;
-                    z-index: 1050;
-                    left: 0;
-                    top: 0;
-                    width: 100%;
-                    height: 100%;
-                    overflow: auto;
-                    background-color: rgba(0, 0, 0, 0.5);
-                    animation: fadeIn 0.3s;
-                }
-
-                .neon-modal-content {
-                    position: relative;
-                    background-color: #fefefe;
-                    margin: 5% auto;
-                    padding: 0;
-                    border: 1px solid #888;
-                    border-radius: 8px;
-                    width: 80%;
-                    max-width: 800px;
-                    box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
-                    animation: slideIn 0.3s;
-                }
-
-                .neon-modal-header {
-                    padding: 15px 20px;
-                    border-bottom: 1px solid #e9ecef;
-                    display: flex;
-                    justify-content: space-between;
-                    align-items: center;
-                }
-
-                .neon-modal-body {
-                    padding: 20px;
-                    max-height: calc(100vh - 200px);
-                    overflow-y: auto;
-                }
-
-                .neon-modal-footer {
-                    padding: 15px 20px;
-                    border-top: 1px solid #e9ecef;
-                    display: flex;
-                    justify-content: flex-end;
-                    gap: 10px;
-                }
-
-                .close-modal {
-                    color: #aaa;
-                    float: right;
-                    font-size: 28px;
-                    font-weight: bold;
-                    cursor: pointer;
-                }
-
-                .close-modal:hover,
-                .close-modal:focus {
-                    color: black;
-                    text-decoration: none;
-                }
-
-                .user-img {
-                    width: 32px;
-                    height: 32px;
-                    border-radius: 10%;
-                    object-fit: cover;
-                }
-
-                @keyframes fadeIn {
-                    from {
-                        opacity: 0
-                    }
-                    to {
-                        opacity: 1
-                    }
-                }
-
-                @keyframes slideIn {
-                    from {
-                        transform: translateY(-50px);
-                        opacity: 0;
-                    }
-                    to {
-                        transform: translateY(0);
-                        opacity: 1;
-                    }
-                }
-            </style>
-
-
-            <script>
-                // Funciones básicas para abrir/cerrar modals
-                function openNeonModal(modalId) {
-                    console.log("Abriendo modal:", modalId);
-                    const modal = document.getElementById(modalId);
-                    if (modal) {
-                        modal.style.display = "block";
-                        document.body.style.overflow = "hidden";
-                        // Enfocar el primer campo input del modal
-                        const firstInput = modal.querySelector('input:not([type="hidden"]');
-                        if (firstInput) {
-                            firstInput.focus();
-                        }
-                    } else {
-                        console.error("Modal no encontrado:", modalId);
-                    }
-                }
-
-                function closeNeonModal(modalId) {
-                    const modal = document.getElementById(modalId);
-                    if (modal) {
-                        modal.style.display = "none";
-                        document.body.style.overflow = "auto";
-                        // Resetear el formulario si existe
-                        const form = modal.querySelector('form');
-                        if (form) {
-                            form.reset();
-                        }
-                    }
-                }
-
-// Cerrar modal al hacer clic fuera del contenido
-                window.onclick = function (event) {
-                    if (event.target.classList.contains('neon-modal')) {
-                        closeNeonModal(event.target.id);
-                    }
-                };
-
-// Cerrar modal con ESC
-                document.addEventListener('keydown', function (event) {
-                    if (event.key === 'Escape') {
-                        const openModal = document.querySelector('.neon-modal[style="display: block;"]');
-                        if (openModal) {
-                            closeNeonModal(openModal.id);
-                        }
-                    }
-                });
-
-// Función para cargar los datos del usuario en el modal de edición
-                function loadUserData(userId) {
-                    showLoader(true);
-
-                    fetch(`/usuario/editar/${userId}`, {
-                        headers: {
-                            'Accept': 'application/json'
-                        }
-                    })
-                            .then(response => {
-                                // Verificar si la respuesta es JSON
-                                const contentType = response.headers.get('content-type');
-                                if (!contentType || !contentType.includes('application/json')) {
-                                    return response.text().then(text => {
-                                        throw new Error(`Respuesta no JSON: ${text.substring(0, 100)}...`);
-                                    });
-                                }
-
-                                if (!response.ok) {
-                                    return response.json().then(err => {
-                                        throw new Error(err.error || `Error HTTP: ${response.status}`);
-                                    });
-                                }
-                                return response.json();
-                            })
-                            .then(data => {
-                                if (data.error) {
-                                    throw new Error(data.error);
-                                }
-
-                                if (!data.usuario) {
-                                    throw new Error('Datos de usuario no recibidos en la respuesta');
-                                }
-
-                                const usuario = data.usuario;
-                                const roles = data.roles || [];
-
-                                // Llenar el formulario
-                                document.getElementById('editUserId').value = usuario.idUsuario;
-                                document.getElementById('editNombre').value = usuario.nombre || '';
-                                document.getElementById('editApellido').value = usuario.apellido || '';
-                                document.getElementById('editCorreoElectronico').value = usuario.correoElectronico || '';
-                                document.getElementById('editDepartamento').value = usuario.departamento || '';
-                                document.getElementById('editNumeroTelefono').value = usuario.numeroTelefono || '';
-                                document.getElementById('editActivo').checked = usuario.activo;
-
-                                // Imagen actual
-                                const currentImageContainer = document.getElementById('currentImageContainer');
-                                const currentImage = document.getElementById('currentImage');
-
-                                if (usuario.tieneImagen) {
-                                    currentImage.src = `/usuario/imagen/${usuario.idUsuario}?${new Date().getTime()}`;
-                                    currentImageContainer.style.display = 'block';
-                                } else {
-                                    currentImageContainer.style.display = 'none';
-                                }
-
-                                // Seleccionar el primer rol si existe
-                                const rolSelect = document.getElementById('editRol');
-                                if (roles && roles.length > 0) {
-                                    rolSelect.value = roles[0];
-                                } else {
-                                    rolSelect.value = '';
-                                }
-
-                                openNeonModal('neonEditModal');
-                            })
-                            .catch(error => {
-                                console.error('Error al cargar usuario:', error);
-                                showToast('error', `Error al cargar datos del usuario: ${error.message}`);
-
-                                // Mostrar detalles del error en consola
-                                if (error.response) {
-                                    error.response.text().then(text => {
-                                        console.error('Respuesta completa del error:', text);
-                                    });
-                                }
-                            })
-                            .finally(() => {
-                                showLoader(false);
-                            });
-                }
-
-// Función para manejar el envío del formulario de creación
-                function handleCreateFormSubmit(event) {
-                    event.preventDefault();
-
-                    const form = event.target;
-                    const formData = new FormData(form);
-                    const submitButton = form.querySelector('button[type="submit"]');
-                    const originalButtonText = submitButton.innerHTML;
-
-                    // Validar contraseña si es necesario
-                    const password = formData.get('contrasena');
-                    if (password.length < 3) {
-                        showToast('error', 'La contraseña debe tener al menos 3 caracteres');
-                        return;
-                    }
-
-                    submitButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Creando...';
-                    submitButton.disabled = true;
-
-                    fetch(form.action, {
-                        method: 'POST',
-                        body: formData
-                    })
-                            .then(response => {
-                                if (response.redirected) {
-                                    window.location.href = response.url;
-                                } else if (!response.ok) {
-                                    return response.json().then(err => {
-                                        throw new Error(err.message || 'Error al crear usuario');
-                                    });
-                                }
-                                return response.json();
-                            })
-                            .then(data => {
-                                if (data.error) {
-                                    throw new Error(data.error);
-                                }
-                                showToast('success', 'Usuario creado exitosamente');
-                                setTimeout(() => {
-                                    window.location.reload();
-                                }, 1500);
-                            })
-                            .catch(error => {
-                                console.error('Error al crear usuario:', error);
-                                showToast('error', error.message);
-                            })
-                            .finally(() => {
-                                submitButton.innerHTML = originalButtonText;
-                                submitButton.disabled = false;
-                            });
-                }
-
-                // Función para manejar el envío del formulario de edición
-                function handleEditFormSubmit(event) {
-                    event.preventDefault();
-
-                    const form = event.target;
-                    const formData = new FormData(form);
-                    const submitButton = form.querySelector('button[type="submit"]');
-                    const originalButtonText = submitButton.innerHTML;
-
-                    // Si la contraseña está vacía, no la incluimos en el FormData
-                    if (document.getElementById('editContrasena').value === '') {
-                        formData.delete('contrasena');
-                    }
-
-                    // Asegurarnos de que el valor de "activo" sea un booleano para el servidor
-                    formData.set('activo', document.getElementById('editActivo').checked);
-
-                    submitButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Guardando...';
-                    submitButton.disabled = true;
-                    showLoader(true);
-
-                    fetch('/usuario/actualizar', {
-                        method: 'POST',
-                        body: formData
-                    })
-                            .then(response => {
-                                const contentType = response.headers.get('content-type');
-                                if (contentType && contentType.includes('application/json')) {
-                                    return response.json();
-                                } else {
-                                    // Si no es JSON, consideramos éxito pero manejamos adecuadamente
-                                    if (response.ok) {
-                                        return {success: true, mensaje: 'Usuario actualizado correctamente'};
-                                    } else {
-                                        throw new Error('Error en la respuesta del servidor');
-                                    }
-                                }
-                            })
-                            .then(data => {
-                                if (data.error) {
-                                    throw new Error(data.error);
-                                }
-
-                                // Cerrar el modal primero
-                                closeNeonModal('neonEditModal');
-
-                                // Luego mostrar el toast de éxito
-                                setTimeout(() => {
-                                    showToast('success', data.mensaje || 'Usuario actualizado correctamente');
-                                }, 300);
-
-                                // Finalmente recargar la página después de un breve retraso
-                                setTimeout(() => {
-                                    window.location.reload();
-                                }, 1500);
-                            })
-                            .catch(error => {
-                                console.error('Error al actualizar usuario:', error);
-                                showToast('error', error.message || 'Error al actualizar usuario');
-                            })
-                            .finally(() => {
-                                submitButton.innerHTML = originalButtonText;
-                                submitButton.disabled = false;
-                                showLoader(false);
-                            });
-                }
-
-// Función para manejar el envío del formulario de eliminación
-                function handleDeleteFormSubmit(event) {
-                    event.preventDefault();
-
-                    const form = event.target;
-                    const submitButton = form.querySelector('button[type="submit"]');
-                    const originalButtonText = submitButton.innerHTML;
-
-                    submitButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Eliminando...';
-                    submitButton.disabled = true;
-
-                    fetch(form.action, {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/x-www-form-urlencoded',
-                            'X-CSRF-TOKEN': document.querySelector('input[name="_csrf"]').value
-                        }
-                    })
-                            .then(response => {
-                                if (!response.ok) {
-                                    return response.json().then(err => {
-                                        throw new Error(err.message || 'Error al eliminar usuario');
-                                    });
-                                }
-                                return response.json();
-                            })
-                            .then(data => {
-                                if (data.error) {
-                                    throw new Error(data.error);
-                                }
-                                showToast('success', 'Usuario eliminado correctamente');
-                                setTimeout(() => {
-                                    window.location.reload();
-                                }, 1500);
-                            })
-                            .catch(error => {
-                                console.error('Error al eliminar usuario:', error);
-                                showToast('error', error.message);
-                            })
-                            .finally(() => {
-                                submitButton.innerHTML = originalButtonText;
-                                submitButton.disabled = false;
-                                closeNeonModal('neonDeleteModal');
-                            });
-                }
-
-// Función para abrir el modal de eliminación
-                function openDeleteModal(userId, userName) {
-                    document.getElementById('deleteUserId').value = userId;
-                    document.getElementById('deleteUserName').textContent = userName;
-                    document.getElementById('formDeleteUser').setAttribute('action', `/usuario/eliminar/${userId}`);
-                    openNeonModal('neonDeleteModal');
-                }
-
-// Función para mostrar notificaciones
-                function showToast(type, message) {
-                    const toast = document.getElementById(`toast-${type}`);
-                    if (!toast)
-                        return;
-
-                    const messageElement = toast.querySelector('.toast-message span');
-                    if (messageElement) {
-                        messageElement.textContent = message;
-                    }
-
-                    toast.style.display = 'block';
-
-                    // Cerrar automáticamente después de 5 segundos
-                    setTimeout(() => {
-                        toast.style.display = 'none';
-                    }, 5000);
-                }
-
-// Función para mostrar/ocultar loader
-                function showLoader(show) {
-                    const loader = document.getElementById('globalLoader');
-                    if (loader) {
-                        loader.style.display = show ? 'flex' : 'none';
-                    }
-                }
-
-// Configurar eventos después de que el DOM esté cargado
-                document.addEventListener('DOMContentLoaded', function () {
-                    // Configurar formulario de creación
-                    const createForm = document.getElementById('formCreateUser');
-                    if (createForm) {
-                        createForm.addEventListener('submit', handleCreateFormSubmit);
-                    }
-
-                    // Configurar formulario de edición
-                    const editForm = document.getElementById('formEditUser');
-                    if (editForm) {
-                        editForm.addEventListener('submit', handleEditFormSubmit);
-                    }
-
-                    // Configurar formulario de eliminación
-                    const deleteForm = document.getElementById('formDeleteUser');
-                    if (deleteForm) {
-                        deleteForm.addEventListener('submit', handleDeleteFormSubmit);
-                    }
-
-                    // Delegación de eventos para los botones de edición
-                    document.addEventListener('click', function (e) {
-                        // Botones de edición
-                        if (e.target.closest('button[data-action="edit"]')) {
-                            e.preventDefault();
-                            const button = e.target.closest('button[data-action="edit"]');
-                            const userId = button.getAttribute('data-id');
-                            if (!userId) {
-                                showToast('error', 'ID de usuario no válido');
-                                return;
-                            }
-                            loadUserData(userId);
-                        }
-
-                        // Enlaces de eliminación
-                        if (e.target.closest('a[href^="/usuario/eliminar/"]')) {
-                            e.preventDefault();
-                            const link = e.target.closest('a[href^="/usuario/eliminar/"]');
-                            const userId = link.getAttribute('href').split('/').pop();
-                            const userName = link.closest('tr').querySelector('td:nth-child(3)').textContent;
-                            openDeleteModal(userId, userName);
-                        }
-                    });
-
-                    // Configurar cambio en el selector de registros por página
-                    const recordsPerPage = document.getElementById('recordsPerPage');
-                    if (recordsPerPage) {
-                        recordsPerPage.addEventListener('change', function () {
-                            const size = this.value;
-                            window.location.href = `/usuario/listado?page=0&size=${size}`;
-                        });
-
-                        // Establecer el valor seleccionado actual
-                        const urlParams = new URLSearchParams(window.location.search);
-                        const currentSize = urlParams.get('size') || '10';
-                        recordsPerPage.value = currentSize;
-                    }
-
-                    // Configurar cierre de toasts
-                    document.querySelectorAll('.toast-close').forEach(closeBtn => {
-                        closeBtn.addEventListener('click', function () {
-                            const toast = this.closest('.toast-modal');
-                            if (toast) {
-                                toast.style.display = 'none';
-                            }
-                        });
-                    });
-                });
-            </script>
         </section>
     </body>
 </html>

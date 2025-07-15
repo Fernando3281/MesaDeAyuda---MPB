@@ -1,9 +1,13 @@
 <!DOCTYPE html>
-<html lang="es">
+<html xmlns="http://www.w3.org/1999/xhtml" 
+      xmlns:th="http://www.thymeleaf.org">
     <head th:replace="~{layout/plantilla :: head}">
         <title>Mesa de Ayuda</title>
     </head>
-    <body class="verification-body">
+    
+    <th:block th:replace="~{layout/plantilla :: scripts-login}"></th:block>
+    
+    <body class="body-unlogged">
         <div class="verification-container">
             <div class="verification-form">
                 <div class="back-button-container">
@@ -49,24 +53,20 @@
 
         <script th:inline="javascript">
             $(document).ready(function () {
-                // Verificar si hay un mensaje de error usando Thymeleaf
                 const errorMessage = /*[[${error}]]*/ null;
                 if (errorMessage) {
                     showToast('error');
                 }
-
-                // También verificar por parámetro en URL (alternativa)
+           
                 const urlParams = new URLSearchParams(window.location.search);
                 if (urlParams.get('error') === 'true') {
                     showToast('error');
                 }
             });
 
-            // Función para mostrar toast
             function showToast(type) {
                 $(`#toast-${type}`).css('display', 'block');
 
-                // Cierra automáticamente después de 5 segundos
                 setTimeout(function () {
                     closeToast(type);
                 }, 80000);

@@ -1,5 +1,5 @@
 /* 
-    Created on : Oct 4, 2024, 1:25:37 PM
+    Created on : Oct 4, 2024, 1:25:37 PM
     Author     : ferva
 */
 
@@ -10,7 +10,6 @@
     gap: 20px;
 }
 
-/* Asegurar que no haya scroll en el body cuando el modal está abierto */
 body.modal-open {
     overflow: hidden;
 }
@@ -68,6 +67,137 @@ body.modal-open {
     letter-spacing: -0.3px;
 }
 
+/* ESTILOS MEJORADOS PARA EL MODAL DE CANCELACIÓN */
+.file-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: none;
+    justify-content: center;
+    align-items: center;
+    z-index: 1005;
+    backdrop-filter: blur(4px);
+}
+
+.modal-container {
+    background-color: white;
+    border-radius: 12px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+    max-width: 500px;
+    width: 90%;
+    max-height: 90vh;
+    overflow-y: auto;
+    position: relative;
+    animation: fadeIn 0.2s ease;
+}
+
+@keyframes modalFadeIn {
+    from {
+        opacity: 0;
+        transform: scale(0.9) translateY(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+    }
+}
+
+/* Contenido del modal de cancelación */
+.modal-container h3 {
+    font-size: 18px;
+    font-weight: 600;
+    color: #2c3e50;
+    margin: 0 0 10px 0;
+    text-align: center;
+}
+
+.modal-container p {
+    font-size: 14px;
+    color: #6c757d;
+    line-height: 1.5;
+    margin: 0 0 0px 0;
+    text-align: center;
+}
+
+/* Icono del modal */
+.modal-container::before {
+    content: '';
+    display: block;
+    width: 80px;
+    height: 80px;
+    background-color: #fee2e2;
+    border-radius: 50%;
+    margin: 0 auto 20px auto;
+    position: relative;
+    background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%23dc2626"><path d="M7 4V2C7 1.45 7.45 1 8 1H16C16.55 1 17 1.45 17 2V4H20C20.55 4 21 4.45 21 5S20.55 6 20 6H19V19C19 20.1 18.1 21 17 21H7C5.9 21 5 20.1 5 19V6H4C3.45 6 3 5.55 3 5S3.45 4 4 4H7ZM9 3V4H15V3H9ZM7 6V19H17V6H7ZM9 8V17H11V8H9ZM13 8V17H15V8H13Z"/></svg>');
+    background-size: 36px 36px;
+    background-repeat: no-repeat;
+    background-position: center;
+}
+
+/* Contenedor de contenido del modal */
+.modal-container > div {
+    padding: 10px;
+}
+
+/* Botones del modal */
+.modal-container .btn {
+    padding: 10px 20px;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 500;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    min-width: 100px;
+}
+
+.modal-container .btn-primary {
+    background-color: #dc2626;
+    color: white;
+}
+
+.modal-container .btn-primary:hover {
+    background-color: #b91c1c;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(220, 38, 38, 0.3);
+}
+
+.modal-container .btn-secondary {
+    background-color: #f8f9fa;
+    color: #6c757d;
+    border: 1px solid #dee2e6;
+}
+
+.modal-container .btn-secondary:hover {
+    background-color: #e9ecef;
+    border-color: #adb5bd;
+}
+
+/* Contenedor de botones */
+.modal-container div[style*="margin-top"] {
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+    margin-top: 20px !important;
+}
+
+/* Estilo para estado cancelado */
+.status-cancelado {
+    padding: 5px 10px;
+    border-radius: 20px;
+    font-size: 14px;
+    font-weight: 500;
+    background-color: #f8d7da;
+    color: #721c24;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+}
+
 /* Indicador de estado */
 #status-badge {
     display: inline-flex;
@@ -81,21 +211,29 @@ body.modal-open {
 }
 
 /* Iconos específicos para cada estado */
-.status .fa-search { color: #856404; } /* En Revisión */
-.status .fa-spinner { color: #004085; } /* En Progreso */
-.status .fa-check-circle { color: #155724; } /* Solucionado */
-.status .fa-lock { color: #343a40; } /* Cerrado */
+.status .fa-search {
+    color: #856404;
+} /* En Revisión */
+.status .fa-spinner {
+    color: #004085;
+} /* En Progreso */
+.status .fa-check-circle {
+    color: #155724;
+} /* Solucionado */
+.status .fa-lock {
+    color: #343a40;
+} /* Cerrado */
 
 .status-en-revision {
-    background-color: #fff8e6;
-    color: #b45309;
-    border: 1px solid #fde68a;
-}
-
-.status-en-progreso {
     background-color: #e0f2fe;
     color: #0369a1;
     border: 1px solid #bae6fd;
+}
+
+.status-en-progreso {
+    background-color: #fff8e6;
+    color: #b45309;
+    border: 1px solid #fde68a;
 }
 
 .status-solucionado {
@@ -105,9 +243,21 @@ body.modal-open {
 }
 
 .status-cerrado {
-    background-color: #f8f9fa;
-    color: #343a40;
-    border: 1px solid #e2e3e5;
+    background-color: #312f2f;
+    color: #fff;
+    border: 1px solid #4c4c4c;
+}
+
+.status-cancelado {
+    background-color: #fee2e2;
+    color: #b91c1c;
+    border: 1px solid #fecaca;
+}
+
+.status-desactivado {
+    background-color: #f3f4f6;
+    color: #4b5563;
+    border: 1px solid #e5e7eb;
 }
 
 .status i {
@@ -291,7 +441,6 @@ body.modal-open {
 
 .manager-status {
     width: 100%;
-    max-width: 300px;
     margin: 0 auto;
 }
 
@@ -310,7 +459,7 @@ body.modal-open {
     margin-top: 10px;
 }
 
-/* Estilos mejorados para el modal */
+/* ESTILOS MEJORADOS PARA EL MODAL DE ARCHIVOS */
 .image-modal {
     display: none;
     position: fixed;
@@ -319,31 +468,49 @@ body.modal-open {
     left: 0;
     width: 100vw;
     height: 100vh;
-    background-color: rgba(0, 0, 0, 0.9);
+    background-color: rgba(0, 0, 0, 0.85);
     backdrop-filter: blur(4px);
     justify-content: center;
     align-items: center;
     overflow: hidden;
+    padding: 20px;
+    box-sizing: border-box;
 }
 
 /* Contenedor del contenido del modal */
 .modal-content-container {
-    max-width: 95vw;
-    max-height: 95vh;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
     position: relative;
+    max-width: 95%;
+    max-height: 95%;
+    width: auto;
+    height: auto;
 }
 
-/* Estilo de la imagen dentro del modal */
-.modal-content {
-    max-width: 95%;
-    max-height: 85vh;
-    object-fit: contain;
+/* Estilos para imagen en el modal */
+#modalFileImage {
+    max-width: 90%;
+    max-height: 90vh;
+    overflow: hidden;
+    margin: auto;
+    display: block;
+    position: relative;
+    top: 50%;
     border-radius: 2px;
-    box-shadow: 0 0 24px rgba(0, 0, 0, 0.3);
+}
+
+/* Estilos para PDF en el modal */
+#modalFilePdf {
+    width: 90vw;
+    max-width: 1200px;
+    height: 85vh;
+    border: none;
+    border-radius: 5px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+    background-color: white;
 }
 
 .file-name-modal {
@@ -351,22 +518,22 @@ body.modal-open {
     margin-top: 15px;
     font-size: 16px;
     text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
-    padding: 5px 10px;
-    background-color: rgba(0, 0, 0, 0.5);
-    border-radius: 4px;
+    padding: 8px 16px;
+    background-color: rgba(0, 0, 0, 0.6);
+    border-radius: 6px;
     display: inline-block;
     max-width: 90%;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+    text-align: center;
+    word-wrap: break-word;
+    line-height: 1.3;
 }
 
 .close-modal {
     position: absolute;
-    top: 20px;
-    right: 20px;
+    top: 10px;
+    right: 10px;
     color: #f1f1f1;
-    font-size: 18px;
+    font-size: 20px;
     font-weight: bold;
     transition: all 0.2s ease;
     cursor: pointer;
@@ -376,83 +543,24 @@ body.modal-open {
     align-items: center;
     justify-content: center;
     border-radius: 50%;
-    background-color: rgba(0, 0, 0, 0.3);
+    background-color: rgba(0, 0, 0, 0.5);
     z-index: 1060;
+    backdrop-filter: blur(4px);
 }
 
 .close-modal:hover {
     color: #fff;
-    background-color: rgba(255, 255, 255, 0.1);
-    transform: scale(1.1);
+    background-color: rgba(255, 255, 255, 0.2);
 }
-
-
-/* Media queries para responsividad */
-@media (max-width: 992px) {
-    .main-container {
-        flex-direction: column;
-    }
-
-    .manager-info {
-        margin-top: 20px;
-    }
-
-    .info-grid {
-        grid-template-columns: 1fr;
-    }
-}
-
-@media (max-width: 576px) {
-    .ticket-header {
-        flex-direction: column;
-        align-items: flex-start;
-    }
-
-    .status {
-        margin-top: 10px;
-    }
-
-    .image-preview-container {
-        justify-content: center;
-    }
-}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-/*REVISAR QUE NO EXISTAN ESTILOS DUPLICADOS*/
 
 /* Estilos para la información del encargado */
 .agent-profile {
     display: flex;
     align-items: center;
-    margin-bottom: 20px;
+    margin-top: 15px;
+    margin-bottom: 15px;
     width: 100%;
+    text-align: left;
 }
 
 .agent-photo {
@@ -499,6 +607,7 @@ body.modal-open {
 .info-field {
     width: 100%;
     margin-bottom: 15px;
+    text-align: left;
 }
 
 .info-field label {
@@ -511,12 +620,13 @@ body.modal-open {
 
 .info-field input {
     width: 100%;
-    padding: 8px 12px;
+    padding: 6px 10px;
     border: 1px solid #ced4da;
     border-radius: 4px;
-    font-size: 14px;
+    font-size: 13px;
     color: #495057;
     background-color: #f8f9fa;
+    text-align: left;
 }
 
 .tickets-counter {
@@ -554,25 +664,7 @@ body.modal-open {
     color: #495057;
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 /* Estilos para sección de adjuntos */
-
 .attachments-header {
     margin-bottom: 12px;
 }
@@ -623,9 +715,6 @@ body.modal-open {
     max-width: 120px;
 }
 
-
-
-
 /* Estilos para la sección de cancelación */
 .cancel-section {
     padding-top: 14px;
@@ -643,9 +732,9 @@ body.modal-open {
     background-color: #e74c3c;
     color: white;
     border: none;
-    padding: 8px 14px;
+    padding: 7px 14px;
     border-radius: 6px;
-    font-size: 14px;
+    font-size: 13px;
     font-weight: 500;
     cursor: pointer;
     transition: all 0.2s ease;
@@ -658,4 +747,321 @@ body.modal-open {
 .cancel-button:hover {
     background-color: #c0392b;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+/* MEDIA QUERIES MEJORADAS PARA RESPONSIVE */
+@media (max-width: 1200px) {
+    .ticket-details {
+        width: auto;
+        min-width: 0;
+    }
+
+    .main-container {
+        gap: 16px;
+    }
+
+    /* Ajustes para el modal de archivos */
+    #modalFilePdf {
+        width: 95vw;
+        max-width: 1000px;
+    }
+}
+
+@media (max-width: 992px) {
+    .main-container {
+        flex-direction: column;
+        gap: 20px;
+    }
+
+    .ticket-details {
+        width: 100%;
+        flex: none;
+    }
+
+    .manager-info {
+        flex: none;
+        width: 100%;
+        min-height: auto;
+    }
+
+    .info-grid {
+        grid-template-columns: 1fr;
+        gap: 12px;
+    }
+
+    .agent-profile {
+        justify-content: center;
+        text-align: center;
+    }
+
+    .agent-info {
+        align-items: center;
+    }
+
+    /* Ajustes para el modal de archivos */
+    #modalFilePdf {
+        width: 95vw;
+        height: 80vh;
+    }
+
+    .modal-content-container {
+        max-width: 98%;
+        max-height: 98%;
+    }
+}
+
+@media (max-width: 768px) {
+    .back-button-container {
+        gap: 15px;
+    }
+
+    .ticket-details, .manager-info {
+        padding: 16px;
+        margin: 0;
+    }
+
+    .ticket-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+    }
+
+    .ticket-id {
+        font-size: 18px;
+    }
+
+    #status-badge {
+        align-self: flex-start;
+    }
+
+    .ticket-title {
+        font-size: 16px;
+    }
+
+    .ticket-description {
+        height: 120px;
+        font-size: 13px;
+    }
+
+    .files-grid {
+        justify-content: center;
+    }
+
+    .file-item {
+        min-width: 150px;
+        flex: 1;
+        max-width: 200px;
+    }
+
+    .modal-container {
+        width: 95%;
+        margin: 10px;
+    }
+
+    .modal-container .btn {
+        min-width: 80px;
+        padding: 8px 16px;
+    }
+
+    .modal-container div[style*="margin-top"] {
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    /* Ajustes para el modal de archivos en tablet */
+    .image-modal {
+        padding: 10px;
+    }
+
+    #modalFileImage {
+        max-height: 80vh;
+    }
+
+    #modalFilePdf {
+        width: 95vw;
+        height: 75vh;
+    }
+
+    .file-name-modal {
+        font-size: 14px;
+        padding: 6px 12px;
+    }
+
+    .close-modal {
+        width: 45px;
+        height: 45px;
+        font-size: 20px;
+    }
+}
+
+@media (max-width: 576px) {
+    .back-button-container {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+    }
+
+    .back-button-container h2 {
+        font-size: 18px;
+        margin: 0;
+    }
+
+    .ticket-details, .manager-info {
+        padding: 12px;
+        border-radius: 8px;
+    }
+
+    .main-container {
+        gap: 12px;
+    }
+
+    .ticket-id {
+        font-size: 16px;
+    }
+
+    .ticket-title {
+        font-size: 15px;
+    }
+
+    .ticket-description {
+        height: 100px;
+        padding: 8px;
+    }
+
+    .info-item label {
+        font-size: 12px;
+    }
+
+    .info-item div {
+        font-size: 13px;
+    }
+
+    .files-grid {
+        gap: 8px;
+    }
+
+    .file-item {
+        min-width: 120px;
+        padding: 6px 8px;
+    }
+
+    .file-name {
+        max-width: 80px;
+        font-size: 13px;
+    }
+
+    .cancel-button {
+        padding: 6px 10px;
+        font-size: 13px;
+    }
+
+    .agent-profile {
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .agent-photo {
+        margin-right: 0;
+        margin-bottom: 8px;
+    }
+
+    .counter-value {
+        font-size: 20px;
+        padding: 6px 16px;
+    }
+
+    .manager-status strong {
+        font-size: 16px;
+    }
+
+    .manager-status p {
+        font-size: 13px;
+    }
+
+    /* Ajustes para el modal de archivos en móvil */
+    .image-modal {
+        padding: 5px;
+    }
+
+    #modalFileImage {
+        max-height: 75vh;
+        border-radius: 4px;
+    }
+
+    #modalFilePdf {
+        width: 98vw;
+        height: 70vh;
+        border-radius: 4px;
+    }
+
+    .file-name-modal {
+        font-size: 13px;
+        padding: 4px 8px;
+        margin-top: 10px;
+        max-width: 95%;
+    }
+
+    .close-modal {
+        width: 40px;
+        height: 40px;
+        font-size: 18px;
+        top: 5px;
+        right: 5px;
+    }
+}
+
+/* Media query para pantallas muy pequeñas */
+@media (max-width: 360px) {
+    .ticket-details, .manager-info {
+        padding: 10px;
+    }
+
+    .modal-container {
+        width: 98%;
+        margin: 5px;
+    }
+
+    .modal-container h3 {
+        font-size: 16px;
+    }
+
+    .modal-container p {
+        font-size: 13px;
+    }
+
+    /* Ajustes para el modal de archivos en pantallas muy pequeñas */
+    #modalFileImage {
+        max-height: 70vh;
+    }
+
+    #modalFilePdf {
+        width: 99vw;
+        height: 65vh;
+    }
+
+    .file-name-modal {
+        font-size: 12px;
+        padding: 3px 6px;
+    }
+
+    .close-modal {
+        width: 35px;
+        height: 35px;
+        font-size: 16px;
+    }
+}
+
+/* Estilos adicionales para mejor experiencia en móvil */
+@media (max-width: 480px) {
+    .image-modal {
+        touch-action: manipulation;
+    }
+
+    #modalFileImage {
+        touch-action: pan-zoom;
+    }
+
+    .modal-content-container {
+        touch-action: manipulation;
+    }
 }

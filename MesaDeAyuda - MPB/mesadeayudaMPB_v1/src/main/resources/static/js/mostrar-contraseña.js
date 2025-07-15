@@ -1,3 +1,7 @@
+/**
+ * Metodo para mostrar el input de tipo contraseña
+ */
+
 function togglePassword() {
     const passwordInput = document.getElementById('passwordInput');
     const toggleIcon = document.getElementById('toggleIcon');

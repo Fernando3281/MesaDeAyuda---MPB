@@ -28,6 +28,9 @@ public class Mensajes {
 
     @Column(name = "Mensaje", columnDefinition = "TEXT", nullable = false)
     private String mensaje;
+    
+    @Column(name = "MensajeTextoPlano", columnDefinition = "TEXT", nullable = false)
+    private String mensajeTextoPlano;
 
     @Column(name = "FechaHora", nullable = false)
     @Temporal(TemporalType.TIMESTAMP)

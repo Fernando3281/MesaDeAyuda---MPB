@@ -5,20 +5,20 @@ import lombok.Data;
 
 @Data
 @Entity
-@Table(name = "Imagenes_Ticket")
-public class ImagenTicket {
+@Table(name = "Archivos_Ticket")
+public class ArchivoTicket {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "id_imagen")
-    private Long idImagen;
+    @Column(name = "id_archivo")
+    private Long idArchivo;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "id_ticket", nullable = false)
     private Ticket ticket;
 
     @Lob
-    @Column(name = "imagen", nullable = false)
-    private byte[] imagen;
+    @Column(name = "archivo", nullable = false)
+    private byte[] archivo;
 
     @Column(name = "nombre_archivo")
     private String nombreArchivo;

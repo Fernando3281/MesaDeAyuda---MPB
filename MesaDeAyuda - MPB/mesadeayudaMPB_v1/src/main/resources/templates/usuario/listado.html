@@ -1,11 +1,12 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
     <head th:replace="~{layout/plantilla :: head}">
-        <title>Administrar Usuarios</title>
+        <title>Mesa de Ayuda</title>
     </head>
 
     <th:block th:append="head">
         <link rel="stylesheet" th:href="@{/css/table_layout_principal.css}">
+        <link rel="stylesheet" th:href="@{/css/table_layout_usuarios.css}">
     </th:block>
 
     <th:block th:replace="~{layout/plantilla :: scripts-table-usuarios}"></th:block>
