@@ -41,5 +41,4 @@ public class Rol implements Serializable {
     @ManyToOne
     @JoinColumn(name = "id_Usuario")
     private Usuario usuario;
-
 }

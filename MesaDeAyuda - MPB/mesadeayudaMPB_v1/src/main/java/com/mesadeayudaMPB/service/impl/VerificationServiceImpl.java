@@ -5,10 +5,7 @@
 package com.mesadeayudaMPB.service.impl;
 
 import com.mesadeayudaMPB.service.VerificationService;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 import java.security.SecureRandom;
 
 /**
@@ -17,19 +14,19 @@ import java.security.SecureRandom;
  */
 @Service
 public class VerificationServiceImpl implements VerificationService {
-    
+
     private static final int CODE_LENGTH = 6;
-    
+
     @Override
     public String generateVerificationCode() {
         SecureRandom random = new SecureRandom();
         StringBuilder code = new StringBuilder();
         for (int i = 0; i < CODE_LENGTH; i++) {
-            code.append(random.nextInt(10));
+            code.append(random.nextInt(10)); // Solo números
         }
         return code.toString();
     }
-    
+
     @Override
     public boolean verifyCode(String storedCode, String inputCode) {
         return storedCode != null && storedCode.equals(inputCode);

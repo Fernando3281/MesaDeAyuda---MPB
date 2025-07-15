@@ -1,10 +1,12 @@
 <!DOCTYPE html>
 <html xmlns="http://www.w3.org/1999/xhtml" 
-      xmlns:th="http://www.thymeleaf.org">
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
     <head th:replace="~{layout/plantilla :: head}">
         <title>Mesa de Ayuda</title>
         <meta charset="UTF-8"/>
     </head>
+    
     <th:block th:append="head">
         <link rel="stylesheet" th:href="@{/css/nuevo_ticket_layout_principal.css}">
     </th:block>

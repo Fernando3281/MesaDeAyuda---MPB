@@ -6,12 +6,12 @@ import com.mesadeayudaMPB.domain.Usuario;
 import com.mesadeayudaMPB.domain.Rol;
 import com.mesadeayudaMPB.service.UsuarioService;
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.List;
-import java.util.UUID;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -21,6 +21,7 @@ public class UsuarioServiceImpl implements UsuarioService {
 
     @Autowired
     private UsuarioDao usuarioDao;
+
     @Autowired
     private RolDao rolDao;
 
@@ -72,10 +73,10 @@ public class UsuarioServiceImpl implements UsuarioService {
         // Guardar el usuario
         usuario = usuarioDao.save(usuario);
 
-        // Si se debe crear el rol, crear el rol "ROLE_USER" asociado al usuario
+        // Si se debe crear el rol, crear el rol "ROL_USUARIO" asociado al usuario
         if (crearRolUser) {
             Rol rol = new Rol();
-            rol.setNombre("ROLE_USER");
+            rol.setNombre("ROL_USUARIO");
             rol.setUsuario(usuario);
             rolDao.save(rol);
         }
@@ -115,5 +116,80 @@ public class UsuarioServiceImpl implements UsuarioService {
     @Transactional(readOnly = true)
     public Usuario getUsuarioPorId(Long id) {
         return usuarioDao.findById(id).orElse(null);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Long contarUsuariosPorDepartamento(String nombreDepartamento) {
+        return usuarioDao.countByDepartamento(nombreDepartamento);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<Usuario> getUsuariosPorRoles(List<String> roles) {
+        return usuarioDao.findByRolesNombreIn(roles);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<Usuario> getUsuariosPaginados(int page, int size) {
+        Pageable pageable = PageRequest.of(page, size, Sort.by("nombre").ascending());
+        return usuarioDao.findAll(pageable);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<Usuario> buscarUsuarios(String query, int page, int size) {
+        Pageable pageable = PageRequest.of(page, size, Sort.by("nombre").ascending());
+        return usuarioDao.buscarUsuarios(query, pageable);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<Usuario> buscarUsuariosPorEstado(String query, boolean activo, int page, int size) {
+        Pageable pageable = PageRequest.of(page, size, Sort.by("nombre").ascending());
+        return usuarioDao.buscarUsuariosPorEstado(query, activo, pageable);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<Usuario> getUsuariosPorEstado(boolean activo, int page, int size) {
+        Pageable pageable = PageRequest.of(page, size, Sort.by("nombre").ascending());
+        return usuarioDao.findByActivo(activo, pageable);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<Usuario> getUsuariosPorRol(String rol, int page, int size) {
+        Pageable pageable = PageRequest.of(page, size, Sort.by("nombre").ascending());
+        return usuarioDao.findByRolesNombre(rol, pageable);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<Usuario> buscarUsuariosPorRol(String query, String rol, int page, int size) {
+        Pageable pageable = PageRequest.of(page, size, Sort.by("nombre").ascending());
+        return usuarioDao.buscarUsuariosPorRol(query, rol, pageable);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<Usuario> getUsuariosPorEstadoYRol(boolean activo, String rol, int page, int size) {
+        Pageable pageable = PageRequest.of(page, size, Sort.by("nombre").ascending());
+        return usuarioDao.findByActivoAndRolesNombre(activo, rol, pageable);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<Usuario> buscarUsuariosPorEstadoYRol(String query, boolean activo, String rol, int page, int size) {
+        Pageable pageable = PageRequest.of(page, size, Sort.by("nombre").ascending());
+        return usuarioDao.buscarUsuariosPorEstadoYRol(query, activo, rol, pageable);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<Usuario> getUsuariosPaginadosOrdenadosPorId(int page, int size) {
+        Pageable pageable = PageRequest.of(page, size, Sort.by("idUsuario").ascending());
+        return usuarioDao.findAll(pageable);
     }
 }

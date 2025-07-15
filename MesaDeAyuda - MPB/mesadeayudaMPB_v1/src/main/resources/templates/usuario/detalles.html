@@ -8,6 +8,8 @@
     <th:block th:append="head">
         <link rel="stylesheet" th:href="@{/css/info_ticket_layout_principal.css}">
     </th:block>
+    
+    <th:block th:replace="~{layout/plantilla :: detalle-ticket-scripts}"></th:block>
 
     <body>
         <div class="wrapper">
@@ -25,7 +27,7 @@
                 <main class="home-section">
                     <div class="content-wrapper">
 
-                        <section th:replace="~{usuario/segmentos-perfil-historial :: ticket-detalle}"></section>
+                        <section th:replace="~{usuario/segmentos-perfil :: ticket-detalle}"></section>
 
                     </div>
                 </main>

@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Poppins', sans-serif;
+            color: #18181b;
+            line-height: 1.5;
+            -webkit-font-smoothing: antialiased;
+        }
+        
+        .container {
+            max-width: 600px;
+            margin: 24px auto;
+            background: white;
+            border-radius: 12px;
+            border: 2px solid #cfcfec;
+        }
+        
+        .header {
+            padding: 14px 32px;
+            background-color: #f6f6f6;
+            border-top-left-radius: 12px;
+            border-top-right-radius: 12px;
+        }
+        
+        .header h1 {
+            font-size: 20px;
+            font-weight: 600;
+            color: #18181b;
+            margin-bottom: 4px;
+        }
+        
+        .header p {
+            font-size: 14px;
+            color: #71717a;
+        }
+        
+        .content {
+            padding: 32px;
+        }
+        
+        .title {
+            font-size: 24px;
+            font-weight: 600;
+            color: #18181b;
+            margin-bottom: 10px;
+        }
+        
+        .message {
+            color: #3f3f46;
+            font-size: 16px;
+            margin-bottom: 24px;
+        }
+        
+        .button-container {
+            text-align: center;
+            margin-bottom: 24px;
+        }
+        
+        .reset-button {
+            display: inline-block;
+            background-color: #11101d;
+            color: white;
+            padding: 12px 24px;
+            border-radius: 6px;
+            text-decoration: none;
+            font-weight: 500;
+        }
+        
+        .warning {
+            background-color: #fff7ed;
+            padding: 16px;
+            border-radius: 8px;
+            margin-bottom: 24px;
+            border-left: 4px solid #f97316;
+        }
+        
+        .warning p {
+            color: #7c2d12;
+            font-size: 14px;
+        }
+        
+        .instructions {
+            color: #3f3f46;
+            font-size: 16px;
+            margin-bottom: 24px;
+        }
+        
+        .footer {
+            padding: 18px 32px;
+            background-color: #f6f6f6;
+            border-bottom-left-radius: 12px;
+            border-bottom-right-radius: 12px;
+        }
+        
+        .footer p {
+            color: #71717a;
+            font-size: 14px;
+            margin-bottom: 8px;
+        }
+        
+        .footer p:last-child {
+            margin-bottom: 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Municipalidad de Barva</h1>     
+        </div>
+        
+        <div class="content">
+            <h2 class="title">Restablece tu contraseña</h2>
+            
+            <p class="message">Hemos recibido una solicitud para restablecer tu contraseña, recuerde que para acceder debe mantener su sesion activa. Haz clic en el siguiente enlace para crear una nueva contraseña:</p>
+            
+            <div class="button-container">
+                <a href="{{changeUrl}}" class="reset-button">Cambiar Contraseña</a>
+            </div>
+            
+            <div class="warning">
+                <p>Este enlace expirará en 10 minutos por razones de seguridad. En caso de que usted no haya realizado la solicitud, puedes ignorar este correo y tu contraseña permanecerá sin cambios.</p>
+            </div>
+            
+        </div>
+        
+        <div class="footer">
+            <p>Este es un mensaje automatico, por favor no respondas a este correo.</p>
+            <p>© {{year}} Municipalidad de Barva. Todos los derechos reservados.</p>
+        </div>
+    </div>
+</body>
+</html>

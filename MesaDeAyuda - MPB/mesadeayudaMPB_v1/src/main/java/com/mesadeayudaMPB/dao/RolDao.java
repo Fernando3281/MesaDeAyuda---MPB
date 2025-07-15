@@ -2,8 +2,17 @@ package com.mesadeayudaMPB.dao;
 
 import com.mesadeayudaMPB.domain.Rol;
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.stereotype.Repository;
+import java.util.List;
+import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
+import org.springframework.transaction.annotation.Transactional;
 
-@Repository
 public interface RolDao extends JpaRepository<Rol, Long> {
+    List<Rol> findByUsuarioIdUsuario(Long idUsuario);
+    
+    @Transactional
+    @Modifying
+    @Query("DELETE FROM Rol r WHERE r.usuario.idUsuario = :idUsuario")
+    void deleteByUsuarioIdUsuario(@Param("idUsuario") Long idUsuario);
 }

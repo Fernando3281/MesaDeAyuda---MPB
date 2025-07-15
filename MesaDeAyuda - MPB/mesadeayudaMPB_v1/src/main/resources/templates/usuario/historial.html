@@ -10,7 +10,7 @@
         <link rel="stylesheet" th:href="@{/css/historial_layout_principal.css}">
     </th:block>
 
-    <th:block th:replace="~{layout/plantilla :: scripts-perfil}"></th:block>
+    <th:block th:replace="~{layout/plantilla :: scripts-historial}"></th:block>
 
     <body>
         <div class="wrapper">
@@ -28,7 +28,7 @@
                 <main class="home-section">
                     <div class="content-wrapper">
 
-                        <section th:replace="~{usuario/segmentos-perfil-historial :: historial}"></section>
+                        <section th:replace="~{usuario/segmentos-perfil :: historial}"></section>
 
                     </div>
                 </main>

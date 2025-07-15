@@ -12,9 +12,6 @@
     border: none;
     background: transparent;
     cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
     color: #6B7280;
     border-radius: 50%;
     transition: all 0.2s ease;
@@ -130,61 +127,6 @@
     white-space: nowrap;
 }
 
-/* Anchos específicos para cada columna */
-
-.table-resizable th:nth-child(2),
-.table-resizable td:nth-child(2) {
-    width: 120px;
-    text-align: center;
-}
-
-.table-resizable th:nth-child(3),
-.table-resizable td:nth-child(3) {
-    width: 100px;
-    text-align: center;
-}
-
-.table-resizable th:nth-child(4),
-.table-resizable td:nth-child(4) {
-    width: 450px;
-}
-
-.table-resizable th:nth-child(5),
-.table-resizable td:nth-child(5) {
-    width: 150px;
-    text-align: center;
-}
-
-.table-resizable th:nth-child(6),
-.table-resizable td:nth-child(6) {
-    width: 100px;
-    text-align: center;
-}
-
-.table-resizable th:nth-child(7),
-.table-resizable td:nth-child(7) {
-    width: 100px;
-    text-align: center;
-}
-
-.table-resizable th:nth-child(8),
-.table-resizable td:nth-child(8) {
-    width: 100px;
-    text-align: center;
-}
-
-.table-resizable th:nth-child(9),
-.table-resizable td:nth-child(9) {
-    min-width: 150px;
-    text-align: center;
-}
-
-.table-resizable th:nth-child(10),
-.table-resizable td:nth-child(10) {
-    min-width: 100px;
-    text-align: center;
-}
-
 .table-resizable th .resizer {
     position: absolute;
     top: 0;
@@ -251,10 +193,18 @@
 
 .search-input {
     width: 100%;
-    padding: 8px 35px;
+    padding: 6px 15px 6px 35px;
     border: 1px solid #ddd;
     border-radius: 4px;
-    font-size: 14px;
+    font-size: 13px;
+    font-family: 'Poppins', sans-serif;
+    transition: border-color 0.2s ease;
+}
+
+.search-input:focus {
+    outline: none;
+    border-color: #007bff;
+    box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.1);
 }
 
 .search-icon {
@@ -271,7 +221,7 @@
 }
 
 .btn {
-    padding: 8px 16px;
+    padding: 6px 16px;
     border: 1px solid #ddd;
     border-radius: 4px;
     background: white;
@@ -279,7 +229,7 @@
     display: flex;
     align-items: center;
     gap: 8px;
-    font-size: 14px;
+    font-size: 13px;
     color: #333;
 }
 
@@ -384,11 +334,11 @@
 
 .table-container {
     min-height: calc(100vh - 200px);
-    max-height: calc(100vh - 200px); /* Ajusta según el tamaño del search bar y otros elementos */
-    display: block; /* Asegura el comportamiento esperado del contenedor */
-    width: 100%; /* El contenedor ocupará todo el ancho disponible */
-    overflow-x: auto; /* Agrega scroll horizontal si es necesario */
-    max-width: 100%; /* Limita el ancho al contenedor padre */
+    max-height: calc(100vh - 200px);
+    display: block;
+    width: 100%;
+    overflow-x: auto;
+    max-width: 100%;
     border: 1px solid #ddd;
     border-top: none;
     border-radius: 0 0 4px 4px;
@@ -411,13 +361,14 @@
 }
 
 .filter-row input {
-    width: 90%; /* Asegura que los inputs sean proporcionales */
+    width: 90%;
     padding: 5px;
     border: 1px solid #ddd;
     border-radius: 4px;
-    font-size: 14px;
-    box-sizing: border-box; /* Asegura que no se salga del contenedor */
+    font-size: 12px;
+    box-sizing: border-box;
     opacity: 70%;
+    font-family: 'Poppins', sans-serif;
 }
 
 
@@ -435,15 +386,15 @@
 .tickets-table th,
 .tickets-table td {
     padding: 6px;
-    text-align: left;
+    text-align: center;
     border-bottom: 1px solid #ddd;
     font-size: 12px;
 }
 
 .table-resizable th:first-child,
 .table-resizable td:first-child {
-    width: 40px;
-    min-width: 40px;
+    width: 50px;
+    min-width: 50px;
 }
 
 .table-resizable th:first-child .resizer {
@@ -457,7 +408,7 @@
 }
 
 .tickets-table tr:hover {
-    background: #f8f9fa;
+    background: #f5f5f5;
 }
 
 .badge {
@@ -467,29 +418,71 @@
     font-weight: 500;
 }
 
+/*Prioridad Badges*/
 .badge-sin-asignar {
-    background: #267EDC;;
-    color: white;
-}
-
-.badge-alto {
-    background: #DC2626;
-    color: white;
-}
-
-.badge-medio {
-    background: #F59E0B;
-    color: white;
+    background-color: #e0f2fe;
+    color: #0369a1;
+    border: 1px solid #a7d1e7;
 }
 
 .badge-bajo {
-    background: #10B981;
-    color: white;
+    background-color: #ecfdf5;
+    color: #047857;
+    border: 1px solid #a7f3d0;
 }
 
+.badge-medio {
+    background-color: #fff8e6;
+    color: #984607;
+    border: 1px solid #e1c65a;
+}
+
+.badge-alto {
+    background-color: #fee2e2;
+    color: #b91c1c;
+    border: 1px solid #d49d9d;
+}
 .badge-critico {
-    background: #7C3AED;
-    color: white;
+    background-color: #5b1111;
+    color: #fff;
+    border: 1px solid #7f1d1d;
+}
+
+/*Estado Badges*/
+.badge-abierto {
+    background-color: #e0f2fe;
+    color: #0369a1;
+    border: 1px solid #a7d1e7;
+}
+
+.badge-pendiente {
+    background-color: #fff8e6;
+    color: #984607;
+    border: 1px solid #e1c65a;
+}
+
+.badge-resuelto {
+    background-color: #ecfdf5;
+    color: #047857;
+    border: 1px solid #a7f3d0;
+}
+
+.badge-cerrado {
+    background-color: #312f2f;
+    color: #fff;
+    border: 1px solid #4c4c4c;
+}
+
+.badge-cancelado {
+    background-color: #fee2e2;
+    color: #b91c1c;
+    border: 1px solid #d49d9d;
+}
+
+.badge-desactivado {
+    background-color: #f3f4f6;
+    color: #2c2f34;
+    border: 1px solid #ced1d8;
 }
 
 .checkbox-custom {
@@ -508,15 +501,6 @@
 .ticket-link:hover {
     text-decoration: underline; /* Agrega un subrayado al pasar el cursor */
 }
-
-.filter-row input {
-    width: 90%;
-    padding: 5px;
-    border: 1px solid #ddd;
-    border-radius: 4px;
-    font-size: 14px;
-}
-
 
 @media (max-width: 768px) {
     .table-header {
@@ -617,6 +601,194 @@
     width: 20px;
     text-align: center;
     color: #6B7280;
+}/* Estilos optimizados para el filtro de fechas */
+.date-filter-container {
+    position: relative;
+    display: inline-block;
+    width: 100%;
+    height: 100%;
+}
+
+.date-filter-dropdown {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 5px 8px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    cursor: pointer;
+    background-color: white;
+    transition: all 0.2s;
+    min-width: 80px; /* Ancho mínimo para que no se vea muy comprimido */
+}
+
+.date-filter-dropdown:hover {
+    border-color: #aaa;
+}
+
+.date-filter-label {
+    font-size: 12px;
+    color: #555;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    flex-grow: 1;
+}
+
+.date-filter-icon {
+    font-size: 12px;
+    color: #6B7280;
+    margin-left: 4px;
+    flex-shrink: 0;
+}
+
+.date-filter-popup {
+    position: fixed;
+    background: white;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    padding: 8px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    z-index: 1100;
+    display: none;
+    width: 220px; /* Reducido de 280px */
+    box-sizing: border-box;
+}
+
+.date-filter-container.active .date-filter-popup {
+    display: block;
+}
+
+/* Estilos para el contenedor del filtro de fechas */
+.date-filter-container {
+  position: relative;
+  display: inline-block;
+  width: 100%;
+  height: 100%;
+}
+
+/* Estilos para el popup del filtro de fechas */
+.date-filter-popup {
+  position: absolute;
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  padding: 8px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  z-index: 1100;
+  display: none;
+  width: 220px;
+  box-sizing: border-box;
+  left: -90px !important; /* Ajuste específico para alinear correctamente */
+  top: 30px !important;
+}
+
+/* Mostrar el popup cuando está activo */
+.date-filter-container.active .date-filter-popup {
+  display: block;
+}
+
+/* Estilos para el header del filtro de fechas */
+.date-filter-header {
+  display: grid;
+  grid-template-columns: 45px 1fr;
+  gap: 6px;
+  align-items: center;
+  margin-bottom: 8px;
+  font-size: 12px;
+}
+
+/* Estilos para los inputs de fecha */
+.date-filter-input {
+  padding: 4px 6px;
+  border: 1px solid #ddd;
+  border-radius: 3px;
+  font-size: 11px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* Estilos para el botón de aplicar */
+.date-filter-apply {
+  padding: 4px 12px;
+  background-color: #2563EB;
+  color: white;
+  border: none;
+  border-radius: 3px;
+  cursor: pointer;
+  font-size: 11px;
+  transition: background-color 0.2s;
+}
+
+.date-filter-apply:hover {
+  background-color: #1D4ED8;
+}
+
+/* Diseño compacto para el header */
+.date-filter-header {
+    display: grid;
+    grid-template-columns: 45px 1fr; /* Reducido de 50px */
+    gap: 6px; /* Reducido de 8px */
+    align-items: center;
+    margin-bottom: 8px; /* Reducido de 10px */
+    font-size: 12px;
+}
+
+.date-filter-header span {
+    white-space: nowrap;
+    font-size: 11px; /* Texto más pequeño */
+    color: #555;
+}
+
+.date-filter-input {
+    padding: 4px 6px; /* Más compacto */
+    border: 1px solid #ddd;
+    border-radius: 3px;
+    font-size: 11px; /* Texto más pequeño */
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.date-filter-actions {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 6px;
+}
+
+.date-filter-apply {
+    padding: 4px 12px; /* Más compacto */
+    background-color: #2563EB;
+    color: white;
+    border: none;
+    border-radius: 3px;
+    cursor: pointer;
+    font-size: 11px; /* Texto más pequeño */
+    transition: background-color 0.2s;
+}
+
+.date-filter-apply:hover {
+    background-color: #1D4ED8;
+}
+
+/* Asegurar que el popup no se corte */
+.filter-row th {
+    overflow: visible !important;
+    position: relative;
+}
+
+/* Posicionamiento inteligente del popup */
+.date-filter-popup {
+    transform: none;
+    margin-top: 2px;
+}
+
+/* Ajuste para pantallas pequeñas */
+@media (max-width: 768px) {
+    .date-filter-popup {
+        width: 200px;
+        right: 10px;
+        left: auto !important;
+    }
 }
 
 /* Estilo para el spinner de carga */
@@ -665,4 +837,109 @@
 
 .notification.show {
     opacity: 1;
+}
+
+.status-filter {
+    padding: 6px 15px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    background-color: white;
+    cursor: pointer;
+    font-family: 'Poppins', sans-serif;
+}
+
+.search-icon {
+    position: absolute;
+    left: 10px;
+    color: #777;
+}
+
+/* Estilos CSS para los modales */
+.neon-modal {
+    display: none;
+    position: fixed;
+    z-index: 1050;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    background-color: rgba(0, 0, 0, 0.5);
+    animation: fadeIn 0.3s;
+}
+
+.neon-modal-content {
+    position: relative;
+    background-color: #fefefe;
+    margin: 5% auto;
+    padding: 0;
+    border: 1px solid #888;
+    border-radius: 8px;
+    width: 80%;
+    max-width: 800px;
+    box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
+    animation: slideIn 0.3s;
+}
+
+.neon-modal-header {
+    padding: 15px 20px;
+    border-bottom: 1px solid #e9ecef;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.neon-modal-body {
+    padding: 20px;
+    max-height: calc(100vh - 200px);
+    overflow-y: auto;
+}
+
+.neon-modal-footer {
+    padding: 15px 20px;
+    border-top: 1px solid #e9ecef;
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+}
+
+.close-modal {
+    color: #aaa;
+    float: right;
+    font-size: 28px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.close-modal:hover,
+.close-modal:focus {
+    color: black;
+    text-decoration: none;
+}
+
+.user-img {
+    width: 32px;
+    height: 32px;
+    border-radius: 10%;
+    object-fit: cover;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0
+    }
+    to {
+        opacity: 1
+    }
+}
+
+@keyframes slideIn {
+    from {
+        transform: translateY(-50px);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
 }

@@ -9,4 +9,6 @@ public interface RegistroService {
     boolean existeUsuario(String correoElectronico);
 
     boolean existeCodigo(String codigo);
+    
+    byte[] obtenerImagenDefault();
 }

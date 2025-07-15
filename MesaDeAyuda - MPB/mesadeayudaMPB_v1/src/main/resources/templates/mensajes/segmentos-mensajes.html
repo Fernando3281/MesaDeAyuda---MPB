@@ -1,0 +1,534 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" 
+      xmlns:th="http://www.thymeleaf.org">
+    <head th:replace="~{layout/plantilla :: head}">
+        <title>Mensajes - Mesa de Ayuda</title>
+        <link th:href="@{/css/mensajes.css}" rel="stylesheet" />
+    </head>
+    <body>
+        <section th:fragment="mensajes-section" class="mensajes-section">
+            <meta name="_csrf_header" th:content="${_csrf.headerName}"/>
+            <meta name="_csrf_token" th:content="${_csrf.token}"/>
+
+            <div class="mensajes-title">Mis Mensajes</div>
+
+            <div class="mensajes-content">
+                <!-- Panel lateral con lista de tickets -->
+                <div class="tickets-list">
+                    <div class="ticket-search">
+                        <input class="form-control" type="text" placeholder="Buscar tickets..." id="ticketSearch">
+                    </div>
+                    <div class="tickets-list-container">
+                        <div th:if="${tickets.empty}" class="no-messages-container">
+                            <i class="fas fa-inbox no-messages-icon"></i>
+                            <h3 class="no-messages-title">No tienes tickets</h3>
+                            <p class="no-messages-description">
+                                Actualmente no tienes tickets con mensajes. Cuando crees o recibas un ticket, 
+                                aparecerá en esta sección.
+                            </p>
+                            <a th:href="@{/tickets/nuevo}" class="no-messages-action">
+                                <i class="fas fa-plus"></i> Crear nuevo ticket
+                            </a>
+                        </div>
+                        <div class="ticket-item" 
+                             th:each="ticket : ${tickets}"
+                             th:id="'ticket-' + ${ticket.idTicket}"
+                             th:onclick="'loadMessages(' + ${ticket.idTicket} + ', this)'">
+                            <span class="ticket-code" th:text="${ticket.codigo}">TICKET-001</span>
+                            <span class="ticket-title" th:text="${ticket.titulo}">Problema con impresora</span>
+                            <div class="ticket-metadata">
+                                <span class="ticket-status" th:text="${ticket.estado}">Estado</span>
+                                <span class="ticket-date" th:text="${#dates.format(ticket.fechaActualizacion, 'dd/MM/yyyy')}">01/01/2025</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Área de visualización de mensajes -->
+                <div class="messages-area" id="messagesArea">
+                    <!-- Header que se oculta/muestra dinámicamente -->
+                    <div class="messages-header" id="messagesHeader" style="display: none;">
+                        <h2 class="ticket-title-main" id="ticketTitleMain">Título del Ticket</h2>
+                        <div class="ticket-details" id="ticketDetails">
+                            <span>Estado: <strong id="ticketStatus">Estado</strong></span>
+                            <span>Prioridad: <strong id="ticketPriority">Prioridad</strong></span>
+                            <span>Categoría: <strong id="ticketCategory">Categoría</strong></span>
+                        </div>
+                    </div>
+
+                    <div class="messages-list" id="messagesList">
+                        <div class="no-messages-container" id="noMessagesPlaceholder" style="display: none;">
+                            <i class="fas fa-comment-dots no-messages-icon"></i>
+                            <h3 class="no-messages-title">No hay mensajes en este ticket</h3>
+                            <p class="no-messages-description">
+                                Sé el primero en enviar un mensaje para iniciar la conversación sobre este ticket.
+                            </p>
+                        </div>
+                    </div>
+
+                    <div id="noSelectionPlaceholder">
+                        <div class="no-messages-container">
+                            <i class="fas fa-comments no-messages-icon"></i>
+                            <h3 class="no-messages-title">Selecciona un ticket</h3>
+                            <p class="no-messages-description">
+                                Selecciona un ticket de la lista lateral para ver los mensajes 
+                                correspondientes y continuar la conversación.
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Área de entrada de mensajes -->
+                    <div class="message-input-area" id="messageInputArea" style="display: none;">
+                        <div class="message-input-container">
+                            <textarea id="messageInput" class="form-control message-input" placeholder="Escribe tu mensaje aquí..." rows="1"></textarea>
+                            <button id="sendButton" class="send-button">Enviar</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <script>
+                // Función para obtener el token CSRF
+                function getCsrfToken() {
+                    return document.querySelector('meta[name="_csrf_token"]').getAttribute('content');
+                }
+
+                function getCsrfHeader() {
+                    return document.querySelector('meta[name="_csrf_header"]').getAttribute('content');
+                }
+
+// Función para formatear la fecha con icono
+                function formatDateWithIcon(dateString) {
+                    const date = new Date(dateString);
+                    const formattedDate = date.toLocaleDateString('es-ES', {
+                        day: '2-digit',
+                        month: '2-digit',
+                        year: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit'
+                    });
+                    return `<i class="fa-regular fa-clock" style="margin-right: 5px;"></i>${formattedDate}`;
+                }
+
+// Función para mostrar/ocultar elementos según el estado de selección
+                function updateSelectionState(hasSelection, ticketData = null) {
+                    const messagesHeader = document.getElementById('messagesHeader');
+                    const messageInputArea = document.getElementById('messageInputArea');
+                    const noSelectionPlaceholder = document.getElementById('noSelectionPlaceholder');
+                    const noMessagesPlaceholder = document.getElementById('noMessagesPlaceholder');
+                    const messagesArea = document.getElementById('messagesArea');
+
+                    if (hasSelection) {
+                        // Mostrar header y área de input
+                        messagesHeader.style.display = 'block';
+                        messageInputArea.style.display = 'flex';
+                        noSelectionPlaceholder.style.display = 'none';
+                        messagesArea.classList.add('has-selected');
+
+                        // Actualizar información del ticket si se proporciona
+                        if (ticketData) {
+                            document.getElementById('ticketTitleMain').textContent = ticketData.titulo;
+                            document.getElementById('ticketStatus').textContent = ticketData.estado;
+                            document.getElementById('ticketPriority').textContent = ticketData.prioridad;
+                            document.getElementById('ticketCategory').textContent = ticketData.categoria;
+                        }
+                    } else {
+                        // Ocultar header y área de input
+                        messagesHeader.style.display = 'none';
+                        messageInputArea.style.display = 'none';
+                        noSelectionPlaceholder.style.display = 'block';
+                        noMessagesPlaceholder.style.display = 'none';
+                        messagesArea.classList.remove('has-selected');
+                }
+                }
+
+// Función para cargar los mensajes de un ticket
+                function loadMessages(ticketId, element) {
+                    // Verificar si el ticket ya está activo para evitar recarga innecesaria
+                    if (element.classList.contains('active')) {
+                        return; // No hacer nada si el ticket ya está seleccionado
+                    }
+
+                    // Mostrar indicador de carga
+                    const messagesList = document.getElementById('messagesList');
+                    messagesList.innerHTML = '<div class="no-messages">Cargando mensajes...</div>';
+
+                    // Realizar la petición AJAX
+                    fetch('/mensajes/cargar/' + ticketId)
+                            .then(response => {
+                                if (!response.ok) {
+                                    throw new Error('Error al cargar los mensajes');
+                                }
+                                return response.json();
+                            })
+                            .then(data => {
+                                if (data.success) {
+                                    // Actualizar estado de selección
+                                    updateSelectionState(true, data.ticket);
+
+                                    renderMessages(data.mensajes);
+
+                                    // Actualizar el ticket activo
+                                    document.querySelectorAll('.ticket-item').forEach(item => {
+                                        item.classList.remove('active');
+                                    });
+                                    element.classList.add('active');
+
+                                    // Hacer scroll al final de los mensajes
+                                    setTimeout(() => {
+                                        messagesList.scrollTop = messagesList.scrollHeight;
+                                    }, 100);
+                                } else {
+                                    showError(data.error || 'Error al cargar los mensajes');
+                                }
+                            })
+                            .catch(error => {
+                                console.error('Error:', error);
+                                showError('Error al cargar los mensajes. Por favor intente nuevamente.');
+                            });
+                }
+
+// Función para renderizar los mensajes en el contenedor
+                function renderMessages(messages) {
+                    const messagesList = document.getElementById('messagesList');
+                    const noMessagesPlaceholder = document.getElementById('noMessagesPlaceholder');
+
+                    if (messages.length === 0) {
+                        // Mostrar placeholder de "no hay mensajes"
+                        if (noMessagesPlaceholder) {
+                            noMessagesPlaceholder.style.display = 'block';
+                        }
+                        messagesList.innerHTML = '';
+                        return;
+                    }
+
+                    // Ocultar placeholder de "no hay mensajes"
+                    if (noMessagesPlaceholder) {
+                        noMessagesPlaceholder.style.display = 'none';
+                    }
+
+                    messagesList.innerHTML = '';
+
+                    messages.forEach(message => {
+                        const messageDiv = document.createElement('div');
+                        messageDiv.className = message.esMio ? 'message-container my-message' : 'message-container other-message';
+
+                        // Avatar del emisor
+                        const avatar = document.createElement('img');
+                        avatar.className = 'message-avatar';
+                        avatar.src = '/usuario/imagen/' + message.emisor.id;
+                        avatar.alt = message.emisor.nombre;
+                        avatar.onerror = function () {
+                            this.src = '/img/ImagenDefaultPerfil.jpg';
+                        };
+
+                        const contentWrapper = document.createElement('div');
+                        contentWrapper.className = 'message-content-wrapper';
+
+                        const messageContent = document.createElement('div');
+                        messageContent.className = 'message-content';
+
+                        // Cabecera del mensaje (emisor y fecha)
+                        const messageHeader = document.createElement('div');
+                        messageHeader.className = 'message-header';
+
+                        const senderName = document.createElement('span');
+                        senderName.className = 'sender-name';
+                        senderName.textContent = message.emisor.nombre + ' ' + message.emisor.apellido;
+
+                        // Añadir clase de rol si es necesario
+                        if (message.emisor.rol.includes('ADMINISTRADOR')) {
+                            senderName.classList.add('role-admin');
+                        } else if (message.emisor.rol.includes('SOPORTISTA')) {
+                            senderName.classList.add('role-soporte');
+                        }
+
+                        const messageTime = document.createElement('span');
+                        messageTime.className = 'message-time';
+                        messageTime.innerHTML = formatDateWithIcon(message.fecha);
+
+                        messageHeader.appendChild(senderName);
+                        messageHeader.appendChild(messageTime);
+
+                        // Contenido del mensaje
+                        const messageText = document.createElement('div');
+                        messageText.className = 'message-text';
+                        messageText.innerHTML = message.contenido;
+
+                        // Nota interna (si aplica)
+                        if (message.esNotaInterna) {
+                            messageContent.classList.add('internal-note');
+                            const internalNote = document.createElement('span');
+                            internalNote.className = 'internal-note-badge';
+                            internalNote.textContent = 'Nota Interna';
+                            messageHeader.appendChild(internalNote);
+                        }
+
+                        messageContent.appendChild(messageHeader);
+                        messageContent.appendChild(messageText);
+                        contentWrapper.appendChild(messageContent);
+
+                        // Añadir elementos al mensaje (orden depende de si es propio o ajeno)
+                        if (message.esMio) {
+                            messageDiv.appendChild(contentWrapper);
+                            messageDiv.appendChild(avatar);
+                        } else {
+                            messageDiv.appendChild(avatar);
+                            messageDiv.appendChild(contentWrapper);
+                        }
+
+                        messagesList.appendChild(messageDiv);
+                    });
+
+                    // Scroll al final después de renderizar
+                    setTimeout(() => {
+                        messagesList.scrollTop = messagesList.scrollHeight;
+                    }, 50);
+                }
+
+// Función para mostrar errores
+                function showError(message) {
+                    const messagesList = document.getElementById('messagesList');
+                    const noMessagesPlaceholder = document.getElementById('noMessagesPlaceholder');
+
+                    // Ocultar placeholder si está visible
+                    if (noMessagesPlaceholder) {
+                        noMessagesPlaceholder.style.display = 'none';
+                    }
+
+                    messagesList.innerHTML = `<div class="no-messages" style="color: #f44336; text-align: center; padding: 20px;">${message}</div>`;
+                }
+
+// Función para enviar mensaje
+                function sendMessage() {
+                    const messageInput = document.getElementById('messageInput');
+                    const message = messageInput.value.trim();
+
+                    if (message === '') {
+                        messageInput.focus();
+                        return;
+                    }
+
+                    const sendButton = document.getElementById('sendButton');
+                    const originalButtonText = sendButton.textContent;
+                    sendButton.disabled = true;
+                    sendButton.textContent = 'Enviando...';
+
+                    // Obtener el ticket activo
+                    const activeTicket = document.querySelector('.ticket-item.active');
+                    if (!activeTicket) {
+                        showError('No hay un ticket seleccionado');
+                        sendButton.disabled = false;
+                        sendButton.textContent = originalButtonText;
+                        return;
+                    }
+
+                    const ticketId = activeTicket.id.replace('ticket-', '');
+
+                    // Enviar el mensaje al servidor CON token CSRF
+                    fetch('/mensajes/enviar', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            [getCsrfHeader()]: getCsrfToken()
+                        },
+                        body: JSON.stringify({
+                            ticketId: ticketId,
+                            contenido: message
+                        })
+                    })
+                            .then(response => {
+                                if (!response.ok) {
+                                    throw new Error('Error en la respuesta del servidor');
+                                }
+                                return response.json();
+                            })
+                            .then(data => {
+                                if (data.success) {
+                                    // Limpiar el input
+                                    messageInput.value = '';
+                                    messageInput.style.height = 'auto';
+                                    messageInput.focus();
+
+                                    // Actualizar la lista de mensajes manteniendo el ticket seleccionado
+                                    loadMessages(ticketId, activeTicket);
+
+                                    // Actualizar el ticket en la lista para mostrar que tiene un nuevo mensaje
+                                    updateTicketInList(ticketId);
+                                } else {
+                                    showError(data.error || 'Error al enviar el mensaje');
+                                }
+                            })
+                            .catch(error => {
+                                console.error('Error:', error);
+                                showError('Error al enviar el mensaje. Por favor intente nuevamente.');
+                            })
+                            .finally(() => {
+                                sendButton.disabled = false;
+                                sendButton.textContent = originalButtonText;
+                            });
+                }
+
+// Función para actualizar el ticket en la lista
+                function updateTicketInList(ticketId) {
+                    const ticketElement = document.getElementById(`ticket-${ticketId}`);
+                    if (ticketElement) {
+                        // Aquí puedes agregar alguna indicación visual de nuevo mensaje
+                        ticketElement.classList.add('has-new-message');
+
+                        // Mover el ticket al principio de la lista
+                        const ticketsList = ticketElement.parentElement;
+                        ticketsList.insertBefore(ticketElement, ticketsList.firstChild);
+
+                        // Actualizar la fecha de actualización mostrada
+                        const dateElement = ticketElement.querySelector('.ticket-date');
+                        if (dateElement) {
+                            const now = new Date();
+                            dateElement.textContent = formatDate(now);
+                        }
+                    }
+                }
+
+// Función auxiliar para formatear fecha
+                function formatDate(date) {
+                    const day = date.getDate().toString().padStart(2, '0');
+                    const month = (date.getMonth() + 1).toString().padStart(2, '0');
+                    const year = date.getFullYear();
+                    return `${day}/${month}/${year}`;
+                }
+
+// Función para filtrar tickets
+                function filterTickets(searchTerm) {
+                    const tickets = document.querySelectorAll('.ticket-item');
+                    const normalizedSearch = searchTerm.toLowerCase().trim();
+
+                    tickets.forEach(ticket => {
+                        const title = ticket.querySelector('.ticket-title').textContent.toLowerCase();
+                        const code = ticket.querySelector('.ticket-code').textContent.toLowerCase();
+                        const status = ticket.querySelector('.ticket-status').textContent.toLowerCase();
+
+                        const matches = title.includes(normalizedSearch) ||
+                                code.includes(normalizedSearch) ||
+                                status.includes(normalizedSearch);
+
+                        ticket.style.display = matches ? 'flex' : 'none';
+                    });
+                }
+
+// Función para manejar el redimensionamiento del textarea
+                function handleTextareaResize(textarea) {
+                    textarea.style.height = 'auto';
+                    const newHeight = Math.min(textarea.scrollHeight, 120); // Máximo 120px
+                    textarea.style.height = newHeight + 'px';
+                }
+
+// Event listeners
+                document.addEventListener('DOMContentLoaded', function () {
+                    // Inicializar estado sin selección
+                    updateSelectionState(false);
+
+                    // Configurar el botón de enviar
+                    const sendButton = document.getElementById('sendButton');
+                    if (sendButton) {
+                        sendButton.addEventListener('click', sendMessage);
+                    }
+
+                    // Configurar el textarea para enviar con Enter
+                    const messageInput = document.getElementById('messageInput');
+                    if (messageInput) {
+                        messageInput.addEventListener('keydown', function (e) {
+                            if (e.key === 'Enter' && !e.shiftKey) {
+                                e.preventDefault();
+                                sendMessage();
+                            }
+                        });
+
+                        // Autoajustar altura del textarea
+                        messageInput.addEventListener('input', function () {
+                            handleTextareaResize(this);
+                        });
+
+                        // Manejar paste para ajustar altura
+                        messageInput.addEventListener('paste', function () {
+                            setTimeout(() => {
+                                handleTextareaResize(this);
+                            }, 10);
+                        });
+                    }
+
+                    // Buscador de tickets con debounce
+                    const ticketSearch = document.getElementById('ticketSearch');
+                    if (ticketSearch) {
+                        let searchTimeout;
+
+                        ticketSearch.addEventListener('input', function () {
+                            clearTimeout(searchTimeout);
+                            const searchTerm = this.value;
+
+                            // Debounce la búsqueda para mejor rendimiento
+                            searchTimeout = setTimeout(() => {
+                                filterTickets(searchTerm);
+                            }, 300);
+                        });
+
+                        // Limpiar búsqueda con Escape
+                        ticketSearch.addEventListener('keydown', function (e) {
+                            if (e.key === 'Escape') {
+                                this.value = '';
+                                filterTickets('');
+                                this.blur();
+                            }
+                        });
+                    }
+
+                    // Agregar indicador visual de carga global
+                    const style = document.createElement('style');
+                    style.textContent = `
+        .loading-indicator {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 15px 25px;
+            border-radius: 5px;
+            z-index: 9999;
+            display: none;
+        }
+        
+        .ticket-item:hover {
+            background-color: #f5f5f5;
+            cursor: pointer;
+        }
+        
+        .ticket-item.active {
+            background-color: #e3f2fd;
+            border-left: 4px solid #2196f3;
+        }
+        
+        .message-input:focus {
+            outline: none;
+            border-color: #2196f3;
+            box-shadow: 0 0 0 2px rgba(33, 150, 243, 0.2);
+        }
+        
+        .send-button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+    `;
+                    document.head.appendChild(style);
+
+                    // Manejar visibilidad de la página para reconectar si es necesario
+                    document.addEventListener('visibilitychange', function () {
+                        if (!document.hidden) {
+                            // Página se volvió visible, podrías agregar lógica para actualizar mensajes
+                            console.log('Página visible - podrías actualizar mensajes aquí');
+                        }
+                    });
+                });
+            </script>
+        </section>
+    </body>
+</html>

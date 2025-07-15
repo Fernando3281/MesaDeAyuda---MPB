@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" 
+      xmlns:th="http://www.thymeleaf.org">
+    <head th:replace="~{layout/plantilla :: head}">
+        <title>Mesa de Ayuda</title>
+    </head>
+
+    <script th:src="@{/js/registro.js}" defer></script>
+
+    <body class="body-unlogged">
+        <div class="recovery-container">
+            <div class="recovery-form">
+                <!-- Botón de regreso -->
+                <a th:href="@{/usuario/perfil}" class="btn btn-outline-secondary back-button">
+                    <i class="fa-solid fa-arrow-left"></i>
+                </a>
+
+                <!-- Logo de la municipalidad -->
+                <div class="municipalidad-logo-recordar"></div>
+
+                <!-- Titulo y subtitulo -->
+                <h1 class="recovery-title">Cambiar Contraseña</h1>
+                <p class="recovery-subtitle">
+                    Ingresa tu nueva contraseña dos veces para confirmar el cambio de contraseña de tu cuenta.
+                </p>
+
+                <!-- Mostrar errores si existen -->
+                <div th:if="${param.error}" class="alert alert-danger" style="margin-bottom: 1rem; padding: 0.75rem; background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; border-radius: 5px; font-size: 14px;">
+                    <span th:if="${param.error[0] == 'password_mismatch'}">Las contraseñas no coinciden. Por favor, inténtalo de nuevo.</span>
+                    <span th:if="${param.error[0] == 'update_failed'}">Error al actualizar la contraseña. Por favor, inténtalo de nuevo.</span>
+                    <span th:if="${param.error[0] == 'token_invalido'}">El enlace de cambio de contraseña no es válido.</span>
+                    <span th:if="${param.error[0] == 'token_expirado'}">El enlace de cambio de contraseña ha expirado.</span>
+                </div>
+
+                <!-- Mensaje de éxito (oculto por defecto) -->
+                <div id="successMessage" class="alert alert-success" style="display: none; margin-bottom: 1rem; padding: 0.75rem; background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; border-radius: 5px; font-size: 14px; text-align: center;">
+                    <strong>¡Contraseña actualizada exitosamente!</strong><br>
+                    Esta ventana se cerrará automáticamente en <span id="countdown">3</span> segundos.
+                </div>
+
+                <!-- Loading message (oculto por defecto) -->
+                <div id="loadingMessage" class="alert alert-info" style="display: none; margin-bottom: 1rem; padding: 0.75rem; background-color: #d1ecf1; color: #0c5460; border: 1px solid #bee5eb; border-radius: 5px; font-size: 14px; text-align: center;">
+                    <i class="fa-solid fa-spinner fa-spin"></i> Actualizando contraseña...
+                </div>
+
+                <!-- Formulario -->
+                <form id="changePasswordForm" th:action="@{/usuario/cambiar-contrasena}" method="post" class="form-elements-recovery">
+                    <input type="hidden" name="token" th:value="${token}">
+
+                    <div class="input-group-recovery">
+                        <label for="password">Nueva Contraseña</label>
+                        <div class="password-container">
+                            <input type="password" 
+                                   id="password" 
+                                   name="password" 
+                                   placeholder="Ingrese su nueva contraseña..." 
+                                   required
+                                   minlength="3">
+                            <button type="button" class="toggle-password">
+                                <i class="fa-solid fa-eye" id="toggleIconPassword"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="input-group-recovery">
+                        <label for="confirmPassword">Confirmar Nueva Contraseña</label>
+                        <div class="password-container">
+                            <input type="password" 
+                                   id="confirmPassword" 
+                                   name="confirmPassword" 
+                                   placeholder="Confirme su nueva contraseña..." 
+                                   required
+                                   minlength="3">
+                            <button type="button" class="toggle-password">
+                                <i class="fa-solid fa-eye" id="toggleIconConfirmPassword"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <button type="submit" id="submitBtn" class="btn-recovery">
+                        Cambiar Contraseña
+                    </button>
+                </form>
+
+                <!-- Footer con enlaces -->
+                <div class="recovery-info">
+                    <div class="recovery-links">
+                        <a th:href="@{/usuario/perfil}" class="recovery-link">Volver al Perfil</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <footer>
+            © 2025 Municipalidad de Barva. Todos los derechos reservados.
+        </footer>
+
+        <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                const form = document.getElementById('changePasswordForm');
+                const passwordInput = document.getElementById('password');
+                const confirmPasswordInput = document.getElementById('confirmPassword');
+                const submitBtn = document.getElementById('submitBtn');
+                const loadingMessage = document.getElementById('loadingMessage');
+                const successMessage = document.getElementById('successMessage');
+                
+                // Validación en tiempo real
+                function validatePasswords() {
+                    const password = passwordInput.value;
+                    const confirmPassword = confirmPasswordInput.value;
+                    
+                    if (confirmPassword && password !== confirmPassword) {
+                        confirmPasswordInput.setCustomValidity('Las contraseñas no coinciden');
+                    } else {
+                        confirmPasswordInput.setCustomValidity('');
+                    }
+                }
+                
+                passwordInput.addEventListener('input', validatePasswords);
+                confirmPasswordInput.addEventListener('input', validatePasswords);
+                
+                // Manejar envío del formulario
+                form.addEventListener('submit', function(e) {
+                    e.preventDefault();
+                    
+                    const password = passwordInput.value;
+                    const confirmPassword = confirmPasswordInput.value;
+                    
+                    // Validar que las contraseñas coincidan
+                    if (password !== confirmPassword) {
+                        alert('Las contraseñas no coinciden');
+                        return;
+                    }
+                    
+                    // Mostrar loading y deshabilitar botón
+                    loadingMessage.style.display = 'block';
+                    submitBtn.disabled = true;
+                    submitBtn.textContent = 'Actualizando...';
+                    
+                    // Enviar formulario usando fetch para manejar la respuesta
+                    const formData = new FormData(form);
+                    
+                    fetch(form.action, {
+                        method: 'POST',
+                        body: formData
+                    })
+                    .then(response => {
+                        if (response.ok) {
+                            // Si la respuesta es exitosa, mostrar mensaje de éxito
+                            showSuccessAndClose();
+                        } else {
+                            // Si hay error, recargar la página para mostrar el error
+                            window.location.reload();
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        // En caso de error, recargar la página
+                        window.location.reload();
+                    });
+                });
+                
+                function showSuccessAndClose() {
+                    // Ocultar loading y formulario
+                    loadingMessage.style.display = 'none';
+                    form.style.display = 'none';
+                    
+                    // Mostrar mensaje de éxito
+                    successMessage.style.display = 'block';
+                    
+                    let countdown = 3;
+                    const countdownElement = document.getElementById('countdown');
+                    
+                    const timer = setInterval(function() {
+                        countdown--;
+                        countdownElement.textContent = countdown;
+                        
+                        if (countdown <= 0) {
+                            clearInterval(timer);
+                            // Intentar cerrar la pestaña
+                            window.close();
+                            
+                            // Si no se puede cerrar (algunas restricciones de navegador),
+                            // redirigir al perfil del usuario
+                            setTimeout(function() {
+                                window.location.href = '/usuario/perfil?contrasenaActualizada=true';
+                            }, 1000);
+                        }
+                    }, 1000);
+                }
+                
+                // Verificar si la contraseña fue actualizada exitosamente al cargar la página
+                const urlParams = new URLSearchParams(window.location.search);
+                if (urlParams.get('success') === 'true') {
+                    showSuccessAndClose();
+                }
+            });
+        </script>
+    </body>
+</html>

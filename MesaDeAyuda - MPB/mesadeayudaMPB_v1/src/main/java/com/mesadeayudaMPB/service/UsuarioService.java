@@ -6,6 +6,7 @@ package com.mesadeayudaMPB.service;
 
 import com.mesadeayudaMPB.domain.Usuario;
 import java.util.List;
+import org.springframework.data.domain.Page;
 import org.springframework.web.multipart.MultipartFile;
 
 /**
@@ -42,6 +43,10 @@ public interface UsuarioService {
     // Se elimina el usuario que tiene el id pasado por parámetro
     public void delete(Usuario usuario);
 
+    Long contarUsuariosPorDepartamento(String nombreDepartamento);
+
+    List<Usuario> getUsuariosPorRoles(List<String> roles);
+
     //METODO PARA EL REGISTRO
     public boolean existeUsuarioPorCorreoElectronico(String correoElectronico);
 
@@ -51,4 +56,23 @@ public interface UsuarioService {
     byte[] actualizarImagen(MultipartFile imagen);
 
     public Usuario getUsuarioPorId(Long id);
+
+    // Nuevo método para paginación
+    Page<Usuario> getUsuariosPaginados(int page, int size);
+
+    Page<Usuario> getUsuariosPaginadosOrdenadosPorId(int page, int size);
+
+    Page<Usuario> buscarUsuarios(String query, int page, int size);
+
+    Page<Usuario> buscarUsuariosPorEstado(String query, boolean activo, int page, int size);
+
+    Page<Usuario> getUsuariosPorEstado(boolean activo, int page, int size);
+
+    Page<Usuario> getUsuariosPorRol(String rol, int page, int size);
+
+    Page<Usuario> buscarUsuariosPorRol(String query, String rol, int page, int size);
+
+    Page<Usuario> getUsuariosPorEstadoYRol(boolean activo, String rol, int page, int size);
+
+    Page<Usuario> buscarUsuariosPorEstadoYRol(String query, boolean activo, String rol, int page, int size);
 }

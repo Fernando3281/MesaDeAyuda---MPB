@@ -4,6 +4,8 @@
     <head th:replace="~{layout/plantilla :: head}">
         <title>Mesa de Ayuda</title>
         <meta charset="UTF-8"/>
+        <meta name="_csrf" th:content="${_csrf.token}"/>
+        <meta name="_csrf_header" content="X-CSRF-TOKEN"/>
     </head>
     <body>
 
@@ -11,10 +13,10 @@
             <div class="search-section">
                 <div class="search-container">
                     <i class="fas fa-search search-icon"></i>
-                    <input type="text" class="search-input" placeholder="Buscar Ticket..." id="searchInput">
+                    <input type="text" class="search-input" placeholder="Buscar por código, usuario, descripción o categoria..." id="searchInput">
                 </div>
                 <div class="action-buttons">
-                    <button class="btn">
+                    <button class="btn" id="assignTicketsBtn" >
                         <i class="fa-solid fa-user-plus"></i> Asignar Ticket
                     </button>
                     <div class="export-container">
@@ -46,7 +48,7 @@
                         <i class="fas fa-filter"></i> Filtrar
                     </button>
                     <button class="btn" id="deleteBtn">
-                        <i class="fas fa-trash"></i> Eliminar
+                        <i class="fa-solid fa-ban"></i> Desactivar
                     </button>
                 </div>
             </div>
@@ -57,10 +59,13 @@
                 <div class="pagination-left">
                     <span>Mostrar</span>
                     <select id="recordsPerPage" class="records-select">
-                        <option value="10">10</option>
-                        <option value="20">20</option>
-                        <option value="50">50</option>
-                        <option value="100">100</option>
+                        <option value="15" th:selected="${pageSize == 15}">15</option>
+                        <option value="30" th:selected="${pageSize == 30}">30</option>
+                        <option value="50" th:selected="${pageSize == 50}">50</option>
+                        <option value="100" th:selected="${pageSize == 100}">100</option>
+                        <option value="200" th:selected="${pageSize == 200}">200</option>
+                        <option value="500" th:selected="${pageSize == 500}">500</option>
+                        <option value="1000" th:selected="${pageSize == 1000}">1000</option>
                     </select>
                     <span>registros por página</span>
                 </div>
@@ -70,77 +75,129 @@
                     </span>
                 </div>
                 <div class="pagination-controls">
-                    <button class="pagination-btn" th:onclick="'window.location.href=\'' + @{/tickets/listado(page=0,size=${pageSize})} + '\''"
+                    <button class="pagination-btn" 
+                            th:onclick="'window.location.href=\'' + @{/tickets/listado(page=0,size=${pageSize})} + '\''"
                             th:disabled="${currentPage == 0}">
                         <i class="fas fa-angle-double-left"></i>
                     </button>
-                    <button class="pagination-btn" th:onclick="'window.location.href=\'' + @{/tickets/listado(page=${currentPage-1},size=${pageSize})} + '\''"
+                    <button class="pagination-btn" 
+                            th:onclick="'window.location.href=\'' + @{/tickets/listado(page=${currentPage-1},size=${pageSize})} + '\''"
                             th:disabled="${currentPage == 0}">
                         <i class="fas fa-angle-left"></i>
                     </button>
                     <div class="page-numbers" id="pageNumbers">
-                        <button th:each="pageNum : ${#numbers.sequence(0, totalPages - 1)}"
+                        <button th:each="pageNum : ${#numbers.sequence(startPage, endPage)}"
                                 th:class="'page-number ' + ${pageNum == currentPage ? 'active' : ''}"
                                 th:onclick="'window.location.href=\'' + @{/tickets/listado(page=${pageNum},size=${pageSize})} + '\''"
                                 th:text="${pageNum + 1}">1</button>
                     </div>
-                    <button class="pagination-btn" th:onclick="'window.location.href=\'' + @{/tickets/listado(page=${currentPage+1},size=${pageSize})} + '\''"
+                    <button class="pagination-btn" 
+                            th:onclick="'window.location.href=\'' + @{/tickets/listado(page=${currentPage+1},size=${pageSize})} + '\''"
                             th:disabled="${currentPage >= totalPages - 1}">
                         <i class="fas fa-angle-right"></i>
                     </button>
-                    <button class="pagination-btn" th:onclick="'window.location.href=\'' + @{/tickets/listado(page=${totalPages-1},size=${pageSize})} + '\''"
+                    <button class="pagination-btn" 
+                            th:onclick="'window.location.href=\'' + @{/tickets/listado(page=${totalPages-1},size=${pageSize})} + '\''"
                             th:disabled="${currentPage >= totalPages - 1}">
                         <i class="fas fa-angle-double-right"></i>
                     </button>
                 </div>
             </div>
 
+            <!-- Contenedor de la Tabla -->
             <div class="table-container">
                 <table class="tickets-table table-resizable">
                     <thead>
                         <tr>
                             <th>
                                 <input type="checkbox" class="checkbox-custom" id="selectAll">
+                                    <label for="selectAll" class="checkbox-label"></label>
                                     <div class="resizer"></div>
                             </th>
                             <th>
-                                Código
+                                <div class="header-content">
+                                    <div class="header-text">Código</div>
+                                    <div class="sort-icons">
+                                        <i class="fas fa-sort sort-icon" data-column="codigo"></i>
+                                    </div>
+                                </div>
                                 <div class="resizer"></div>
                             </th>
                             <th>
-                                Apertura
-                                <div class="resizer"></div>
-                            </th>
-                            <th style="text-align: center;">
-                                Breve Descripción
-                                <div class="resizer"></div>
-                            </th>
-                            <th>
-                                Solicitante
+                                <div class="header-content">
+                                    <div class="header-text">Apertura</div>
+                                    <div class="sort-icons">
+                                        <i class="fas fa-sort sort-icon" data-column="fechaApertura"></i>
+                                    </div>
+                                </div>
                                 <div class="resizer"></div>
                             </th>
                             <th>
-                                Prioridad
+                                <div class="header-content">
+                                    <div class="header-text">Breve Descripción</div>
+                                    <div class="sort-icons">
+                                        <i class="fas fa-sort sort-icon" data-column="titulo"></i>
+                                    </div>
+                                </div>
                                 <div class="resizer"></div>
                             </th>
                             <th>
-                                Estado
+                                <div class="header-content">
+                                    <div class="header-text">Solicitante</div>
+                                    <div class="sort-icons">
+                                        <i class="fas fa-sort sort-icon" data-column="solicitante"></i>
+                                    </div>
+                                </div>
                                 <div class="resizer"></div>
                             </th>
                             <th>
-                                Categoría
+                                <div class="header-content">
+                                    <div class="header-text">Prioridad</div>
+                                    <div class="sort-icons">
+                                        <i class="fas fa-sort sort-icon" data-column="prioridad"></i>
+                                    </div>
+                                </div>
                                 <div class="resizer"></div>
                             </th>
                             <th>
-                                Asignado para
+                                <div class="header-content">
+                                    <div class="header-text">Estado</div>
+                                    <div class="sort-icons">
+                                        <i class="fas fa-sort sort-icon" data-column="estado"></i>
+                                    </div>
+                                </div>
                                 <div class="resizer"></div>
                             </th>
                             <th>
-                                Actualizado
+                                <div class="header-content">
+                                    <div class="header-text">Categoría</div>
+                                    <div class="sort-icons">
+                                        <i class="fas fa-sort sort-icon" data-column="categoria"></i>
+                                    </div>
+                                </div>
+                                <div class="resizer"></div>
+                            </th>
+                            <th>
+                                <div class="header-content">
+                                    <div class="header-text">Asignado para</div>
+                                    <div class="sort-icons">
+                                        <i class="fas fa-sort sort-icon" data-column="asignadoPara"></i>
+                                    </div>
+                                </div>
+                                <div class="resizer"></div>
+                            </th>
+                            <th>
+                                <div class="header-content">
+                                    <div class="header-text">Actualizado</div>
+                                    <div class="sort-icons">
+                                        <i class="fas fa-sort sort-icon" data-column="fechaActualizacion"></i>
+                                    </div>
+                                </div>
                                 <div class="resizer"></div>
                             </th>
                         </tr>
                     </thead>
+                    <!-- Reemplazar los inputs de texto en filterRow por estos controles de fecha -->
                     <thead id="filterRow" class="filter-row" style="display: none;">
                         <tr>
                             <th>
@@ -148,54 +205,468 @@
                                     <i class="fas fa-arrow-rotate-right"></i>
                                 </button>
                             </th>
-                            <th><input type="text" placeholder="Buscar..."></th>
-                            <th><input type="text" placeholder="Buscar..."></th>
-                            <th><input type="text" placeholder="Buscar..."></th>
-                            <th><input type="text" placeholder="Buscar..."></th>
-                            <th><input type="text" placeholder="Buscar..."></th>
-                            <th><input type="text" placeholder="Buscar..."></th>
-                            <th><input type="text" placeholder="Buscar..."></th>
-                            <th><input type="text" placeholder="Buscar..."></th>
-                            <th><input type="text" placeholder="Buscar..."></th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr th:each="ticket : ${tickets}">
-                            <td><input type="checkbox" class="checkbox-custom"></td>
-                            <td>
-                                <a th:href="@{/tickets/manager/{id}(id=${ticket.idTicket})}" 
-                                   class="ticket-link" th:text="${ticket.codigo}">(Codigo)</a>
-                            </td>
-                            <td>
-                                <span th:text="${#dates.format(ticket.fechaApertura, 'dd/MM/yyyy')}">(Fecha)</span><br>
-                                    <span th:text="${#dates.format(ticket.fechaApertura, 'HH:mm:ss')}">(Hora)</span>
-                            </td>
-                            <td th:text="${ticket.titulo}">No me funciona la impresora</td>
-                            <td th:text="${ticket.solicitante.nombre + ' ' + ticket.solicitante.apellido}">(Solicitante)</td>
-                            <td>
-                                <span th:class="'badge badge-' + ${ticket.prioridad == 'Sin Asignar' ? 'sin-asignar' : #strings.toLowerCase(ticket.prioridad)}"
-                                      th:text="${ticket.prioridad == 'Sin Asignar' ? 'Sin Asignar' : ticket.prioridad}">
-                                    (Prioridad)
-                                </span>
-                            </td>
-                            <td th:text="${ticket.estado}">(Estado)</td>
-                            <td th:text="${ticket.categoria}">Hardware</td>
-                            <td th:text="${ticket.asignadoPara != null ? 
-                                ticket.asignadoPara.nombre + ' ' + ticket.asignadoPara.apellido : 
-                                'Sin asignar'}">(Colaborador)</td>
-                            <td>
-                                <span th:text="${#dates.format(ticket.fechaActualizacion, 'dd/MM/yyyy')}">(Fecha)</span><br>
-                                    <span th:text="${#dates.format(ticket.fechaActualizacion, 'HH:mm:ss')}">(Hora)</span>
-                            </td>
-                        </tr>
-                        <!-- Si no hay tickets, mostrar mensaje -->
-                        <tr th:if="${#lists.isEmpty(tickets)}">
-                            <td colspan="10" class="text-center">No hay tickets registrados</td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-        </section>
+                            <th><input type="text" placeholder="Buscar..." data-column="codigo"></th>
+                            <th>
+                                <div class="date-filter-container">
+                                    <div class="date-filter-dropdown">
+                                        <span class="date-filter-label">Fecha</span>
+                                        <i class="fas fa-calendar-alt date-filter-icon"></i>
+                                    </div>
+                                    <div class="date-filter-popup">
+                                        <div class="date-filter-header">
+                                            <span>Desde:</span>
+                                            <input type="date" id="dateFromApertura" class="date-filter-input">
+                                                <span>Hasta:</span>
+                                                <input type="date" id="dateToApertura" class="date-filter-input">
+                                                    </div>
+                                                    <div class="date-filter-actions">
+                                                        <button class="date-filter-apply">Aplicar</button>
+                                                    </div>
+                                                    </div>
+                                                    </div>
+                                                    </th>
+                                                    <th><input type="text" placeholder="Buscar..." data-column="titulo"></th>
+                                                    <th><input type="text" placeholder="Buscar..." data-column="solicitante"></th>
+                                                    <th><input type="text" placeholder="Buscar..." data-column="prioridad"></th>
+                                                    <th><input type="text" placeholder="Buscar..." data-column="estado"></th>
+                                                    <th><input type="text" placeholder="Buscar..." data-column="categoria"></th>
+                                                    <th><input type="text" placeholder="Buscar..." data-column="asignadoPara"></th>
+                                                    <th>
+                                                        <div class="date-filter-container">
+                                                            <div class="date-filter-dropdown">
+                                                                <span class="date-filter-label">Fecha</span>
+                                                                <i class="fas fa-calendar-alt date-filter-icon"></i>
+                                                            </div>
+                                                            <div class="date-filter-popup">
+                                                                <div class="date-filter-header">
+                                                                    <span>Desde:</span>
+                                                                    <input type="date" id="dateFromActualizado" class="date-filter-input">
+                                                                        <span>Hasta:</span>
+                                                                        <input type="date" id="dateToActualizado" class="date-filter-input">
+                                                                            </div>
+                                                                            <div class="date-filter-actions">
+                                                                                <button class="date-filter-apply">Aplicar</button>
+                                                                            </div>
+                                                                            </div>
+                                                                            </div>
+                                                                            </th>
+                                                                            </tr>
+                                                                            </thead>
+                                                                            <tbody>
+                                                                                <tr th:each="ticket : ${tickets}">
+                                                                                    <td>
+                                                                                        <input type="checkbox" class="checkbox-custom ticket-checkbox" 
+                                                                                               th:data-id="${ticket.idTicket}" id="ticket_${ticket.idTicket}">
+                                                                                            <label th:for="'ticket_' + ${ticket.idTicket}" class="checkbox-label"></label>
+                                                                                    </td>
+                                                                                    <td>
+                                                                                        <a th:href="@{/tickets/manager/{id}(id=${ticket.idTicket})}" 
+                                                                                           class="ticket-link" th:text="${ticket.codigo}">(Codigo)</a>
+                                                                                    </td>
+                                                                                    <td>
+                                                                                        <span th:text="${#dates.format(ticket.fechaApertura, 'dd/MM/yyyy')}">(Fecha)</span><br>
+                                                                                            <span th:text="${#dates.format(ticket.fechaApertura, 'HH:mm:ss')}">(Hora)</span>
+                                                                                    </td>
+                                                                                    <td th:text="${ticket.titulo}" style="text-align: left;">(Titulo)</td>
+                                                                                    <td th:text="${ticket.solicitante.nombre + ' ' + ticket.solicitante.apellido}">(Solicitante)</td>
+                                                                                    <td>
+                                                                                        <span th:class="'badge badge-' + ${ticket.prioridad == 'Sin Asignar' ? 'sin-asignar' : #strings.toLowerCase(ticket.prioridad)}"
+                                                                                              th:text="${ticket.prioridad == 'Sin Asignar' ? 'Sin Asignar' : ticket.prioridad}">
+                                                                                            (Prioridad)
+                                                                                        </span>
+                                                                                    </td>
+                                                                                    <td>
+                                                                                        <span th:class="'badge badge-' + ${#strings.toLowerCase(ticket.estado)}" 
+                                                                                              th:text="${ticket.estado}">(Estado)</span>
+                                                                                    </td>
+                                                                                    <td th:text="${ticket.categoria}">(Categoria)</td>
+                                                                                    <td>
+                                                                                        <span th:if="${ticket.asignadoPara == null}" 
+                                                                                              class="badge badge-sin-asignar">Sin Asignar</span>
+                                                                                        <span th:unless="${ticket.asignadoPara == null}" 
+                                                                                              th:text="${ticket.asignadoPara.nombre + ' ' + ticket.asignadoPara.apellido}">(Colaborador)</span>
+                                                                                    </td>
+                                                                                    <td>
+                                                                                        <span th:text="${#dates.format(ticket.fechaActualizacion, 'dd/MM/yyyy')}">(Fecha)</span><br>
+                                                                                            <span th:text="${#dates.format(ticket.fechaActualizacion, 'HH:mm:ss')}">(Hora)</span>
+                                                                                    </td>
+                                                                                </tr>
+                                                                                <!-- Si no hay tickets, mostrar mensaje -->
+                                                                                <tr th:if="${#lists.isEmpty(tickets)}">
+                                                                                    <td colspan="10" class="text-center">No hay tickets registrados</td>
+                                                                                </tr>
+                                                                            </tbody>
+                                                                            </table>
+                                                                            </div>
 
-    </body>
-</html>
+                                                                            <!-- Modal para asignar tickets -->
+                                                                            <div class="modal-overlay" id="assignTicketsModalOverlay">
+                                                                                <div class="modal assign-modal">
+                                                                                    <div class="modal-header">
+                                                                                        <h2 class="modal-title">Asignar Tickets</h2>
+                                                                                        <p class="modal-description">Seleccione un soportista o administrador para asignar los tickets.</p>
+                                                                                    </div>
+                                                                                    <div class="modal-body">
+                                                                                        <div class="form-group">
+                                                                                            <label class="form-label" for="soportistaSearchInput">Buscar soportista/administrador</label>
+                                                                                            <div class="search-input-container">
+                                                                                                <i class="fas fa-search search-icon"></i>
+                                                                                                <input type="text" class="form-control search-input" id="soportistaSearchInput" placeholder="Buscar por nombre, código o rol..." autocomplete="off">
+                                                                                                    <button type="button" class="clear-search-btn" id="clearSearchBtn" title="Limpiar búsqueda">
+                                                                                                        <i class="fas fa-times"></i>
+                                                                                                    </button>
+                                                                                            </div>
+                                                                                        </div>
+                                                                                        <div class="floating-results-container" id="floatingResultsContainer">
+                                                                                            <div id="loadingMessage" class="loading-message" style="display: none;">
+                                                                                                <i class="fas fa-spinner fa-spin"></i>
+                                                                                                <span>Cargando soportistas...</span>
+                                                                                            </div>
+                                                                                            <div id="errorMessage" class="error-message" style="display: none;">
+                                                                                                Error al cargar los soportistas
+                                                                                            </div>
+                                                                                            <div class="floating-results-list" id="soportistasList"></div>
+                                                                                        </div>
+                                                                                        <div class="ticket-summary-section">
+                                                                                            <div class="section-header">
+                                                                                                <i class="fas fa-ticket-alt"></i>
+                                                                                                <span>Resumen de tickets (<span id="ticketCountBadge">0</span> ticket)</span>
+                                                                                            </div>
+                                                                                            <div class="ticket-group">
+                                                                                                <div class="ticket-group-header">
+                                                                                                    <span class="badge badge-media">Media</span>
+                                                                                                    <span class="ticket-count"><span id="ticketCountBadge">0</span> ticket</span>
+                                                                                                </div>
+                                                                                                <ul class="ticket-list" id="ticketList"></ul>
+                                                                                            </div>
+                                                                                        </div>
+                                                                                    </div>
+                                                                                    <div class="modal-footer">
+                                                                                        <button type="button" class="btn btn-outline" onclick="closeAssignTicketsModal()">Cancelar</button>
+                                                                                        <button type="button" class="btn btn-primary" id="confirmAssignBtn" disabled>Confirmar Asignación</button>
+                                                                                    </div>
+                                                                                </div>
+                                                                            </div>
+
+                                                                            <script>
+                                                                                // tickets-funciones.js
+
+                                                                                let selectedSoportista = null;
+
+                                                                                document.addEventListener('DOMContentLoaded', () => {
+                                                                                    initializeCheckboxEvents();
+                                                                                    initializeSoportistaSearch();
+                                                                                });
+
+// Function to toggle the "Asignar Ticket" button visibility
+                                                                                function toggleAssignButton() {
+                                                                                    const checkboxes = document.querySelectorAll('.ticket-checkbox:checked');
+                                                                                    const assignBtn = document.getElementById('assignTicketsBtn');
+                                                                                    if (assignBtn) {
+                                                                                        assignBtn.style.display = checkboxes.length > 0 ? 'flex' : 'none';
+                                                                                    }
+                                                                                }
+
+// Initialize checkbox events for selection and button toggle
+                                                                                function initializeCheckboxEvents() {
+                                                                                    const selectAll = document.getElementById('selectAll');
+                                                                                    const checkboxes = document.querySelectorAll('.ticket-checkbox');
+                                                                                    const assignBtn = document.getElementById('assignTicketsBtn');
+
+                                                                                    if (!selectAll || !assignBtn) {
+                                                                                        console.error('Required elements (selectAll or assignTicketsBtn) not found');
+                                                                                        return;
+                                                                                    }
+
+                                                                                    selectAll.addEventListener('change', function () {
+                                                                                        checkboxes.forEach(checkbox => {
+                                                                                            checkbox.checked = this.checked;
+                                                                                        });
+                                                                                        toggleAssignButton();
+                                                                                    });
+
+                                                                                    checkboxes.forEach(checkbox => {
+                                                                                        checkbox.addEventListener('change', function () {
+                                                                                            const allChecked = Array.from(checkboxes).every(cb => cb.checked);
+                                                                                            const someChecked = Array.from(checkboxes).some(cb => cb.checked);
+                                                                                            selectAll.checked = allChecked;
+                                                                                            selectAll.indeterminate = someChecked && !allChecked;
+                                                                                            toggleAssignButton();
+                                                                                        });
+                                                                                    });
+
+                                                                                    assignBtn.addEventListener('click', function () {
+                                                                                        const selectedTickets = Array.from(document.querySelectorAll('.ticket-checkbox:checked')).map(cb => ({
+                                                                                                id: cb.getAttribute('data-id'),
+                                                                                                codigo: cb.closest('tr').querySelector('.ticket-link').textContent.trim(),
+                                                                                                categoria: cb.closest('tr').querySelector('td:nth-child(8)').textContent.trim(),
+                                                                                                titulo: cb.closest('tr').querySelector('td:nth-child(4)').textContent.trim()
+                                                                                            }));
+
+                                                                                        if (selectedTickets.length === 0) {
+                                                                                            showErrorMessage('Por favor, seleccione al menos un ticket.');
+                                                                                            return;
+                                                                                        }
+
+                                                                                        openAssignTicketsModal(selectedTickets);
+                                                                                    });
+                                                                                }
+
+// Open the assign tickets modal
+                                                                                function openAssignTicketsModal(selectedTickets) {
+                                                                                    const modalOverlay = document.getElementById('assignTicketsModalOverlay');
+                                                                                    if (!modalOverlay) {
+                                                                                        console.error('Modal overlay not found');
+                                                                                        showErrorMessage('No se pudo abrir el modal de asignación.');
+                                                                                        return;
+                                                                                    }
+
+                                                                                    modalOverlay.classList.add('active');
+                                                                                    document.body.style.overflow = 'hidden';
+
+                                                                                    const ticketList = document.getElementById('ticketList');
+                                                                                    const ticketCountBadge = document.getElementById('ticketCountBadge');
+                                                                                    const ticketSummarySpan = document.querySelector('.ticket-summary-section .section-header span');
+
+                                                                                    if (ticketList && ticketCountBadge && ticketSummarySpan) {
+                                                                                        ticketList.innerHTML = '';
+                                                                                        selectedTickets.forEach(ticket => {
+                                                                                            const li = document.createElement('li');
+                                                                                            li.className = 'ticket-item';
+                                                                                            li.innerHTML = `
+                <span class="ticket-id">${ticket.codigo}</span> - 
+                <span class="ticket-category">${ticket.categoria}</span>: 
+                <span class="ticket-title">${ticket.titulo}</span>
+            `;
+                                                                                            ticketList.appendChild(li);
+                                                                                        });
+                                                                                        ticketCountBadge.textContent = selectedTickets.length;
+                                                                                        ticketSummarySpan.textContent = `Resumen de tickets (${selectedTickets.length} ticket${selectedTickets.length > 1 ? 's' : ''})`;
+                                                                                    }
+
+                                                                                    window.selectedTicketIds = selectedTickets.map(ticket => ticket.id);
+                                                                                    loadSoportistas();
+
+                                                                                    selectedSoportista = null;
+                                                                                    const searchInput = document.getElementById('soportistaSearchInput');
+                                                                                    if (searchInput)
+                                                                                        searchInput.value = '';
+                                                                                    const resultsContainer = document.getElementById('floatingResultsContainer');
+                                                                                    if (resultsContainer)
+                                                                                        resultsContainer.style.display = 'none';
+                                                                                    const confirmBtn = document.getElementById('confirmAssignBtn');
+                                                                                    if (confirmBtn)
+                                                                                        confirmBtn.disabled = true;
+                                                                                }
+
+// Close the assign tickets modal
+                                                                                function closeAssignTicketsModal() {
+                                                                                    const modalOverlay = document.getElementById('assignTicketsModalOverlay');
+                                                                                    if (modalOverlay) {
+                                                                                        modalOverlay.classList.remove('active');
+                                                                                        document.body.style.overflow = '';
+                                                                                    }
+                                                                                }
+
+// Load soportistas for assignment
+                                                                                function loadSoportistas() {
+                                                                                    const resultsContainer = document.getElementById('soportistasList');
+                                                                                    const loadingMessage = document.getElementById('loadingMessage');
+                                                                                    const errorMessage = document.getElementById('errorMessage');
+
+                                                                                    if (!resultsContainer || !loadingMessage || !errorMessage)
+                                                                                        return;
+
+                                                                                    loadingMessage.style.display = 'flex';
+                                                                                    errorMessage.style.display = 'none';
+                                                                                    resultsContainer.innerHTML = '';
+
+                                                                                    fetch('/tickets/usuarios/soportistas', {
+                                                                                        method: 'GET',
+                                                                                        headers: {'Content-Type': 'application/json'}
+                                                                                    })
+                                                                                            .then(response => response.json())
+                                                                                            .then(data => {
+                                                                                                loadingMessage.style.display = 'none';
+                                                                                                resultsContainer.innerHTML = '';
+                                                                                                data.forEach(soportista => {
+                                                                                                    const div = document.createElement('div');
+                                                                                                    div.className = 'result-item';
+                                                                                                    div.setAttribute('data-id', soportista.id);
+                                                                                                    div.innerHTML = `
+                    <div class="user-info">
+                        <div class="user-name">${soportista.nombreCompleto}</div>
+                        <div class="user-details">
+                            <span class="user-code">Código: ${soportista.codigo}</span>
+                            <span class="user-role">Rol: ${soportista.rol}</span>
+                        </div>
+                    </div>
+                `;
+                                                                                                    div.addEventListener('click', () => selectSoportista(soportista));
+                                                                                                    resultsContainer.appendChild(div);
+                                                                                                });
+                                                                                                resultsContainer.style.display = data.length > 0 ? 'block' : 'none';
+                                                                                            })
+                                                                                            .catch(error => {
+                                                                                                console.error('Error loading soportistas:', error);
+                                                                                                loadingMessage.style.display = 'none';
+                                                                                                errorMessage.style.display = 'block';
+                                                                                            });
+                                                                                }
+
+// Select a soportista
+                                                                                function selectSoportista(soportista) {
+                                                                                    selectedSoportista = soportista;
+                                                                                    const searchInput = document.getElementById('soportistaSearchInput');
+                                                                                    const resultsContainer = document.getElementById('floatingResultsContainer');
+                                                                                    const confirmBtn = document.getElementById('confirmAssignBtn');
+
+                                                                                    if (searchInput)
+                                                                                        searchInput.value = soportista.nombreCompleto;
+                                                                                    if (resultsContainer)
+                                                                                        resultsContainer.style.display = 'none';
+                                                                                    if (confirmBtn)
+                                                                                        confirmBtn.disabled = false;
+                                                                                }
+
+// Initialize soportista search
+                                                                                function initializeSoportistaSearch() {
+                                                                                    const searchInput = document.getElementById('soportistaSearchInput');
+                                                                                    const clearBtn = document.getElementById('clearSearchBtn');
+                                                                                    const resultsContainer = document.getElementById('floatingResultsContainer');
+
+                                                                                    if (!searchInput || !clearBtn || !resultsContainer)
+                                                                                        return;
+
+                                                                                    searchInput.addEventListener('input', () => {
+                                                                                        const query = searchInput.value.trim().toLowerCase();
+                                                                                        if (query.length > 0) {
+                                                                                            fetch(`/tickets/usuarios/soportistas?query=${encodeURIComponent(query)}`)
+                                                                                                    .then(response => response.json())
+                                                                                                    .then(data => {
+                                                                                                        const resultsContainer = document.getElementById('soportistasList');
+                                                                                                        resultsContainer.innerHTML = '';
+                                                                                                        data.forEach(soportista => {
+                                                                                                            const div = document.createElement('div');
+                                                                                                            div.className = 'result-item';
+                                                                                                            div.setAttribute('data-id', soportista.id);
+                                                                                                            div.innerHTML = `
+                            <div class="user-info">
+                                <div class="user-name">${soportista.nombreCompleto}</div>
+                                <div class="user-details">
+                                    <span class="user-code">Código: ${soportista.codigo}</span>
+                                    <span class="user-role">Rol: ${soportista.rol}</span>
+                                </div>
+                            </div>
+                        `;
+                                                                                                            div.addEventListener('click', () => selectSoportista(soportista));
+                                                                                                            resultsContainer.appendChild(div);
+                                                                                                        });
+                                                                                                        resultsContainer.style.display = data.length > 0 ? 'block' : 'none';
+                                                                                                    })
+                                                                                                    .catch(error => console.error('Error searching soportistas:', error));
+                                                                                        } else {
+                                                                                            resultsContainer.style.display = 'none';
+                                                                                        }
+                                                                                    });
+
+                                                                                    clearBtn.addEventListener('click', () => {
+                                                                                        searchInput.value = '';
+                                                                                        resultsContainer.style.display = 'none';
+                                                                                        selectedSoportista = null;
+                                                                                        const confirmBtn = document.getElementById('confirmAssignBtn');
+                                                                                        if (confirmBtn)
+                                                                                            confirmBtn.disabled = true;
+                                                                                    });
+                                                                                }
+
+// Confirm ticket assignment
+                                                                                function confirmAssignTicket() {
+                                                                                    if (!selectedSoportista) {
+                                                                                        showErrorMessage('Por favor, seleccione un colaborador para asignar los tickets.');
+                                                                                        return;
+                                                                                    }
+
+                                                                                    const confirmBtn = document.getElementById('confirmAssignBtn');
+                                                                                    if (confirmBtn) {
+                                                                                        confirmBtn.disabled = true;
+                                                                                        confirmBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Asignando...';
+                                                                                    }
+
+                                                                                    const ticketIds = window.selectedTicketIds || [];
+                                                                                    if (ticketIds.length === 0) {
+                                                                                        showErrorMessage('No se han seleccionado tickets para asignar.');
+                                                                                        if (confirmBtn) {
+                                                                                            confirmBtn.disabled = false;
+                                                                                            confirmBtn.innerHTML = 'Confirmar Asignación';
+                                                                                        }
+                                                                                        return;
+                                                                                    }
+
+                                                                                    const csrfToken = document.querySelector('input[name="_csrf"]').value;
+                                                                                    const data = {
+                                                                                        soportistaId: selectedSoportista.id,
+                                                                                        ticketIds: ticketIds
+                                                                                    };
+
+                                                                                    fetch('/tickets/asignar', {
+                                                                                        method: 'POST',
+                                                                                        headers: {
+                                                                                            'Content-Type': 'application/json',
+                                                                                            'X-CSRF-TOKEN': csrfToken
+                                                                                        },
+                                                                                        body: JSON.stringify(data)
+                                                                                    })
+                                                                                            .then(response => response.json().then(data => ({status: response.status, ok: response.ok, data})))
+                                                                                            .then(result => {
+                                                                                                if (result.ok && result.data.success) {
+                                                                                                    closeAssignTicketsModal();
+                                                                                                    applyFiltersAsync();
+                                                                                                    showSuccessMessage(`Tickets asignados exitosamente a ${selectedSoportista.nombreCompleto}.`);
+                                                                                                } else {
+                                                                                                    showErrorMessage(result.data.error || 'Error desconocido al asignar los tickets.');
+                                                                                                    if (confirmBtn) {
+                                                                                                        confirmBtn.disabled = false;
+                                                                                                        confirmBtn.innerHTML = 'Confirmar Asignación';
+                                                                                                    }
+                                                                                                }
+                                                                                            })
+                                                                                            .catch(error => {
+                                                                                                console.error('Error en la petición:', error);
+                                                                                                showErrorMessage('Error de conexión al asignar los tickets. Por favor, intente nuevamente.');
+                                                                                                if (confirmBtn) {
+                                                                                                    confirmBtn.disabled = false;
+                                                                                                    confirmBtn.innerHTML = 'Confirmar Asignación';
+                                                                                                }
+                                                                                            });
+                                                                                }
+
+// Show success message
+                                                                                function showSuccessMessage(message) {
+                                                                                    const successDiv = document.createElement('div');
+                                                                                    successDiv.className = 'notification success show';
+                                                                                    successDiv.textContent = message;
+                                                                                    document.body.appendChild(successDiv);
+                                                                                    setTimeout(() => successDiv.remove(), 5000);
+                                                                                }
+
+// Show error message
+                                                                                function showErrorMessage(message) {
+                                                                                    const errorDiv = document.createElement('div');
+                                                                                    errorDiv.className = 'notification error show';
+                                                                                    errorDiv.textContent = message;
+                                                                                    document.body.appendChild(errorDiv);
+                                                                                    setTimeout(() => errorDiv.remove(), 5000);
+                                                                                }
+
+// Placeholder for applyFiltersAsync (implement as needed)
+                                                                                function applyFiltersAsync() {
+                                                                                    // Assuming this function refreshes the table
+                                                                                    window.location.reload(); // Simplified; replace with actual filter logic if available
+                                                                                }
+                                                                            </script>
+
+                                                                            </section>
+
+                                                                            </body>
+                                                                            </html>

@@ -113,29 +113,50 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
 
-
-/////////////////////////
+/* DROPDOWN DEL HEADER */
 document.addEventListener('DOMContentLoaded', function() {
   const userProfile = document.querySelector('.user-profile');
   const dropdownMenu = document.querySelector('.dropdown-menu');
+  const contentDropdown = document.querySelector('.content-dropdown');
+  const chevronIcon = contentDropdown.querySelector('.fa-chevron-down');
   
-  // Si no hay Dropdown, detiene la ejecución del script
-    if (!userProfile) {
-        console.warn('Dropdown no encontrado. Se detiene la ejecución del script.');
-        return;
-    }
+  if (!userProfile || !dropdownMenu || !contentDropdown || !chevronIcon) {
+      console.warn('Dropdown o elementos relacionados no encontrados. Se detiene la ejecución del script.');
+      return;
+  }
 
-  // Toggle al hacer clic en el perfil de usuario
-  userProfile.addEventListener('click', function(event) {
-    event.stopPropagation(); // Evitar que el click cierre el menú inmediatamente
-    dropdownMenu.style.display = dropdownMenu.style.display === 'block' ? 'none' : 'block';
+  // Función para abrir el dropdown
+  function openDropdown() {
+    dropdownMenu.style.display = 'flex';
+    dropdownMenu.classList.add('show');
+    contentDropdown.classList.add('active');
+  }
+
+  // Función para cerrar el dropdown
+  function closeDropdown() {
+    dropdownMenu.classList.remove('show');
+    dropdownMenu.classList.add('hide');
+    contentDropdown.classList.remove('active');
+    setTimeout(() => {
+      dropdownMenu.classList.remove('hide');
+      dropdownMenu.style.display = 'none';
+    }, 100);
+  }
+
+  // Toggle al hacer clic en el área específica del dropdown
+  contentDropdown.addEventListener('click', function(event) {
+    event.stopPropagation();
+    if (dropdownMenu.classList.contains('show')) {
+      closeDropdown();
+    } else {
+      openDropdown();
+    }
   });
 
   // Cerrar el menú cuando se hace clic fuera de él
   document.addEventListener('click', function(event) {
-    if (!userProfile.contains(event.target)) {
-      dropdownMenu.style.display = 'none';
+    if (!userProfile.contains(event.target) && dropdownMenu.classList.contains('show')) {
+      closeDropdown();
     }
   });
 });
-

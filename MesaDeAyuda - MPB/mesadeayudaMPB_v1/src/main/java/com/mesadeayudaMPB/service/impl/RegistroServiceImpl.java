@@ -1,4 +1,5 @@
 package com.mesadeayudaMPB.service.impl;
+
 import com.mesadeayudaMPB.dao.UsuarioDao;
 import com.mesadeayudaMPB.dao.RolDao;
 import com.mesadeayudaMPB.domain.Usuario;
@@ -16,8 +17,10 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Date;
 import java.util.Random;
+
 @Service
 public class RegistroServiceImpl implements RegistroService {
+
     @Autowired
     private UsuarioDao usuarioDao;
     @Autowired
@@ -28,6 +31,7 @@ public class RegistroServiceImpl implements RegistroService {
     private EmailService emailService;
     @Autowired
     private VerificationService verificationService;
+
     @Override
     @Transactional
     public void registrarNuevoUsuario(Usuario usuario) {
@@ -40,9 +44,9 @@ public class RegistroServiceImpl implements RegistroService {
             usuario.setImagen(imagenDefault);
             // Guardar el usuario
             Usuario usuarioGuardado = usuarioDao.save(usuario);
-            // Crear y asignar rol ROL_USER
+            // Crear y asignar rol ROL_USUARIO
             Rol rol = new Rol();
-            rol.setNombre("ROL_USER");
+            rol.setNombre("ROL_USUARIO");
             rol.setDescripcion("Usuario regular del sistema");
             rol.setUsuario(usuarioGuardado);
             rolDao.save(rol);
@@ -50,14 +54,18 @@ public class RegistroServiceImpl implements RegistroService {
             throw new IllegalArgumentException("El usuario ya existe");
         }
     }
+
     @Override
     public boolean existeUsuario(String correoElectronico) {
         return usuarioDao.existsByCorreoElectronico(correoElectronico);
     }
+
     @Override
     public boolean existeCodigo(String codigo) {
         return usuarioDao.existsByCodigo(codigo);
     }
+
+    //Genera el codigo para el nuevo usuario
     public String generarCodigoUnico() {
         String CARACTERES = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
         StringBuilder codigo = new StringBuilder();
@@ -67,6 +75,7 @@ public class RegistroServiceImpl implements RegistroService {
         }
         return codigo.toString();
     }
+
     // Método para cargar la imagen predeterminada
     private byte[] cargarImagenDefault() {
         try {
@@ -78,8 +87,22 @@ public class RegistroServiceImpl implements RegistroService {
             return null;
         }
     }
+
+    // Metodo para cargar la imagen predeterminada
+    @Override
+    public byte[] obtenerImagenDefault() {
+        try {
+            // Ruta de la imagen predeterminada
+            Path rutaImagenDefault = Paths.get("src/main/resources/static/img/ImagenDefaultPerfil.jpg");
+            return Files.readAllBytes(rutaImagenDefault);
+        } catch (IOException e) {
+            e.printStackTrace();
+            return new byte[0]; // Retorna un arreglo vacío si hay error
+        }
+    }
+
     public Usuario prepararNuevoUsuario(Usuario usuario) {
-        // Generar código único
+        // Aqui inicializa la funcion para establecer el codigo unico al usuario
         String codigoUnico = generarCodigoUnico();
         while (existeCodigo(codigoUnico)) {
             codigoUnico = generarCodigoUnico();
@@ -89,12 +112,13 @@ public class RegistroServiceImpl implements RegistroService {
         usuario.setUltimaConexion(new Date());
         return usuario;
     }
+
     public String iniciarVerificacion(Usuario usuario) {
         String verificationCode = verificationService.generateVerificationCode();
         emailService.sendVerificationCode(usuario.getCorreoElectronico(), verificationCode);
         return verificationCode;
     }
-    
+
     @Transactional
     public void actualizarContrasena(String correoElectronico, String nuevaContrasena) {
         Usuario usuario = usuarioDao.findByCorreoElectronico(correoElectronico);

@@ -4,42 +4,53 @@ import com.mesadeayudaMPB.dao.TicketDao;
 import com.mesadeayudaMPB.domain.Ticket;
 import com.mesadeayudaMPB.domain.Usuario;
 import com.mesadeayudaMPB.service.TicketService;
-import java.io.ByteArrayInputStream;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Random;
+import java.util.stream.Collectors;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.multipart.MultipartFile;
-
-import javax.crypto.Cipher;
-import javax.crypto.KeyGenerator;
-import javax.crypto.SecretKey;
-import javax.crypto.spec.SecretKeySpec;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.security.NoSuchAlgorithmException;
-import java.util.Arrays;
-import java.util.Base64;
-import java.util.List;
-import java.util.Random;
 
 @Service
 public class TicketServiceImpl implements TicketService {
 
     @Autowired
     private TicketDao ticketDao;
-    
-    private static final int MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB in bytes
-    private static final String ENCRYPTION_ALGORITHM = "AES";
-    private static final String ENCRYPTION_KEY = "YourSecretKey123"; // Change this to a secure key
+
+    @Override
+    @Transactional
+    public void save(Ticket ticket) {
+        ticketDao.save(ticket);
+    }
+
+    @Override
+    @Transactional
+    public void delete(Ticket ticket) {
+        ticketDao.delete(ticket);
+    }
 
     @Override
     @Transactional(readOnly = true)
     public List<Ticket> getTickets() {
-        return ticketDao.findAll(Sort.by("fechaApertura").descending());
+        return ticketDao.findAll(Sort.by(Sort.Direction.DESC, "fechaApertura"));
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<Ticket> getTicketsPorSolicitanteYEstado(Usuario solicitante, String estado) {
+        return ticketDao.findBySolicitanteAndEstadoOrderByFechaAperturaDesc(solicitante, estado);
     }
 
     @Override
@@ -55,18 +66,6 @@ public class TicketServiceImpl implements TicketService {
     }
 
     @Override
-    @Transactional
-    public void save(Ticket ticket) {
-        ticketDao.save(ticket);
-    }
-
-    @Override
-    @Transactional
-    public void delete(Ticket ticket) {
-        ticketDao.delete(ticket);
-    }
-
-    @Override
     public String generarCodigoTicket() {
         Random random = new Random();
         String codigo;
@@ -77,61 +76,20 @@ public class TicketServiceImpl implements TicketService {
             }
             codigo = sb.toString();
         } while (ticketDao.existsByCodigo(codigo));
-
         return codigo;
     }
 
     @Override
-    public byte[] procesarImagenes(List<MultipartFile> imagenes) {
-        try {
-            if (imagenes == null || imagenes.isEmpty()) {
-                return null;
-            }
-
-            // Validar número de imágenes
-            if (imagenes.size() > 2) {
-                throw new IllegalArgumentException("Maximum 2 images allowed");
-            }
-
-            ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-            SecretKey key = new SecretKeySpec(ENCRYPTION_KEY.getBytes(), ENCRYPTION_ALGORITHM);
-            Cipher cipher = Cipher.getInstance(ENCRYPTION_ALGORITHM);
-            cipher.init(Cipher.ENCRYPT_MODE, key);
-
-            for (MultipartFile imagen : imagenes) {
-                if (!imagen.isEmpty()) {
-                    // Validar tamaño
-                    if (imagen.getSize() > MAX_FILE_SIZE) {
-                        throw new IllegalArgumentException("Image size exceeds 5MB limit");
-                    }
-
-                    // Validar tipo de archivo
-                    String contentType = imagen.getContentType();
-                    if (contentType == null || !contentType.startsWith("image/")) {
-                        throw new IllegalArgumentException("Invalid file type. Only images are allowed");
-                    }
-
-                    // Encriptar imagen
-                    byte[] imageBytes = imagen.getBytes();
-                    byte[] encryptedBytes = cipher.doFinal(imageBytes);
-
-                    // Escribir bytes encriptados
-                    outputStream.write(encryptedBytes);
-                    outputStream.write(new byte[]{0, 0, 0, 0}); // Delimitador
-                }
-            }
-
-            return outputStream.toByteArray();
-        } catch (Exception e) {
-            throw new RuntimeException("Error processing images: " + e.getMessage());
-        }
+    @Transactional(readOnly = true)
+    public Page<Ticket> getTicketsPaginados(Pageable pageable) {
+        return ticketDao.findAll(pageable);
     }
 
     @Override
     @Transactional(readOnly = true)
-    public Page<Ticket> getTicketsPaginados(int page, int size) {
-        Pageable pageable = PageRequest.of(page, size, Sort.by("fechaApertura").descending());
-        return ticketDao.findAll(pageable);
+    public Page<Ticket> buscarTickets(String search, Pageable pageable) {
+        return ticketDao.findByCodigoContainingOrTituloContainingOrDescripcionContaining(
+                search, search, search, pageable);
     }
 
     @Override
@@ -141,83 +99,174 @@ public class TicketServiceImpl implements TicketService {
     }
 
     @Override
-    public int contarImagenes(byte[] imagenesBytes) {
-        if (imagenesBytes == null) {
-            return 0;
-        }
-
-        int count = 0;
-        ByteArrayInputStream bis = new ByteArrayInputStream(imagenesBytes);
-        byte[] delimiter = new byte[4];
-
-        try {
-            while (bis.available() > 0) {
-                count++;
-                // Leer hasta encontrar el delimitador
-                while (bis.available() > 0) {
-                    bis.read(delimiter);
-                    if (Arrays.equals(delimiter, new byte[]{0, 0, 0, 0})) {
-                        break;
-                    }
-                }
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        return count;
+    @Transactional(readOnly = true)
+    public Ticket getTicketPorId(Long idTicket) {
+        return ticketDao.findById(idTicket).orElse(null);
     }
 
     @Override
-    public byte[] obtenerImagenPorIndice(byte[] imagenesBytes, int index) {
-        if (imagenesBytes == null) {
-            return null;
+    @Transactional(readOnly = true)
+    public List<Ticket> getTicketsConMensajes(Usuario usuario) {
+        boolean esAdmin = usuario.getRoles().stream()
+                .anyMatch(rol -> "ROL_ADMINISTRADOR".equals(rol.getNombre()));
+        boolean esSoportista = usuario.getRoles().stream()
+                .anyMatch(rol -> "ROL_SOPORTISTA".equals(rol.getNombre()));
+
+        if (esAdmin) {
+            return ticketDao.findTicketsWithMessages();
+        } else if (esSoportista) {
+            return ticketDao.findTicketsWithMessagesBySupport(usuario.getIdUsuario());
+        } else {
+            return ticketDao.findTicketsWithMessagesByClient(usuario.getIdUsuario());
         }
+    }
 
-        try {
-            SecretKey key = new SecretKeySpec(ENCRYPTION_KEY.getBytes(), ENCRYPTION_ALGORITHM);
-            Cipher cipher = Cipher.getInstance(ENCRYPTION_ALGORITHM);
-            cipher.init(Cipher.DECRYPT_MODE, key);
+    @Override
+    @Transactional
+    public void eliminarTicketsPorUsuario(Long idUsuario) {
+        ticketDao.deleteBySolicitanteId(idUsuario);
+        ticketDao.clearAsignadoPara(idUsuario);
+    }
 
-            ByteArrayInputStream bis = new ByteArrayInputStream(imagenesBytes);
-            ByteArrayOutputStream bos = new ByteArrayOutputStream();
-            byte[] delimiter = new byte[4];
-            int currentIndex = 0;
+    @Override
+    @Transactional(readOnly = true)
+    public List<Ticket> getTicketsPorEstado(String estado) {
+        return ticketDao.findByEstado(estado);
+    }
 
-            while (bis.available() > 0 && currentIndex <= index) {
-                if (currentIndex == index) {
-                    // Leer la imagen encriptada
-                    ByteArrayOutputStream imageBos = new ByteArrayOutputStream();
-                    int b;
-                    while ((b = bis.read()) != -1) {
-                        byte[] temp = new byte[4];
-                        temp[0] = (byte) b;
-                        if (bis.read(temp, 1, 3) == 3) {
-                            if (Arrays.equals(temp, new byte[]{0, 0, 0, 0})) {
-                                break;
+    @Override
+    @Transactional(readOnly = true)
+    public List<Ticket> buscarTicketsPorFiltros(Map<String, String> columnFilters, String searchTerm) {
+        return buscarTicketsPorFiltrosAvanzados(columnFilters, searchTerm, null, null, null, null);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<Ticket> buscarTicketsPorFiltrosAvanzados(
+            Map<String, String> columnFilters, 
+            String searchTerm,
+            String fechaAperturaFrom,
+            String fechaAperturaTo,
+            String fechaActualizacionFrom,
+            String fechaActualizacionTo) {
+        
+        List<Ticket> allTickets = ticketDao.findAll(Sort.by(Sort.Direction.DESC, "fechaApertura"));
+        
+        return allTickets.stream()
+                .filter(ticket -> {
+                    boolean matches = true;
+                    
+                    // Aplicar búsqueda global si existe
+                    if (searchTerm != null && !searchTerm.isEmpty()) {
+                        String searchLower = searchTerm.toLowerCase();
+                        matches = ticket.getCodigo().toLowerCase().contains(searchLower) ||
+                                  ticket.getTitulo().toLowerCase().contains(searchLower) ||
+                                  ticket.getDescripcion().toLowerCase().contains(searchLower) ||
+                                  ticket.getCategoria().toLowerCase().contains(searchLower) ||
+                                  (ticket.getSolicitante().getNombre() + " " + ticket.getSolicitante().getApellido()).toLowerCase().contains(searchLower) ||
+                                  (ticket.getAsignadoPara() != null && 
+                                   (ticket.getAsignadoPara().getNombre() + " " + ticket.getAsignadoPara().getApellido()).toLowerCase().contains(searchLower));
+                    }
+                    
+                    // Aplicar filtros de columnas
+                    if (matches && columnFilters != null && !columnFilters.isEmpty()) {
+                        for (Map.Entry<String, String> entry : columnFilters.entrySet()) {
+                            String filterValue = entry.getValue().toLowerCase();
+                            
+                            switch (entry.getKey()) {
+                                case "codigo":
+                                    matches = matches && ticket.getCodigo().toLowerCase().contains(filterValue);
+                                    break;
+                                case "fechaApertura":
+                                    String fechaApertura = new SimpleDateFormat("dd/MM/yyyy").format(ticket.getFechaApertura());
+                                    matches = matches && fechaApertura.toLowerCase().contains(filterValue);
+                                    break;
+                                case "titulo":
+                                    matches = matches && ticket.getTitulo().toLowerCase().contains(filterValue);
+                                    break;
+                                case "solicitante":
+                                    String solicitante = ticket.getSolicitante().getNombre() + " " + ticket.getSolicitante().getApellido();
+                                    matches = matches && solicitante.toLowerCase().contains(filterValue);
+                                    break;
+                                case "prioridad":
+                                    matches = matches && ticket.getPrioridad().toLowerCase().contains(filterValue);
+                                    break;
+                                case "estado":
+                                    matches = matches && ticket.getEstado().toLowerCase().contains(filterValue);
+                                    break;
+                                case "categoria":
+                                    matches = matches && ticket.getCategoria().toLowerCase().contains(filterValue);
+                                    break;
+                                case "asignadoPara":
+                                    String asignadoPara = ticket.getAsignadoPara() != null ? 
+                                            ticket.getAsignadoPara().getNombre() + " " + ticket.getAsignadoPara().getApellido() : 
+                                            "sin asignar";
+                                    matches = matches && asignadoPara.toLowerCase().contains(filterValue);
+                                    break;
+                                case "fechaActualizacion":
+                                    String fechaActualizacion = new SimpleDateFormat("dd/MM/yyyy").format(ticket.getFechaActualizacion());
+                                    matches = matches && fechaActualizacion.toLowerCase().contains(filterValue);
+                                    break;
                             }
-                            imageBos.write(temp);
-                        } else {
-                            imageBos.write(temp, 0, 1);
+                            
+                            if (!matches) break;
                         }
                     }
-
-                    // Desencriptar la imagen
-                    byte[] encryptedBytes = imageBos.toByteArray();
-                    return cipher.doFinal(encryptedBytes);
-                } else {
-                    // Saltar hasta el siguiente delimitador
-                    while (bis.available() > 0) {
-                        bis.read(delimiter);
-                        if (Arrays.equals(delimiter, new byte[]{0, 0, 0, 0})) {
-                            break;
+                    
+                    // Aplicar filtros de fecha para Apertura
+                    if (matches && (fechaAperturaFrom != null || fechaAperturaTo != null)) {
+                        try {
+                            SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+                            Date fechaApertura = ticket.getFechaApertura();
+                            
+                            if (fechaAperturaFrom != null && !fechaAperturaFrom.isEmpty()) {
+                                Date fromDate = sdf.parse(fechaAperturaFrom);
+                                matches = matches && !fechaApertura.before(fromDate);
+                            }
+                            
+                            if (fechaAperturaTo != null && !fechaAperturaTo.isEmpty()) {
+                                Date toDate = sdf.parse(fechaAperturaTo);
+                                // Añadir 1 día para incluir el día completo
+                                Calendar cal = Calendar.getInstance();
+                                cal.setTime(toDate);
+                                cal.add(Calendar.DATE, 1);
+                                toDate = cal.getTime();
+                                
+                                matches = matches && !fechaApertura.after(toDate);
+                            }
+                        } catch (ParseException e) {
+                            matches = false;
                         }
                     }
-                    currentIndex++;
-                }
-            }
-        } catch (Exception e) {
-            throw new RuntimeException("Error decrypting image: " + e.getMessage());
-        }
-        return null;
+                    
+                    // Aplicar filtros de fecha para Actualización
+                    if (matches && (fechaActualizacionFrom != null || fechaActualizacionTo != null)) {
+                        try {
+                            SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+                            Date fechaActualizacion = ticket.getFechaActualizacion();
+                            
+                            if (fechaActualizacionFrom != null && !fechaActualizacionFrom.isEmpty()) {
+                                Date fromDate = sdf.parse(fechaActualizacionFrom);
+                                matches = matches && !fechaActualizacion.before(fromDate);
+                            }
+                            
+                            if (fechaActualizacionTo != null && !fechaActualizacionTo.isEmpty()) {
+                                Date toDate = sdf.parse(fechaActualizacionTo);
+                                // Añadir 1 día para incluir el día completo
+                                Calendar cal = Calendar.getInstance();
+                                cal.setTime(toDate);
+                                cal.add(Calendar.DATE, 1);
+                                toDate = cal.getTime();
+                                
+                                matches = matches && !fechaActualizacion.after(toDate);
+                            }
+                        } catch (ParseException e) {
+                            matches = false;
+                        }
+                    }
+                    
+                    return matches;
+                })
+                .collect(Collectors.toList());
     }
 }

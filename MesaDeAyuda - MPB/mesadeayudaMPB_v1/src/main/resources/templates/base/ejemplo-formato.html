@@ -32,3 +32,72 @@ Click nbfs://nbhost/SystemFileSystem/Templates/Other/html.html to edit this temp
                     </div>
                 </body>
             </html>
+
+
+
+
+<!-- Modals BASE -->
+                    
+                    <!-- Contenedor para los botones de prueba -->
+                    <div style="text-align: center; margin-top: 50px;">
+                        <button onclick="showToast('success')">Mostrar Éxito</button>
+                        <button onclick="showToast('info')">Mostrar Información</button>
+                        <button onclick="showToast('warning')">Mostrar Alerta</button>
+                        <button onclick="showToast('error')">Mostrar Error</button>
+                    </div>
+
+                    <!-- Toast de Éxito (Verde) -->
+                    <div id="toast-success" class="toast-modal toast-success">
+                        <div class="toast-content">
+                            <p class="toast-message">
+                                <i class="toast-icon fa-solid fa-circle-check"></i>
+                                <span>"Mensaje generico..."</span>
+                            </p>
+                            <span class="toast-close" onclick="closeToast('success')">
+                                <i class="fa-solid fa-xmark"></i>
+                            </span>
+                        </div>
+                    </div>
+
+                    <!-- Toast de Información (Azul) -->
+                    <div id="toast-info" class="toast-modal toast-info">
+                        <div class="toast-content">
+                            <p class="toast-message">
+                                <i class="toast-icon fa-solid fa-user"></i>
+                                <span>"Mensaje generico..."</span>
+                            </p>
+                            <span class="toast-close" onclick="closeToast('info')">
+                                <i class="fa-solid fa-xmark"></i>
+                            </span>
+                        </div>
+                    </div>
+
+                    <!-- Toast de Alerta (Amarillo) -->
+                    <div id="toast-warning" class="toast-modal toast-warning">
+                        <div class="toast-content">
+                            <p class="toast-message">
+                                <i class="toast-icon fa-solid fa-triangle-exclamation"></i>
+                                <span>"Mensaje generico..."</span>
+                            </p>
+                            <span class="toast-close" onclick="closeToast('warning')">
+                                <i class="fa-solid fa-xmark"></i>
+                            </span>
+                        </div>
+                    </div>
+
+                    <!-- Toast de Error (Rojo) -->
+                    <div id="toast-error" class="toast-modal toast-error">
+                        <div class="toast-content">
+                            <p class="toast-message">
+                                <i class="toast-icon fa-solid fa-server"></i>
+                                <span>"Mensaje generico..."</span>
+                            </p>
+                            <span class="toast-close" onclick="closeToast('error')">
+                                <i class="fa-solid fa-xmark"></i>
+                            </span>
+                        </div>
+                    </div>
+
+                    <footer>
+                        © 2024 Municipalidad de Barva. Todos los derechos reservados.
+                    </footer>

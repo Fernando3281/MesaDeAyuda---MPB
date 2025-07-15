@@ -9,29 +9,34 @@ import java.util.Date;
 @Entity
 @Table(name = "Auditoria")
 public class Auditoria implements Serializable {
+    private static final long serialVersionUID = 1L;
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id_auditoria")
     private Long idAuditoria;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "id_ticket", referencedColumnName = "id_ticket")
     private Ticket ticket;
 
-    @Column(name = "fecha_actualizacion")
-    private Date fechaActualizacion;
+    @Column(name = "accion", nullable = false)
+    private String accion; // CREACION, ACTUALIZACION, ASIGNACION, CAMBIO_ESTADO, CIERRE, etc.
 
-    @ManyToOne
-    @JoinColumn(name = "usuario_actualizacion", referencedColumnName = "id_Usuario")
-    private Usuario usuarioActualizacion;
+    @Column(name = "detalle", columnDefinition = "TEXT")
+    private String detalle;
 
-    @ManyToOne
-    @JoinColumn(name = "usuario_asignado", referencedColumnName = "id_Usuario")
-    private Usuario usuarioAsignado;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "id_usuario", referencedColumnName = "id_Usuario")
+    private Usuario usuario;
 
-    @Column(name = "actividad")
-    private String actividad;
-    
-    //Agregar propiedad para calcular el tiempo transcurrido en la respuesta del ticket
+    @Column(name = "fecha_accion", nullable = false)
+    @Temporal(TemporalType.TIMESTAMP)
+    private Date fechaAccion;
+
+    @Column(name = "valor_anterior", columnDefinition = "TEXT")
+    private String valorAnterior;
+
+    @Column(name = "valor_nuevo", columnDefinition = "TEXT")
+    private String valorNuevo;
 }

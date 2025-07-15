@@ -1,36 +1,49 @@
 package com.mesadeayudaMPB.service;
+
 import com.mesadeayudaMPB.domain.Ticket;
 import com.mesadeayudaMPB.domain.Usuario;
-import org.springframework.data.domain.Page;
-import org.springframework.web.multipart.MultipartFile;
 import java.util.List;
+import java.util.Map;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+
 public interface TicketService {
-    // Obtener todos los tickets
-    public List<Ticket> getTickets();
 
-    // Obtener un ticket específico
-    public Ticket getTicket(Ticket ticket);
+    void save(Ticket ticket);
 
-    // Obtener ticket por código
-    public Ticket getTicketPorCodigo(String codigo);
+    void delete(Ticket ticket);
 
-    // Guardar o actualizar un ticket
-    public void save(Ticket ticket);
+    List<Ticket> getTickets();
 
-    // Eliminar un ticket
-    public void delete(Ticket ticket);
+    List<Ticket> getTicketsPorSolicitanteYEstado(Usuario solicitante, String estado);
 
-    // Generar código único para el ticket
-    public String generarCodigoTicket();
+    Ticket getTicket(Ticket ticket);
 
-    // Procesar las imágenes adjuntas al ticket
-    public byte[] procesarImagenes(List<MultipartFile> imagenes);
+    Ticket getTicketPorCodigo(String codigo);
 
-    // Obtener tickets con paginación
-    public Page<Ticket> getTicketsPaginados(int page, int size);
+    String generarCodigoTicket();
+
+    Page<Ticket> getTicketsPaginados(Pageable pageable);
+
+    Page<Ticket> buscarTickets(String search, Pageable pageable);
 
     List<Ticket> getTicketsPorSolicitante(Usuario solicitante);
 
-    int contarImagenes(byte[] imagenesBytes);
-    byte[] obtenerImagenPorIndice(byte[] imagenesBytes, int index);
+    Ticket getTicketPorId(Long idTicket);
+
+    List<Ticket> getTicketsConMensajes(Usuario usuario);
+
+    void eliminarTicketsPorUsuario(Long idUsuario);
+
+    List<Ticket> getTicketsPorEstado(String estado);
+
+    List<Ticket> buscarTicketsPorFiltros(Map<String, String> columnFilters, String searchTerm);
+    
+    List<Ticket> buscarTicketsPorFiltrosAvanzados(
+            Map<String, String> columnFilters, 
+            String searchTerm,
+            String fechaAperturaFrom,
+            String fechaAperturaTo,
+            String fechaActualizacionFrom,
+            String fechaActualizacionTo);
 }

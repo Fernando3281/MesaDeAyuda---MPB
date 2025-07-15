@@ -6,7 +6,7 @@ import java.io.Serializable;
 
 @Data
 @Entity
-@Table(name = "Departamento")
+@Table(name = "Departamentos")
 public class Departamento implements Serializable {
 
     @Id
@@ -19,4 +19,7 @@ public class Departamento implements Serializable {
 
     @Column(name = "Descripcion", length = 510)
     private String descripcion;
+
+    @Column(name = "Visible", nullable = false)
+    private boolean visible = true;
 }
