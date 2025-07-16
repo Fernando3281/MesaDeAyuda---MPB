@@ -133,7 +133,7 @@ public class UsuarioController {
                 model.addAttribute("usuario", usuario);
                 model.addAttribute("departamentos", departamentos);
 
-                return "/usuario/editar";
+                return "usuario/editar";
             }
         }
         return "redirect:/login";
@@ -217,7 +217,7 @@ public class UsuarioController {
                 List<Ticket> tickets = ticketService.getTicketsPorSolicitante(usuario);
                 model.addAttribute("tickets", tickets);
                 model.addAttribute("usuario", usuario);
-                return "/usuario/historial";
+                return "usuario/historial";
             }
         }
         return "redirect:/login";
@@ -233,7 +233,7 @@ public class UsuarioController {
 
                 model.addAttribute("ticket", ticket);
                 model.addAttribute("imagenes", archivos);
-                return "/usuario/detalles";
+                return "usuario/detalles";
             }
         }
         return "redirect:/login";
@@ -241,7 +241,7 @@ public class UsuarioController {
 
     @GetMapping("/configuracion")
     public String configuracion(Model model) {
-        return "/usuario/configuracion";
+        return "usuario/configuracion";
     }
 
     @GetMapping("/listado")
