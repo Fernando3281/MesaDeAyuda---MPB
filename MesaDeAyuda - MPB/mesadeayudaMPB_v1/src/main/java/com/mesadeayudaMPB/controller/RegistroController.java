@@ -53,7 +53,7 @@ public class RegistroController {
         // Obtener solo los departamentos visibles
         List<Departamento> departamentos = departamentoService.obtenerDepartamentosVisibles();
         model.addAttribute("departamentos", departamentos);
-        return "/registro/nuevo";
+        return "registro/nuevo";
     }
 
     @PostMapping("/nuevo")
@@ -102,7 +102,7 @@ public class RegistroController {
         }
 
         model.addAttribute("email", email);
-        return "/registro/verificacion";
+        return "registro/verificacion";
     }
 
     @PostMapping("/verificar")
@@ -141,7 +141,7 @@ public class RegistroController {
     // Método para mostrar el formulario de recordar contraseña
     @GetMapping("/recordar")
     public String mostrarRecordarContrasena() {
-        return "/registro/recordar";
+        return "registro/recordar";
     }
 
     // Método para procesar la solicitud de recuperación de contraseña
@@ -220,7 +220,7 @@ public class RegistroController {
         }
 
         model.addAttribute("token", token);
-        return "/registro/cambiar-contrasena";
+        return "registro/cambiar-contrasena";
     }
 
     // Método para procesar el cambio de contraseña

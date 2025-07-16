@@ -337,7 +337,7 @@ public String listado(Model model,
                     model.addAttribute("usuariosAsignables", usuariosAsignables);
                 }
 
-                return "/tickets/nuevo";
+                return "tickets/nuevo";
             }
         }
         return "redirect:/login";
