@@ -21,6 +21,8 @@ public interface TicketDao extends JpaRepository<Ticket, Long> {
 
     Page<Ticket> findAll(Pageable pageable);
 
+    List<Ticket> findByAsignadoPara(Usuario asignadoPara);
+
     @Query("SELECT t FROM Ticket t WHERE "
             + "LOWER(t.codigo) LIKE LOWER(CONCAT('%', :search, '%')) OR "
             + "LOWER(t.titulo) LIKE LOWER(CONCAT('%', :search, '%')) OR "
@@ -54,4 +56,15 @@ public interface TicketDao extends JpaRepository<Ticket, Long> {
     @Modifying
     @Query("UPDATE Ticket t SET t.asignadoPara = null WHERE t.asignadoPara.idUsuario = :usuarioId")
     void clearAsignadoPara(@Param("usuarioId") Long usuarioId);
+
+    @Query("SELECT COUNT(t) FROM Ticket t WHERE t.asignadoPara = :asignadoPara AND t.estado IN :estados")
+    Long countByAsignadoParaAndEstadoIn(
+            @Param("asignadoPara") Usuario asignadoPara,
+            @Param("estados") List<String> estados);
+
+    @Query("SELECT COUNT(t) FROM Ticket t WHERE t.asignadoPara = :asignadoPara AND t.solicitante = :solicitante AND t.estado IN :estados")
+    Long countByAsignadoParaAndSolicitanteAndEstadoIn(
+            @Param("asignadoPara") Usuario asignadoPara,
+            @Param("solicitante") Usuario solicitante,
+            @Param("estados") List<String> estados);
 }

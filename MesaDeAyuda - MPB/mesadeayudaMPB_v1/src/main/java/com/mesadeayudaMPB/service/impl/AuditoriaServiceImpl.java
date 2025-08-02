@@ -15,6 +15,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.util.Date;
 import java.util.List;
+import org.hibernate.Hibernate;
 
 @Service
 public class AuditoriaServiceImpl implements AuditoriaService {
@@ -109,4 +110,12 @@ public class AuditoriaServiceImpl implements AuditoriaService {
             throw new RuntimeException("Error al obtener historial paginado", e);
         }
     }
+
+
+
+@Override
+@Transactional(readOnly = true)
+public List<Auditoria> findTop50RecentAuditActions() {
+    return auditoriaDao.findTop50RecentAuditActions();
+}
 }

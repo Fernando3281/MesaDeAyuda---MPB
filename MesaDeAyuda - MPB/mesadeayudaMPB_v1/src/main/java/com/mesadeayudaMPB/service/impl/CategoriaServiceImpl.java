@@ -89,4 +89,9 @@ public class CategoriaServiceImpl implements CategoriaService {
         return categoriaDao.findByNombreContainingIgnoreCaseOrDescripcionContainingIgnoreCase(
                 search, search, pageable);
     }
+
+    @Override
+    public List<Categoria> obtenerCategoriasActivas() {
+        return categoriaDao.findByActivoTrue();
+    }
 }

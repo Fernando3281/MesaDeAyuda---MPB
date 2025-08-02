@@ -7,7 +7,6 @@ document.addEventListener('DOMContentLoaded', function () {
     const maxSizeMB = 5;
     const maxSizeBytes = maxSizeMB * 1024 * 1024;
 
-    // Función para abrir el modal de imagen
     function openModal(imgSrc) {
         const modal = document.getElementById('imageModal');
         const modalImg = document.getElementById('modalImage');
@@ -15,7 +14,6 @@ document.addEventListener('DOMContentLoaded', function () {
         modalImg.src = imgSrc;
     }
 
-    // Función para abrir el modal de PDF
     function openPdfModal(pdfUrl) {
         const modal = document.getElementById('pdfModal');
         const modalContent = document.getElementById('pdfModalContent');
@@ -23,24 +21,20 @@ document.addEventListener('DOMContentLoaded', function () {
         modalContent.src = pdfUrl;
     }
 
-    // Función para cerrar el modal de imagen
     document.querySelector('.close-modal').addEventListener('click', () => {
         const modal = document.getElementById('imageModal');
         modal.style.display = 'none';
     });
 
-    // Función para cerrar el modal de PDF
     document.querySelector('.close-pdf-modal').addEventListener('click', () => {
         const modal = document.getElementById('pdfModal');
         modal.style.display = 'none';
         document.getElementById('pdfModalContent').src = '';
     });
 
-    // Configuración de estado de archivos
     const fileState = {
         files: [],
 
-        // Método para agregar archivo
         addFile(file) {
             if (this.files.length >= maxFiles) {
                 this.showNotification(`No se pueden agregar más de ${maxFiles} archivos`);
@@ -63,9 +57,7 @@ document.addEventListener('DOMContentLoaded', function () {
             uploadBox.classList.remove('drag-over');
         },
 
-        // Método para eliminar archivo
         removeFile(index) {
-            // Liberar URL de objeto si es un PDF
             if (this.files[index].type === 'application/pdf') {
                 const pdfPreviews = document.querySelectorAll('.pdf-preview');
                 if (pdfPreviews[index]) {
@@ -82,7 +74,6 @@ document.addEventListener('DOMContentLoaded', function () {
             this.updateHoverState();
         },
 
-        // Actualizar el estado del hover
         updateHoverState() {
             if (this.files.length >= maxFiles) {
                 uploadBox.classList.add('has-files');
@@ -92,7 +83,6 @@ document.addEventListener('DOMContentLoaded', function () {
             }
         },
 
-        // Validar archivo
         validateFile(file) {
             const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'application/pdf'];
 
@@ -109,7 +99,6 @@ document.addEventListener('DOMContentLoaded', function () {
             return true;
         },
 
-        // Renderizar vistas previas
         renderPreviews() {
             previewContainer.innerHTML = '';
 
@@ -118,10 +107,9 @@ document.addEventListener('DOMContentLoaded', function () {
                 previewWrapper.className = 'file-preview-wrapper';
 
                 if (file.type.startsWith('image/')) {
-                    // Procesar como imagen
                     const reader = new FileReader();
                     reader.onload = (e) => {
-                        const imgSrc = e.target.result; // Guardamos la URL de la imagen
+                        const imgSrc = e.target.result;
 
                         previewWrapper.innerHTML = `
                             <div class="image-preview" data-img-src="${imgSrc}">
@@ -135,7 +123,6 @@ document.addEventListener('DOMContentLoaded', function () {
                             </div>
                         `;
 
-                        // Evento para abrir el modal
                         previewWrapper.querySelector('.image-preview').addEventListener('click', (e) => {
                             if (!e.target.closest('.delete-image-btn')) {
                                 const imgSrc = e.currentTarget.getAttribute('data-img-src');
@@ -143,7 +130,6 @@ document.addEventListener('DOMContentLoaded', function () {
                             }
                         });
 
-                        // Evento para eliminar
                         previewWrapper.querySelector('.delete-image-btn').addEventListener('click', (e) => {
                             e.stopPropagation();
                             const indexToRemove = e.currentTarget.dataset.index;
@@ -154,7 +140,6 @@ document.addEventListener('DOMContentLoaded', function () {
                     };
                     reader.readAsDataURL(file);
                 } else if (file.type === 'application/pdf') {
-                    // Procesar como PDF
                     const pdfUrl = URL.createObjectURL(file);
                     const fileName = this.truncateFileName(file.name);
 
@@ -172,9 +157,7 @@ document.addEventListener('DOMContentLoaded', function () {
                         </div>
                     `;
 
-                    // Abrir PDF al hacer clic en la miniatura
                     previewWrapper.querySelector('.pdf-preview').addEventListener('click', (e) => {
-                        // Evitar que se active cuando se hace clic en el botón de eliminar
                         if (!e.target.closest('.delete-image-btn')) {
                             const pdfUrl = e.currentTarget.getAttribute('data-pdf-url');
                             openPdfModal(pdfUrl);
@@ -192,7 +175,6 @@ document.addEventListener('DOMContentLoaded', function () {
             });
         },
 
-        // Acortar nombres de archivo largos
         truncateFileName(name) {
             if (name.length > 20) {
                 return name.substring(0, 17) + '...';
@@ -200,7 +182,6 @@ document.addEventListener('DOMContentLoaded', function () {
             return name;
         },
 
-        // Actualizar input de archivos
         updateInputFiles() {
             const dataTransfer = new DataTransfer();
             this.files.forEach(file => {
@@ -209,7 +190,6 @@ document.addEventListener('DOMContentLoaded', function () {
             imageInput.files = dataTransfer.files;
         },
 
-        // Manejar selección de archivos
         handleFileSelection(newFiles) {
             const availableSlots = maxFiles - this.files.length;
 
@@ -255,18 +235,15 @@ document.addEventListener('DOMContentLoaded', function () {
             this.updateInputFiles();
         },
 
-        // Mostrar/ocultar texto de subida
         toggleUploadText() {
             uploadText.style.display = this.files.length > 0 ? 'none' : 'flex';
         },
 
-        // Mostrar notificaciones
         showNotification(message) {
             alert(message);
         }
     };
 
-    // Eventos de arrastre
     ['dragenter', 'dragover'].forEach(eventName => {
         uploadBox.addEventListener(eventName, (e) => {
             e.preventDefault();
@@ -311,7 +288,6 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     });
 
-    // Manejar soltar archivos
     uploadBox.addEventListener('drop', (e) => {
         if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
             const totalFiles = fileState.files.length + e.dataTransfer.files.length;
@@ -324,12 +300,10 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     });
 
-    // Evento de cambio de input
     imageInput.addEventListener('change', (e) => {
         fileState.handleFileSelection(e.target.files);
     });
 
-    // Eventos de hover
     uploadBox.addEventListener('mouseenter', function () {
         if (fileState.files.length < maxFiles) {
             uploadBox.style.borderColor = '#0d6efd';
@@ -344,7 +318,6 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     });
 
-    // Contador de Caracteres en "Breve Descripcion"
     const inputField = document.querySelector('input[name="titulo"]');
     const characterCount = document.querySelector('.character-count');
 
@@ -355,7 +328,6 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
-    // Cerrar modales al hacer clic fuera
     window.onclick = function (event) {
         const imageModal = document.getElementById('imageModal');
         const pdfModal = document.getElementById('pdfModal');
@@ -370,7 +342,6 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     };
 
-    // Método para mostrar y ocultar el popover
     const infoIcon = document.querySelector('.info-icon');
     const popover = document.querySelector('.popover');
 
@@ -384,14 +355,9 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
-    // Solicitar permiso para notificaciones al cargar la página
     if ('Notification' in window && Notification.permission !== 'granted' && Notification.permission !== 'denied') {
         Notification.requestPermission();
     }
-
-    // =============================================
-    // FUNCIONALIDAD PARA ASIGNAR SOPORTISTA (MODIFICADA)
-    // =============================================
 
     const btnAsignarSoportista = document.getElementById('btnAsignarSoportista');
     const infoSoportista = document.getElementById('infoSoportista');
@@ -405,18 +371,15 @@ document.addEventListener('DOMContentLoaded', function () {
     const soportistasList = document.getElementById('soportistasList');
     const modalElement = document.getElementById('asignarSoportistaModal');
 
-    // Variables para almacenar la selección
     let selectedSoportistaId = null;
     let selectedSoportistaName = null;
 
-    // Inicializar estados de los botones
     function initSoportistaButtons() {
         if (asignadoParaId && asignadoParaId.value) {
             if (btnAsignarSoportista) btnAsignarSoportista.disabled = true;
             if (btnCambiarSoportista) btnCambiarSoportista.disabled = false;
             if (btnEliminarSoportista) btnEliminarSoportista.disabled = false;
 
-            // Actualizar el texto del botón con el nombre del soportista asignado
             const selectedItem = document.querySelector(`.soportista-item[data-id="${asignadoParaId.value}"]`);
             if (selectedItem) {
                 const name = selectedItem.querySelector('.soportista-name').textContent;
@@ -429,33 +392,26 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }
 
-    // Configurar el modal para no afectar el body
     function configureModal() {
         if (!modalElement) return;
         
-        // Eliminar la clase 'fade' si existe para evitar animaciones
         modalElement.classList.remove('fade');
 
-        // Configurar eventos personalizados
         modalElement.addEventListener('show.bs.modal', function () {
-            // Limpiar estilos del body
             document.body.style.overflow = '';
             document.body.style.paddingRight = '';
         });
 
         modalElement.addEventListener('shown.bs.modal', function () {
-            // Enfocar el campo de búsqueda al abrir
             if (searchSoportista) {
                 searchSoportista.focus();
             }
         });
 
         modalElement.addEventListener('hidden.bs.modal', function () {
-            // Limpiar estilos del body
             document.body.style.overflow = '';
             document.body.style.paddingRight = '';
 
-            // Limpiar selección
             document.querySelectorAll('.soportista-item').forEach(item => {
                 item.classList.remove('active');
             });
@@ -463,7 +419,6 @@ document.addEventListener('DOMContentLoaded', function () {
             selectedSoportistaName = null;
             if (infoSoportista) infoSoportista.style.display = 'none';
 
-            // Limpiar búsqueda si existe
             if (searchSoportista) {
                 searchSoportista.value = '';
                 filterSoportistas('');
@@ -471,7 +426,6 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
-    // Función para abrir el modal
     function openAssignModal() {
         if (!modalElement) return;
         
@@ -483,7 +437,6 @@ document.addEventListener('DOMContentLoaded', function () {
         modal.show();
     }
 
-    // Función para filtrar soportistas
     function filterSoportistas(searchTerm) {
         const items = document.querySelectorAll('.soportista-item');
         let hasMatches = false;
@@ -506,7 +459,6 @@ document.addEventListener('DOMContentLoaded', function () {
             }
         });
 
-        // Mostrar mensaje si no hay coincidencias
         const noResults = document.getElementById('noResults');
         if (!hasMatches && searchTerm) {
             if (!noResults && soportistasList) {
@@ -521,7 +473,6 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }
 
-    // Función para resetear la selección de soportista
     function resetSoportistaSelection() {
         if (asignadoParaId) asignadoParaId.value = '';
         const nombreSoportista = document.getElementById('nombreSoportista');
@@ -534,26 +485,21 @@ document.addEventListener('DOMContentLoaded', function () {
         if (btnEliminarSoportista) btnEliminarSoportista.disabled = true;
     }
 
-    // Inicialización
     initSoportistaButtons();
     configureModal();
 
-    // Evento para seleccionar soportista (delegación de eventos)
     if (soportistasList) {
         soportistasList.addEventListener('click', function (e) {
             const item = e.target.closest('.soportista-item');
             if (!item)
                 return;
 
-            // Remover selección previa
             document.querySelectorAll('.soportista-item').forEach(i => i.classList.remove('active'));
 
-            // Agregar selección al item clickeado
             item.classList.add('active');
             selectedSoportistaId = item.getAttribute('data-id');
             selectedSoportistaName = item.querySelector('.soportista-name').textContent;
 
-            // Mostrar información del soportista seleccionado
             const codigo = item.querySelector('.soportista-code').textContent;
 
             if (infoText) infoText.textContent = `Asignar el ticket a: ${selectedSoportistaName} (${codigo})`;
@@ -561,7 +507,6 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
-    // Configurar eventos de búsqueda
     if (searchSoportista) {
         searchSoportista.addEventListener('input', function () {
             filterSoportistas(this.value);
@@ -578,7 +523,6 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
-    // Confirmar asignación
     if (confirmarAsignacion) {
         confirmarAsignacion.addEventListener('click', function () {
             if (selectedSoportistaId) {
@@ -600,7 +544,6 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
-    // Evento para cambiar soportista
     if (btnCambiarSoportista) {
         btnCambiarSoportista.addEventListener('click', function (e) {
             e.preventDefault();
@@ -608,7 +551,6 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
-    // Evento para eliminar soportista
     if (btnEliminarSoportista) {
         btnEliminarSoportista.addEventListener('click', function (e) {
             e.preventDefault();
@@ -616,7 +558,6 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
-    // Evento del botón principal de asignar
     if (btnAsignarSoportista) {
         btnAsignarSoportista.addEventListener('click', function (e) {
             if (!this.disabled) {
@@ -625,11 +566,6 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
-    // =============================================
-    // FUNCIONALIDAD ADICIONAL
-    // =============================================
-
-    // Script para el desplegable de campos de administrador
     const toggleBtn = document.getElementById('adminFieldsToggle');
     const adminFields = document.getElementById('adminFields');
 
@@ -640,16 +576,10 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
-    // =============================================
-    // MANEJO DEL FORMULARIO CON MODAL DE CONFIRMACIÓN
-    // =============================================
-    
-    // Variables para el control del envío
     let isSubmitting = false;
     const successModal = document.getElementById('successModal');
     let bootstrapSuccessModal = null;
 
-    // Inicializar el modal de éxito
     if (successModal) {
         bootstrapSuccessModal = new bootstrap.Modal(successModal, {
             backdrop: 'static',
@@ -657,35 +587,29 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
-    // Función para mostrar el modal de éxito
     function showSuccessModal() {
         if (bootstrapSuccessModal) {
             bootstrapSuccessModal.show();
         }
     }
 
-    // Función para limpiar el formulario después del envío exitoso
     function resetForm() {
         const form = document.querySelector('form[action="/tickets/guardar"]');
         if (form) {
             form.reset();
         }
         
-        // Limpiar previsualizaciones de archivos
         if (previewContainer) {
             previewContainer.innerHTML = '';
         }
         
-        // Resetear estado de archivos
         fileState.files = [];
         fileState.toggleUploadText();
         fileState.updateHoverState();
 
-        // Limpiar selección de soportista si existe
         resetSoportistaSelection();
     }
 
-    // Función para manejar el envío del formulario
     function handleFormSubmit(event) {
         event.preventDefault();
         
@@ -696,45 +620,37 @@ document.addEventListener('DOMContentLoaded', function () {
         const form = event.target.closest('form') || document.querySelector('form[action="/tickets/guardar"]');
         const submitButton = document.getElementById('submitButton');
 
-        // Validación del formulario
         if (!form.checkValidity()) {
             form.reportValidity();
             return false;
         }
 
-        // Marcar como enviando
         isSubmitting = true;
         if (submitButton) {
             submitButton.disabled = true;
             submitButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Enviando...';
         }
 
-        // Crear FormData
         const formData = new FormData(form);
 
-        // Realizar petición AJAX
         fetch(form.action, {
             method: 'POST',
             body: formData
         })
         .then(response => {
             if (response.ok) {
-                // Si la respuesta es exitosa, mostrar el modal
                 showSuccessModal();
                 resetForm();
             } else {
-                // Si hay error, intentar obtener el mensaje de error
                 return response.text().then(text => {
                     throw new Error(`Error ${response.status}: ${text || response.statusText}`);
                 });
             }
         })
         .catch(error => {
-            console.error('Error al enviar el ticket:', error);
             alert('Error al enviar el ticket: ' + error.message);
         })
         .finally(() => {
-            // Restaurar botón y estado
             isSubmitting = false;
             if (submitButton) {
                 submitButton.disabled = false;
@@ -745,13 +661,11 @@ document.addEventListener('DOMContentLoaded', function () {
         return false;
     }
 
-    // Prevenir el envío tradicional del formulario
     const form = document.querySelector('form[action="/tickets/guardar"]');
     if (form) {
         form.addEventListener('submit', handleFormSubmit);
     }
 
-    // Manejar click del botón de envío
     const submitButton = document.getElementById('submitButton');
     if (submitButton) {
         submitButton.addEventListener('click', function(event) {
@@ -760,7 +674,6 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
-    // Manejar el botón de confirmación del modal de éxito
     const confirmButton = document.getElementById('confirmButton');
     if (confirmButton) {
         confirmButton.addEventListener('click', function() {
@@ -768,13 +681,11 @@ document.addEventListener('DOMContentLoaded', function () {
                 bootstrapSuccessModal.hide();
             }
             
-            // Redirigir a la página anterior o a la página de listado
             const previousPage = sessionStorage.getItem('previousPanel') || '/tickets/listado';
             window.location.href = previousPage;
         });
     }
 
-    // Guardar página anterior para redirección
     const previousPage = document.referrer;
     if (previousPage) {
         sessionStorage.setItem('previousPanel', previousPage);

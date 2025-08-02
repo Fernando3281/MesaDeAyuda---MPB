@@ -1,1536 +1,708 @@
 <!DOCTYPE html>
 <html xmlns="http://www.w3.org/1999/xhtml" xmlns:th="http://www.thymeleaf.org">
     <head th:replace="~{layout/plantilla :: head}">
-        <title>Mesa de Ayuda</title>
+        <title>Centro de Soporte</title>
         <meta charset="UTF-8"/>
     </head>
 
     <body>
         <section th:fragment="properties-section">
             <input type="hidden" id="solicitanteId" th:value="${ticket.solicitante.idUsuario}">
-                <input type="hidden" id="estadoTicket" th:value="${ticket.estado}" />
-                <input type="hidden" id="usuarioActualId" th:value="${usuarioActual?.idUsuario}">
-                    <input type="hidden" id="usuarioActualRol" th:value="${usuarioActual?.roles?.get(0)?.nombre}">
+            <input type="hidden" id="estadoTicket" th:value="${ticket.estado}" />
+            <input type="hidden" id="usuarioActualId" th:value="${usuarioActual?.idUsuario}">
+            <input type="hidden" id="usuarioActualRol" th:value="${usuarioActual?.roles?.get(0)?.nombre}">
 
-                        <!-- Viewer Modal Unificado -->
-                        <div class="modal-viewer" id="fileViewer">
-                            <button class="close-viewer" onclick="closeViewer()">&times;</button>
-                            <button class="file-nav prev-file" onclick="changeFile(-1)">&#10094;</button>
-                            <div class="modal-content-viewer">
-                                <!-- Contenedor para imágenes -->
-                                <div class="image-container" id="imageContainer">
-                                    <img src="" alt="Vista previa" class="modal-image-viewer" id="currentImage">
-                                </div>
+            <!-- Viewer Modal Unificado -->
+            <div class="modal-viewer" id="fileViewer">
+                <button class="close-viewer" onclick="closeViewer()">&times;</button>
+                <button class="file-nav prev-file" onclick="changeFile(-1)">&#10094;</button>
+                <div class="modal-content-viewer">
+                    <!-- Contenedor para imágenes -->
+                    <div class="image-container" id="imageContainer">
+                        <img src="" alt="Vista previa" class="modal-image-viewer" id="currentImage">
+                    </div>
 
-                                <!-- Contenedor para PDF -->
-                                <div class="pdf-container" id="pdfContainer">
-                                    <iframe id="pdfViewerContent" class="pdf-viewer-content" frameborder="0"></iframe>
-                                </div>
+                    <!-- Contenedor para PDF -->
+                    <div class="pdf-container" id="pdfContainer">
+                        <iframe id="pdfViewerContent" class="pdf-viewer-content" frameborder="0"></iframe>
+                    </div>
 
-                                <div class="file-counter" id="fileCounter"></div>
-                                <div class="thumbnail-container" id="thumbnailContainer"></div>
+                    <div class="file-counter" id="fileCounter"></div>
+                    <div class="thumbnail-container" id="thumbnailContainer"></div>
+                </div>
+                <button class="file-nav next-file" onclick="changeFile(1)">&#10095;</button>
+            </div>
+
+            <div class="back-button-container">
+                <a class="btn btn-outline-secondary back-button">
+                    <i class="fa-solid fa-arrow-left"></i>
+                </a>
+
+                <input type="hidden" id="ticketId" th:value="${ticket.idTicket}">
+
+                <!-- Botón Atender Ticket -->
+                <button th:if="${(ticket.estado != 'Cerrado' and ticket.estado != 'Desactivado') and
+                        (ticket.asignadoPara?.idUsuario != usuarioActual.idUsuario or ticket.estado == 'Cancelado') and
+                        (esAdmin or esSoportista or 
+                        (ticket.estado == 'Abierto' and ticket.asignadoPara == null) or
+                        ticket.estado == 'Cancelado')}"
+                        type="button" 
+                        id="btnAtenderTicket" 
+                        class="btn btn-outline-primary" 
+                        th:data-ticket-id="${ticket.idTicket}"
+                        onclick="atenderTicket(this.getAttribute('data-ticket-id'))">
+                    <i class="fa-solid fa-clipboard-check"></i> Atender Ticket
+                </button>
+
+                <!-- Boton Actualizar Ticket -->
+                <button th:if="${(esAdmin or (ticket.estado != 'Desactivado' and ticket.estado != 'Cerrado' and 
+                        (ticket.solicitante.idUsuario == usuarioActual.idUsuario and usuarioActual.roles.?[nombre == 'ROL_SOPORTISTA'].size() > 0))) or 
+                        (esAdmin and ticket.estado != 'Desactivado') or
+                        (ticket.estado == 'Cerrado' and ticket.solicitante.idUsuario == usuarioActual.idUsuario and 
+                        ticket.solicitante.roles.?[nombre == 'ROL_SOPORTISTA'].size() > 0)}"
+                        type="button" 
+                        class="btn btn-outline-primary" 
+                        onclick="toggleEditMode()">
+                    <i class="fa-solid fa-pen"></i> Actualizar Ticket
+                </button>
+
+                <!-- Botón Asignar/Reasignar Ticket -->
+                <button th:if="${(esAdmin or (ticket.estado != 'Desactivado' and 
+                        ((ticket.asignadoPara != null and usuarioActual != null and ticket.asignadoPara.idUsuario == usuarioActual.idUsuario) or
+                        (ticket.estado == 'Cerrado' and ticket.solicitante.idUsuario == usuarioActual.idUsuario and 
+                        ticket.solicitante.roles.?[nombre == 'ROL_SOPORTISTA'].size() > 0)))) or 
+                        (esAdmin and ticket.estado != 'Desactivado' and ticket.asignadoPara != null)}" 
+                        type="button" 
+                        class="btn btn-outline-primary"
+                        onclick="openAssignTicketsModal()">
+                    <i th:class="${ticket.asignadoPara != null ? 'fa-solid fa-user-pen' : 'fa-solid fa-user-plus'}"></i>
+                    <span th:text="${ticket.asignadoPara != null ? 'Reasignar Ticket' : 'Asignar Ticket'}"></span>
+                </button>
+
+                <!-- Botón Reabrir Ticket -->
+                <button th:if="${ticket.estado == 'Resuelto' or ticket.estado == 'Cerrado'}"
+                        type="button" 
+                        class="btn btn-outline-primary" 
+                        onclick="openReabrirTicketModal()">
+                    <i class="fa-solid fa-rotate"></i> Reabrir Ticket
+                </button>
+
+                <!-- Botón Cerrar Ticket -->
+                <button th:if="${ticket.asignadoPara != null and ticket.estado != 'Resuelto' and ticket.estado != 'Desactivado' and ticket.estado != 'Cerrado'}" 
+                        type="button" 
+                        class="btn btn-outline-success" 
+                        id="btnCerrarTicket"
+                        onclick="verificarPrioridadYCerrar()">
+                    <i class="fa-regular fa-circle-check"></i> Cerrar Ticket
+                </button>
+
+                <!-- Botón Desactivar Ticket -->
+                <button type="button" 
+                        class="btn btn-danger" 
+                        id="desactivarBtn" 
+                        th:data-ticket-id="${ticket.idTicket}"
+                        th:disabled="${ticket.estado == 'Desactivado'}"
+                        onclick="openDeactivateTicketModal()">
+                    <i class="fa-solid fa-ban"></i> Desactivar Ticket
+                </button>
+            </div>
+
+            <div class="container">
+                <!-- Sidebar -->
+                <div class="ticket-summary card">
+                    <h2 class="ticket-title">Resumen del Ticket</h2>
+                    <div class="info-row">
+                        <span class="info-label">Código:</span>
+                        <span class="badge badge-codigo" th:text="'#' + ${ticket.codigo}">#TIC12345678</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Estado:</span>
+                        <span th:class="'badge badge-' + ${#strings.toLowerCase(ticket.estado)}"
+                              th:text="${ticket.estado}">(Estado)</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Prioridad:</span>
+                        <span th:class="'badge badge-' + ${ticket.prioridad == 'Sin Asignar' ? 'sin-asignar' : #strings.toLowerCase(ticket.prioridad)}"
+                              th:text="${ticket.prioridad == 'Sin Asignar' ? 'Sin Asignar' : ticket.prioridad}">
+                            (Prioridad)
+                        </span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Categoria:</span>
+                        <span class="badge badge-categorias" th:text="${ticket.categoria}">#TIC12345678</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Fecha de Apertura:</span>
+                        <span class="info-value" th:text="${#dates.format(ticket.fechaApertura, 'dd/MM/yyyy')}"></span>
+                    </div>
+                    <div class="info-row" th:if="${ticket.estado == 'Resuelto'}">
+                        <span class="info-label">Cierre automático en:</span>
+                        <span class="info-value" id="tiempoCierreRestante">Calculando...</span>
+                    </div>
+
+                    <button class="action-button" id="btnAsignarPrioridad"
+                            onclick="openPrioridadModal()"
+                            th:disabled="${(ticket.estado == 'Resuelto' or ticket.estado == 'Desactivado' or ticket.estado == 'Cerrado')}">
+                        <i class="fa-solid fa-thumbtack"></i> Asignar Prioridad
+                    </button>
+                </div>
+
+                <!-- Main Content -->
+                <div class="ticket-details">
+                    <div class="tabs">
+                        <button class="tab-button active" data-tab="tab1">
+                            <i class="fa-solid fa-list-ul"></i>
+                            Detalles del Ticket
+                        </button>
+                        <button class="tab-button" data-tab="tab2">
+                            <i class="fa-solid fa-comments"></i>
+                            Respuestas
+                        </button>
+                        <button class="tab-button" data-tab="tab3" 
+                                th:if="${usuarioActual.roles.?[nombre == 'ROL_ADMINISTRADOR'].size() > 0}">
+                            <i class="fa-solid fa-clock-rotate-left"></i>
+                            Auditoria
+                        </button>
+                    </div>
+                    <div class="tab-content">
+                        <div id="tab1" class="tab-pane active">
+                            <div class="card" id="card-tabs">
+                                <form>
+                                    <div class="grid grid-2">
+                                        <div class="form-group">
+                                            <label for="solicitante" class="form-label">Solicitante</label>
+                                            <div class="input-group">
+                                                <input type="text" class="form-control" id="solicitante" 
+                                                       th:value="${ticket.solicitante != null ? 
+                                                       (ticket.solicitante.apellido != null && !ticket.solicitante.apellido.isEmpty() ? 
+                                                       ticket.solicitante.nombre + ' ' + ticket.solicitante.apellido + ' (' + ticket.solicitante.codigo + ')' : 
+                                                       ticket.solicitante.nombre + ' (' + ticket.solicitante.codigo + ')') : 
+                                                       'Sin Asignar'}" 
+                                                       readonly>
+                                                <button type="button" 
+                                                        id="infoUsuario" 
+                                                        class="btn btn-outline-secondary popover-btn" 
+                                                        data-popover="Ver Perfil del Solicitante"
+                                                        th:onclick="'window.location.href=\'/tickets/perfil-solicitante/' + ${ticket.solicitante.idUsuario} + '\''">
+                                                    <i class="fa-solid fa-id-badge"></i>
+                                                </button>
+                                            </div>
+                                        </div>
+
+                                        <div class="grid grid-2">
+                                            <div class="form-group">
+                                                <!-- Campo Editable por medio del buttom Actualizar Ticket -->
+                                                <label for="codigo" class="form-label">Código</label>
+                                                <input type="text" class="form-control" id="codigo" th:value="${ticket.codigo}" readonly maxlength="11">
+                                            </div>
+                                            <div class="form-group">
+                                                <label for="impacto" class="form-label">Impacto</label>
+                                                <select class="form-control no-interaction" id="impacto" th:value="${#strings.isEmpty(ticket.impacto) ? 'Sin Asignar' : ticket.impacto}">
+                                                    <option th:selected="${ticket.impacto == 'Mínimo'}" value="Mínimo">Mínimo</option>
+                                                    <option th:selected="${ticket.impacto == 'Regular'}" value="Regular">Regular</option>
+                                                    <option th:selected="${ticket.impacto == 'Importante'}" value="Importante">Importante</option>
+                                                    <option th:selected="${ticket.impacto == 'Urgente'}" value="Urgente">Urgente</option>
+                                                    <option th:selected="${ticket.impacto == null or ticket.impacto == 'Sin Asignar'}" value="Sin Asignar">Sin Asignar</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="grid grid-2">
+                                        <div class="grid grid-2">
+                                            <div class="form-group">
+                                                <label for="fechaApertura" class="form-label">Fecha de Apertura</label>
+                                                <input type="text" class="form-control" id="fechaApertura" 
+                                                       th:value="${#dates.format(ticket.fechaApertura, 'dd')} + ' de ' + ${#dates.format(ticket.fechaApertura, 'MMMM')} + ' del ' + ${#dates.format(ticket.fechaApertura, 'yyyy')} + ' - ' + ${#dates.format(ticket.fechaApertura, 'HH:mm:ss')}" 
+                                                       readonly>
+                                            </div>
+                                            <div class="form-group">
+                                                <label for="categoria" class="form-label">Categoría</label>
+                                                <select class="form-control no-interaction" id="categoria" th:value="${ticket.categoria}">
+                                                    <option th:each="categoria : ${categoriasActivas}" 
+                                                            th:value="${categoria.nombre}"
+                                                            th:text="${categoria.nombre}"
+                                                            th:selected="${ticket.categoria == categoria.nombre}">
+                                                    </option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                        <div class="grid grid-2">
+                                            <!-- Campo Editable por medio del buttom Actualizar Ticket -->
+                                            <div class="form-group">
+                                                <label for="prioridad" class="form-label">Prioridad</label>
+                                                <select class="form-control no-interaction" id="prioridad" th:value="${ticket.prioridad}">
+                                                    <option th:selected="${ticket.prioridad == 'Bajo'}" value="Bajo">Bajo</option>
+                                                    <option th:selected="${ticket.prioridad == 'Medio'}" value="Medio">Medio</option>
+                                                    <option th:selected="${ticket.prioridad == 'Alto'}" value="Alto">Alto</option>
+                                                    <option th:selected="${ticket.prioridad == 'Critico'}" value="Critico">Critico</option>
+                                                    <option th:selected="${ticket.prioridad == 'Sin Asignar'}" value="Sin Asignar">Sin Asignar</option>
+                                                </select>
+                                            </div>
+                                            <!-- Campo Editable por medio del buttom Actualizar Ticket -->
+                                            <div class="form-group">
+                                                <div class="label-with-icon">
+                                                    <label for="estado" class="form-label">Estado</label>
+                                                    <span class="password-info-icon">
+                                                        <i class="fas fa-info-circle"></i>
+                                                        <div class="password-popover-container">
+                                                            <div class="password-popover">
+                                                                <div class="password-popover-title">Información sobre Estados</div>
+                                                                <div class="password-popover-content">
+                                                                    <ul>
+                                                                        <li><strong>Abierto (En Revisión):</strong> Ticket recién creado, pendiente de asignación.</li>
+                                                                        <li><strong>Pendiente (En Progreso):</strong> Ticket asignado y en proceso de resolución.</li>
+                                                                        <li><strong>Resuelto (Solucionado):</strong> Solución implementada, pendiente de cierre.</li>
+                                                                        <li><strong>Cerrado (Cerrado):</strong> Ticket finalizado y confirmado.</li>
+                                                                        <li><strong>Cancelado (Cancelado):</strong> Ticket cancelado por el solicitante.</li>
+                                                                        <li><strong>Desactivado (Desactivado):</strong> Ticket deshabilitado para el usuario solicitante.</li>
+                                                                    </ul>
+                                                                    <div style="margin-top: 12px; padding-top: 8px; border-top: 1px solid #e0e0e0; font-size: 11px; color: #555; font-style: italic;">
+                                                                        <strong>Correspondencia de estados:</strong> La descripción entre paréntesis representa cómo visualiza el estado el usuario solicitante.
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </span>
+                                                </div>
+                                                <select class="form-control no-interaction" id="estado">
+                                                    <option th:selected="${ticket.estado == 'Abierto'}">Abierto</option>
+                                                    <option th:selected="${ticket.estado == 'Pendiente'}">Pendiente</option>
+                                                    <option th:selected="${ticket.estado == 'Resuelto'}">Resuelto</option>
+                                                    <option th:selected="${ticket.estado == 'Cerrado'}">Cerrado</option>
+                                                    <option th:selected="${ticket.estado == 'Cancelado'}">Cancelado</option>
+                                                    <option th:selected="${ticket.estado == 'Desactivado'}" 
+                                                            th:unless="${esSoportista}">Desactivado</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="grid grid-2">
+                                        <div class="form-group">
+                                            <label for="asignadoPara" class="form-label">Asignado para</label>
+                                            <div class="input-group" 
+                                                 th:classappend="${(ticket.estado == 'Resuelto' or ticket.estado == 'Desactivado')} ? 'no-button' : ''">
+                                                <input type="text" class="form-control" id="asignadoPara" 
+                                                       th:value="${ticket.asignadoPara != null ? 
+                                                       (ticket.asignadoPara.apellido != null && !ticket.asignadoPara.apellido.isEmpty() ? 
+                                                       ticket.asignadoPara.nombre + ' ' + ticket.asignadoPara.apellido + ' (' + ticket.asignadoPara.codigo + ')' : 
+                                                       ticket.asignadoPara.nombre + ' (' + ticket.asignadoPara.codigo + ')') : 
+                                                       'Sin Asignar'}" 
+                                                       readonly>
+                                                <button type="button" 
+                                                        id="asignarTicket" 
+                                                        class="btn btn-outline-secondary popover-btn" 
+                                                        data-popover="Asignar Ticket"
+                                                        th:unless="${ticket.estado == 'Resuelto' or ticket.estado == 'Desactivado' or ticket.asignadoPara != null}">
+                                                    <i class="fa-solid fa-user-plus"></i>
+                                                </button>
+                                            </div>
+                                        </div>
+                                        <div class="grid grid-2">
+                                            <div class="form-group">
+                                                <label for="ultimaActualizacion" class="form-label">Última Fecha de Actualización</label>
+                                                <input type="text" class="form-control" id="ultimaActualizacion" 
+                                                       th:value="${#dates.format(ticket.fechaActualizacion, 'dd')} + ' de ' + ${#dates.format(ticket.fechaActualizacion, 'MMMM')} + ' del ' + ${#dates.format(ticket.fechaActualizacion, 'yyyy')} + ' - ' + ${#dates.format(ticket.fechaActualizacion, 'HH:mm:ss')}" 
+                                                       readonly>
+                                            </div>
+                                            <div class="form-group">
+                                                <label for="actualizadoPor" class="form-label">Actualizado por</label>
+                                                <input type="text" class="form-control" id="actualizadoPor" 
+                                                       th:value="${lastUpdatedBy != null ? lastUpdatedBy : 'Sistema'}" 
+                                                       readonly>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Campo Editable por medio del buttom Actualizar Ticket -->
+                                    <div class="form-group">
+                                        <label for="breveDescripcion" class="form-label">Breve Descripción</label>
+                                        <input type="text" class="form-control" id="breveDescripcion" th:value="${ticket.titulo}" readonly>
+                                    </div>
+
+                                    <!-- Campo Editable por medio del buttom Actualizar Ticket -->
+                                    <div class="form-group">
+                                        <label for="descripcion" class="form-label">Descripción</label>
+                                        <textarea class="form-control" id="descripcion" readonly th:text="${ticket.descripcion}"></textarea>
+                                    </div>
+
+                                    <div class="form-group">
+                                        <label class="form-label">Archivos adjuntos</label>
+                                        <div class="attachments-container" th:if="${tieneArchivos}">
+                                            <div class="files-list">
+                                                <div th:each="archivo : ${archivosInfo}" class="file-item"
+                                                     th:attr="data-id=${archivo.id}, 
+                                                     data-type=${archivo.tipo.startsWith('image/') ? 'image' : 'pdf'},
+                                                     data-name=${archivo.nombre}">
+                                                    <i th:class="${archivo.tipo.startsWith('image/') ? 'far fa-file-image file-icon' : 
+                                                       (archivo.tipo == 'application/pdf' ? 'far fa-file-pdf file-icon' : 'far fa-file file-icon')}"></i>
+                                                    <span class="file-name" th:text="${archivo.nombre}"></span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="no-attachments-message" th:unless="${tieneArchivos}">
+                                            <div class="empty-state">
+                                                <i class="far fa-folder-open"></i>
+                                                <p>No se han adjuntado archivos a este ticket</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </form>
                             </div>
-                            <button class="file-nav next-file" onclick="changeFile(1)">&#10095;</button>
                         </div>
 
-                        <div class="back-button-container">
-                            <a onclick="window.location.href = '/tickets/listado'" class="btn btn-outline-secondary back-button">
-                                <i class="fa-solid fa-arrow-left"></i>
-                            </a>
-
-                            <input type="hidden" id="ticketId" th:value="${ticket.idTicket}">
-
-                                <!-- Botón Atender Ticket -->
-                                <button th:if="${ticket.estado != 'Cerrado' and ticket.estado != 'Desactivado' and
-                                        ticket.asignadoPara?.idUsuario != usuarioActual.idUsuario and
-                                        (esAdmin or esSoportista or 
-                                        (ticket.estado == 'Abierto' and ticket.asignadoPara == null))}"
-                                        type="button" 
-                                        id="btnAtenderTicket" 
-                                        class="btn btn-outline-primary" 
-                                        th:data-ticket-id="${ticket.idTicket}"
-                                        onclick="atenderTicket(this.getAttribute('data-ticket-id'))">
-                                    <i class="fa-solid fa-clipboard-check"></i> Atender Ticket
-                                </button>
-
-                                <!-- Botón Actualizar Ticket -->
-                                <button th:if="${(esAdmin or (ticket.estado != 'Desactivado' and ticket.estado != 'Cerrado' and 
-                                        (ticket.solicitante.idUsuario == usuarioActual.idUsuario and usuarioActual.roles.?[nombre == 'ROL_SOPORTISTA'].size() > 0))) or 
-                                        (esAdmin and ticket.estado != 'Desactivado') or
-                                        (ticket.estado == 'Cerrado' and ticket.solicitante.idUsuario == usuarioActual.idUsuario and 
-                                        ticket.solicitante.roles.?[nombre == 'ROL_SOPORTISTA'].size() > 0)}"
-                                        type="button" 
-                                        class="btn btn-outline-primary" 
-                                        onclick="toggleEditMode()">
-                                    <i class="fa-solid fa-pen"></i> Actualizar Ticket
-                                </button>
-
-                                <!-- Botón Asignar/Reasignar Ticket -->
-                                <button th:if="${(esAdmin or (ticket.estado != 'Desactivado' and 
-                                        ((ticket.asignadoPara != null and usuarioActual != null and ticket.asignadoPara.idUsuario == usuarioActual.idUsuario) or
-                                        (ticket.estado == 'Cerrado' and ticket.solicitante.idUsuario == usuarioActual.idUsuario and 
-                                        ticket.solicitante.roles.?[nombre == 'ROL_SOPORTISTA'].size() > 0)))) or 
-                                        (esAdmin and ticket.estado != 'Desactivado' and ticket.asignadoPara != null)}" 
-                                        type="button" 
-                                        class="btn btn-outline-primary"
-                                        onclick="openAssignTicketsModal()">
-                                    <i th:class="${ticket.asignadoPara != null ? 'fa-solid fa-user-pen' : 'fa-solid fa-user-plus'}"></i>
-                                    <span th:text="${ticket.asignadoPara != null ? 'Reasignar Ticket' : 'Asignar Ticket'}"></span>
-                                </button>
-
-                                <!-- Botón Reabrir Ticket -->
-                                <button th:if="${ticket.estado == 'Resuelto'}"
-                                        type="button" 
-                                        class="btn btn-outline-primary" 
-                                        onclick="openReabrirTicketModal()">
-                                    <i class="fa-solid fa-rotate"></i> Reabrir Ticket
-                                </button>
-
-                                <!-- Botón Cerrar Ticket -->
-                                <button th:if="${ticket.asignadoPara != null and ticket.estado != 'Resuelto' and ticket.estado != 'Desactivado' and ticket.estado != 'Cerrado'}" 
-                                        type="button" 
-                                        class="btn btn-outline-success" 
-                                        id="btnCerrarTicket"
-                                        onclick="verificarPrioridadYCerrar()">
-                                    <i class="fa-regular fa-circle-check"></i> Cerrar Ticket
-                                </button>
-
-                                <!-- Botón Desactivar Ticket -->
-                                <button type="button" 
-                                        class="btn btn-danger" 
-                                        id="desactivarBtn" 
-                                        th:data-ticket-id="${ticket.idTicket}"
-                                        th:disabled="${ticket.estado == 'Desactivado'}"
-                                        onclick="openDeactivateTicketModal()">
-                                    <i class="fa-solid fa-ban"></i> Desactivar Ticket
-                                </button>
-                        </div>
-
-                        <div class="container">
-                            <!-- Sidebar -->
-                            <div class="ticket-summary card">
-                                <h2 class="ticket-title">Resumen del Ticket</h2>
-                                <div class="info-row">
-                                    <span class="info-label">Estado:</span>
-                                    <span th:class="'badge badge-' + ${#strings.toLowerCase(ticket.estado)}"
-                                          th:text="${ticket.estado}">(Estado)</span>
+                        <div id="tab2" class="tab-pane">
+                            <!-- Contenido de la pestaña Respuestas -->
+                            <div class="card" id="card-tabs" style="padding: 10px 20px 0px 20px;">
+                                <div class="chat-header">
+                                    <div class="chat-header-top">
+                                        <h2>Chat de Soporte <span id="totalMessagesCounter">(0 mensajes)</span></h2>
+                                        <div class="btn-refresh-container popover-btn" data-popover="Actualizar Mensajes">
+                                            <button id="btnRefreshMessages" class="btn-refresh">
+                                                <i class="fas fa-sync-alt"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <div class="chat-controls">
+                                        <!-- Barra de búsqueda -->
+                                        <div class="search-bar">
+                                            <input type="text" id="searchMessages" placeholder="Buscar mensajes...">
+                                            <button id="btnSearch"><i class="fa fa-search"></i></button>
+                                        </div>
+                                        <div class="filter-select">
+                                            <select id="messageFilter">
+                                                <option value="all">Todos</option>
+                                                <option value="usuario">Solicitante</option>
+                                                <option value="soporte">Soportista</option>
+                                                <option value="notas" 
+                                                        th:if="${usuarioActual.roles.?[nombre == 'ROL_SOPORTISTA'].size() > 0 or usuarioActual.roles.?[nombre == 'ROL_ADMINISTRADOR'].size() > 0}">
+                                                    Notas Internas
+                                                </option>
+                                            </select>
+                                        </div>
+                                    </div>
                                 </div>
-                                <div class="info-row">
-                                    <span class="info-label">Prioridad:</span>
-                                    <span th:class="'badge badge-' + ${ticket.prioridad == 'Sin Asignar' ? 'sin-asignar' : #strings.toLowerCase(ticket.prioridad)}"
-                                          th:text="${ticket.prioridad == 'Sin Asignar' ? 'Sin Asignar' : ticket.prioridad}">
-                                        (Prioridad)
+                                <div class="chat-messages" id="chatMessagesContainer">
+                                    <!-- Ejemplo de mensaje (Este no se muestra en la vista) -->
+                                    <div class="message">
+                                        <div class="message-header">
+                                            <div class="user-avatar">
+                                                <img src="/img/ImagenDefaultPerfil.jpg" alt="Foto de perfil">
+                                            </div>
+                                            <div class="message-info">
+                                                <span class="user-name-message">Fernando</span>
+                                                <span class="message-time">25/06/2025, 21:15:00</span>
+                                            </div>
+                                            <span class="user-role role-admin">Usuario</span>
+                                        </div>
+                                        <div class="message-content">
+                                            Contenido del Mensaje...
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div id="tab3" class="tab-pane" th:if="${usuarioActual.roles.?[nombre == 'ROL_ADMINISTRADOR'].size() > 0}">
+                            <div class="card" id="card-tabs" style="padding: 10px 20px 0px 20px;">
+                                <div class="audit-header">
+                                    <div class="audit-header-top">
+                                        <h2>Historial de Auditoría</h2>
+                                        <div class="btn-refresh-container popover-btn" data-popover="Actualizar Historial">
+                                            <button id="btnRefreshAudit" class="btn-refresh">
+                                                <i class="fas fa-sync-alt"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <div class="audit-header-top">
+                                        <div class="audit-filters">
+                                            <select class="form-control" id="auditFilter">
+                                                <option value="all">Todas las acciones</option>
+                                                <option value="CREACION">Creación</option>
+                                                <option value="CANCELACION">Cancelado</option>
+                                                <option value="ASIGNACION">Asignaciones</option>
+                                                <option value="RESPUESTA_PUBLICA">Respuestas públicas</option>
+                                                <option value="NOTA_INTERNA">Notas internas</option>
+                                                <option value="ELIMINACION_RESPUESTA_PUBLICA">Eliminación de respuestas</option>
+                                                <option value="ELIMINACION_NOTA_INTERNA">Eliminación de notas</option>
+                                                <option value="CAMBIO_ESTADO">Cambios de estado</option>
+                                                <option value="CIERRE">Cierres</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="audit-container">
+                                    <div class="audit-timeline" id="auditTimeline">
+                                        <!-- Los registros de auditoría se cargarán aquí dinámicamente -->
+                                        <div class="loading-audit">
+                                            <i class="fas fa-spinner fa-spin"></i>
+                                            <span>Cargando historial...</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="card" id="card-message-manager">
+                            <div class="response-header">
+                                <h2>Responder Ticket</h2>
+                               <button type="button" class="response-type public-response" id="responseType" onclick="toggleResponseType()">Respuesta Pública</button>
+                            </div>
+                            <form id="formResponderTicket" th:action="@{/tickets/responder/{id}(id=${ticket.idTicket})}" method="POST">
+                                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                                <input type="hidden" id="esNotaInterna" name="esNotaInterna" value="false">
+                                <input type="hidden" id="respuesta" name="respuesta">
+                                <input type="hidden" id="respuestaTexto" name="respuestaTexto">
+
+                                <!-- Editor TinyMCE -->
+                                <div class="response-editor-container">
+                                    <div id="editor"></div>
+                                </div>
+
+                                <div class="response-actions">
+                                    <button type="submit" class="btn btn-primary">
+                                        <i class="fas fa-paper-plane"></i> Enviar Respuesta
+                                    </button>
+                                </div>
+                            </form>
+
+                            <!-- Mensaje para tickets cerrados - Visible para todos -->
+                            <div th:if="${ticket.estado == 'Cerrado'}" class="status-message info">
+                                <i class="fas fa-info-circle"></i>
+                                <span>
+                                    Este ticket está cerrado. 
+                                    <!-- Mensaje para colaboradores (admin/soporte) -->
+                                    <span th:if="${usuarioActual.roles.?[nombre == 'ROL_ADMINISTRADOR'].size() > 0 or 
+                                          usuarioActual.roles.?[nombre == 'ROL_SOPORTISTA'].size() > 0}">
+                                        Los usuarios no pueden responder mensajes en tickets que se encuentren cerrados.
                                     </span>
-                                </div>
-                                <div class="info-row">
-                                    <span class="info-label">Categoria:</span>
-                                    <span class="badge badge-categorias" th:text="${ticket.categoria}">#TIC12345678</span>
-                                </div>
-                                <div class="info-row">
-                                    <span class="info-label">Código:</span>
-                                    <span class="badge badge-codigo" th:text="'#' + ${ticket.codigo}">#TIC12345678</span>
-                                </div>
-                                <div class="info-row">
-                                    <span class="info-label">Fecha de Apertura:</span>
-                                    <span class="info-value" th:text="${#dates.format(ticket.fechaApertura, 'dd/MM/yyyy')}"></span>
-                                </div>
-                                <div class="info-row" th:if="${ticket.estado == 'Resuelto'}">
-                                    <span class="info-label">Cierre automático en:</span>
-                                    <span class="info-value" id="tiempoCierreRestante">Calculando...</span>
-                                </div>
-
-
-                                <!-- Boton sin implementar
-                                <button class="action-button" id="btnHeredarTicket"
-                                        th:disabled="${(ticket.estado == 'Resuelto' or ticket.estado == 'Desactivado') or 
-                                        (ticket.estado == 'Abierto' and esSoportista)}">
-                                    <i class="fa-solid fa-people-arrows"></i> Heredar Ticket
-                                </button>
-                                -->
-
-                                <button class="action-button" id="btnAsignarPrioridad"
-                                        onclick="openPrioridadModal()"
-                                        th:disabled="${(ticket.estado == 'Resuelto' or ticket.estado == 'Desactivado' or ticket.estado == 'Cerrado')}">
-                                    <i class="fa-solid fa-thumbtack"></i> Asignar Prioridad
-                                </button>
+                                </span>
                             </div>
 
-                            <!-- Main Content -->
-                            <div class="ticket-details">
-                                <div class="tabs">
-                                    <button class="tab-button active" data-tab="tab1">
-                                        <i class="fa-solid fa-list-ul"></i>
-                                        Detalles del Ticket
+                            <!-- Mensaje para tickets desactivados -->
+                            <div th:if="${ticket.estado == 'Desactivado'}" class="status-message warning">
+                                <i class="fas fa-exclamation-triangle"></i>
+                                <span>Este ticket está desactivado. No se permiten más mensajes.</span>
+                            </div>
+                        </div>
+
+                        <!-- Modal de Asignar Prioridad -->
+                        <div class="modal-overlay" id="prioridadModalOverlay">
+                            <div class="modal">
+                                <div class="modal-header">
+                                    <h2 class="modal-title">Asigne la prioridad estimada según el valor de cada celda</h2>
+                                    <p class="modal-description">Una vez se actualice la prioridad del ticket, el usuario solicitante quedará a la espera de la resolución correspondiente. Además, se habilitará la opción para cerrar el ticket.</p>
+                                </div>
+
+                                <div class="modal-body">
+                                    <!-- Usa Thymeleaf para pasar el ID del ticket -->
+                                    <form th:action="@{/tickets/asignar-prioridad/{id}(id=${ticket.idTicket})}" method="POST">
+                                        <input type="hidden" name="_csrf" th:value="${_csrf.token}" />
+                                        <div class="form-grid">
+                                            <div class="form-row">
+                                                <div class="form-group">
+                                                    <label class="form-label" for="categoria">Categoría</label>
+                                                    <div class="form-control">Hardware</div>
+                                                </div>
+
+                                                <div class="form-group">
+                                                    <label class="form-label" for="impacto">Impacto</label>
+                                                    <div class="form-control">Medio</div>
+                                                </div>
+
+                                                <div class="form-group">
+                                                    <label class="form-label" for="prioridad">Prioridad</label>
+                                                    <select class="form-select" id="prioridadSelect" name="prioridad" onchange="habilitarBoton()">
+                                                        <!-- Mostrar "Sin Asignar" solo si la prioridad actual es "Sin Asignar" -->
+                                                        <option th:if="${ticket.prioridad == 'Sin Asignar'}" value="Sin Asignar" th:selected="${ticket.prioridad == 'Sin Asignar'}">Sin Asignar</option>
+                                                        <option value="Bajo" th:selected="${ticket.prioridad == 'Bajo'}">Bajo</option>
+                                                        <option value="Medio" th:selected="${ticket.prioridad == 'Medio'}">Medio</option>
+                                                        <option value="Alto" th:selected="${ticket.prioridad == 'Alto'}">Alto</option>
+                                                        <option value="Critico" th:selected="${ticket.prioridad == 'Critico'}">Critico</option>
+                                                    </select>
+                                                </div>
+                                            </div>
+                                        </div>
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="submit" class="btn" id="btnActualizarPrioridad" disabled>Actualizar Prioridad</button>
+                                    <button type="button" class="btn btn-outline" id="closePrioridadModalBtn">Cerrar</button>
+                                </div>
+                                </form>
+                            </div>
+                        </div>
+
+                        <!-- Modal para confirmar el cierre del ticket -->
+                        <div class="modal-overlay" id="resolveTicketModalOverlay">
+                            <div class="modal">
+                                <div class="modal-header">
+                                    <h2 class="modal-title">Confirmar Cierre del Ticket</h2>
+                                </div>
+                                <form th:action="@{/tickets/cerrarTicket}" method="post">
+                                    <div class="modal-body">
+                                        <input type="hidden" name="idTicket" th:value="${ticket.idTicket}">
+                                        <div>
+                                            <p>¿Está seguro que desea cerrar el ticket?</p>
+                                        </div>
+                                    </div>
+                                    <div class="modal-footer">
+                                        <button type="button" class="btn btn-secondary" onclick="closeResolveTicketModal()">Cancelar</button>
+                                        <button type="submit" class="btn btn-primary">Cerrar Ticket</button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+
+                        <!-- Modal para mostrar error si no hay prioridad o usuario asignado -->
+                        <div class="modal-overlay" id="errorPriorityModalOverlay">
+                            <div class="modal">
+                                <div class="modal-header">
+                                    <h2 class="modal-title">Requisitos no cumplidos</h2>
+                                </div>
+                                <div class="modal-body">
+                                    <div class="form-group">
+                                        <p>Para cerrar un ticket primero se le debe asignar un nivel de prioridad y un usuario responsable.</p>
+                                    </div>
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-primary" onclick="closeErrorPriorityModal()">Aceptar</button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Modal para asignar tickets -->
+                        <div class="modal-overlay" id="assignTicketsModalOverlay">
+                            <div class="modal assign-modal">
+                                <div class="modal-header">
+                                    <h2 class="modal-title">Asignar Ticket</h2>
+                                    <p class="modal-description">Seleccione un soportista o administrador para asignar el ticket.</p>
+                                </div>
+
+                                <div class="modal-body">
+                                    <!-- Campo de búsqueda mejorado -->
+                                    <div class="form-group">
+                                        <label class="form-label" for="soportistaSearchInput">Buscar soportista/administrador</label>
+                                        <div class="search-input-container">
+                                            <i class="fas fa-search search-icon"></i>
+                                            <input type="text" 
+                                                   class="form-control search-input" 
+                                                   id="soportistaSearchInput" 
+                                                   placeholder="Buscar por nombre, código o rol..."
+                                                   autocomplete="off">
+                                            <button type="button" 
+                                                    class="clear-search-btn" 
+                                                    id="clearSearchBtn" 
+                                                    title="Limpiar búsqueda">
+                                                <i class="fas fa-times"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    <!-- Contenedor de resultados flotante -->
+                                    <div class="floating-results-container" id="floatingResultsContainer">
+                                        <!-- Mensaje de carga -->
+                                        <div id="loadingMessage" class="loading-message" style="display: none;">
+                                            <i class="fas fa-spinner fa-spin"></i>
+                                            <span>Cargando soportistas...</span>
+                                        </div>
+
+                                        <!-- Mensaje de error -->
+                                        <div id="errorMessage" class="error-message" style="display: none;">
+                                            Error al cargar los soportistas
+                                        </div>
+
+                                        <!-- Lista de soportistas flotante -->
+                                        <div class="floating-results-list" id="soportistasList">
+                                            <!-- Los soportistas se cargarán aquí dinámicamente -->
+                                        </div>
+                                    </div>
+
+                                    <!-- Resumen del ticket a asignar -->
+                                    <div class="ticket-summary-section">
+                                        <div class="section-header">
+                                            <i class="fas fa-ticket-alt"></i>
+                                            <span>Resumen de tickets (1 ticket)</span>
+                                        </div>
+                                        <div class="ticket-group">
+                                            <div class="ticket-group-header">
+                                                <div class="group-elements">
+                                                    <span class="badge" 
+                                                          th:classappend="${ticket.prioridad == 'Sin Asignar'} ? 
+                                                          'badge-sin-asignar' : 
+                                                          'badge-' + ${#strings.toLowerCase(#strings.replace(ticket.prioridad, ' ', '-'))}">
+                                                        <span th:text="${ticket.prioridad == 'Sin Asignar' ? 'Sin Asignar' : ticket.prioridad}"></span>
+                                                    </span>
+                                                    <span class="badge badge-categorias" style="margin-left: 8px;">
+                                                        <span th:text="${ticket.categoria}"></span>
+                                                    </span>
+                                                </div>
+                                                <span class="ticket-count"><span id="ticketCountBadge">1</span> ticket</span>
+                                            </div>
+                                            <ul class="ticket-list" id="ticketList">
+                                                <li class="ticket-item">
+                                                    <span class="ticket-id" th:text="${ticket.codigo}">TIC68428073</span>:
+                                                    <span class="ticket-title" th:text="${ticket.titulo}">Solicitud de nueva funcionalidad para reportes</span>
+                                                </li>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-outline" onclick="closeAssignTicketsModal()">
+                                        Cancelar
                                     </button>
-                                    <button class="tab-button" data-tab="tab2">
-                                        <i class="fa-solid fa-comments"></i>
-                                        Respuestas
-                                        <span class="counter">3</span>
-                                    </button>
-                                    <button class="tab-button" data-tab="tab3" 
-                                            th:if="${usuarioActual.roles.?[nombre == 'ROL_ADMINISTRADOR'].size() > 0}">
-                                        <i class="fa-solid fa-clock-rotate-left"></i>
-                                        Auditoria
+                                    <button type="button" 
+                                            class="btn btn-primary" 
+                                            id="confirmAssignBtn" 
+                                            disabled>
+                                        Confirmar Asignación
                                     </button>
                                 </div>
-                                <div class="tab-content">
-                                    <div id="tab1" class="tab-pane active">
-                                        <div class="card" id="card-tabs">
-                                            <form>
-                                                <div class="grid grid-2">
-                                                    <div class="form-group">
-                                                        <label for="solicitante" class="form-label">Solicitante</label>
-                                                        <div class="input-group">
-                                                            <input type="text" class="form-control" id="solicitante" 
-                                                                   th:value="${ticket.solicitante != null ? 
-                                                                   (ticket.solicitante.apellido != null && !ticket.solicitante.apellido.isEmpty() ? 
-                                                                   ticket.solicitante.nombre + ' ' + ticket.solicitante.apellido : 
-                                                                   ticket.solicitante.nombre) : 
-                                                                   'Sin Asignar'}" 
-                                                                   readonly>
-                                                                <button type="button" 
-                                                                        id="infoUsuario" 
-                                                                        class="btn btn-outline-secondary popover-btn" 
-                                                                        data-popover="Ver Perfil del Solicitante"
-                                                                        th:onclick="'window.location.href=\'/tickets/perfil-solicitante/' + ${ticket.solicitante.idUsuario} + '\''">
-                                                                    <i class="fa-solid fa-id-badge"></i>
-                                                                </button>
-                                                        </div>
-                                                    </div>
+                            </div>
+                        </div>
 
-                                                    <div class="grid grid-2">
-                                                        <div class="form-group">
-                                                            <!-- Campo Editable por medio del buttom Actualizar Ticket -->
-                                                            <label for="codigo" class="form-label">Código</label>
-                                                            <input type="text" class="form-control" id="codigo" th:value="${ticket.codigo}" readonly maxlength="11">
-                                                        </div>
-                                                        <div class="form-group">
-                                                            <label for="impacto" class="form-label">Impacto</label>
-                                                            <select class="form-control no-interaction" id="impacto" th:value="${#strings.isEmpty(ticket.impacto) ? 'Sin Asignar' : ticket.impacto}">
-                                                                <option th:selected="${ticket.impacto == 'Mínimo'}" value="Mínimo">Mínimo</option>
-                                                                <option th:selected="${ticket.impacto == 'Regular'}" value="Regular">Regular</option>
-                                                                <option th:selected="${ticket.impacto == 'Importante'}" value="Importante">Importante</option>
-                                                                <option th:selected="${ticket.impacto == 'Urgente'}" value="Urgente">Urgente</option>
-                                                                <option th:selected="${ticket.impacto == null or ticket.impacto == 'Sin Asignar'}" value="Sin Asignar">Sin Asignar</option>
-                                                            </select>
-                                                        </div>
-                                                    </div>
-                                                </div>
-
-                                                <div class="grid grid-2">
-                                                    <div class="grid grid-2">
-                                                        <div class="form-group">
-                                                            <label for="fechaApertura" class="form-label">Fecha de Apertura</label>
-                                                            <input type="text" class="form-control" id="fechaApertura" 
-                                                                   th:value="${#dates.format(ticket.fechaApertura, 'dd')} + ' de ' + ${#dates.format(ticket.fechaApertura, 'MMMM')} + ' del ' + ${#dates.format(ticket.fechaApertura, 'yyyy')} + ' - ' + ${#dates.format(ticket.fechaApertura, 'HH:mm:ss')}" 
-                                                                   readonly>
-                                                        </div>
-                                                        <div class="form-group">
-                                                            <label for="categoria" class="form-label">Categoría</label>
-                                                            <select class="form-control no-interaction" id="categoria" th:value="${ticket.categoria}">
-                                                                <option th:each="categoria : ${categoriasActivas}" 
-                                                                        th:value="${categoria.nombre}"
-                                                                        th:text="${categoria.nombre}"
-                                                                        th:selected="${ticket.categoria == categoria.nombre}">
-                                                                </option>
-                                                            </select>
-                                                        </div>
-                                                    </div>
-                                                    <div class="grid grid-2">
-                                                        <!-- Campo Editable por medio del buttom Actualizar Ticket -->
-                                                        <div class="form-group">
-                                                            <label for="prioridad" class="form-label">Prioridad</label>
-                                                            <select class="form-control no-interaction" id="prioridad" th:value="${ticket.prioridad}">
-                                                                <option th:selected="${ticket.prioridad == 'Bajo'}" value="Bajo">Bajo</option>
-                                                                <option th:selected="${ticket.prioridad == 'Medio'}" value="Medio">Medio</option>
-                                                                <option th:selected="${ticket.prioridad == 'Alto'}" value="Alto">Alto</option>
-                                                                <option th:selected="${ticket.prioridad == 'Critico'}" value="Critico">Critico</option>
-                                                                <option th:selected="${ticket.prioridad == 'Sin Asignar'}" value="Sin Asignar">Sin Asignar</option>
-                                                            </select>
-                                                        </div>
-                                                        <!-- Campo Editable por medio del buttom Actualizar Ticket -->
-                                                        <div class="form-group">
-                                                            <div class="label-with-icon">
-                                                                <label for="estado" class="form-label">Estado</label>
-                                                                <span class="password-info-icon">
-                                                                    <i class="fas fa-info-circle"></i>
-                                                                    <div class="password-popover-container">
-                                                                        <div class="password-popover">
-                                                                            <div class="password-popover-title">Información sobre Estados</div>
-                                                                            <div class="password-popover-content">
-                                                                                <ul>
-                                                                                    <li><strong>Abierto (En Revisión):</strong> Ticket recién creado, pendiente de asignación.</li>
-                                                                                    <li><strong>Pendiente (En Progreso):</strong> Ticket asignado y en proceso de resolución.</li>
-                                                                                    <li><strong>Resuelto (Solucionado):</strong> Solución implementada, pendiente de confirmación.</li>
-                                                                                    <li><strong>Cerrado (Cerrado):</strong> Ticket finalizado y confirmado.</li>
-                                                                                    <li><strong>Cancelado (Cancelado):</strong> Ticket cancelado por el solicitante.</li>
-                                                                                    <li><strong>Desactivado (Desactivado):</strong> Ticket deshabilitado por el administrador.</li>
-                                                                                </ul>
-                                                                                <div style="margin-top: 12px; padding-top: 8px; border-top: 1px solid #e0e0e0; font-size: 11px; color: #555; font-style: italic;">
-                                                                                    <strong>Correspondencia de estados:</strong> La descripción entre paréntesis representa cómo visualiza el estado el usuario solicitante.
-                                                                                </div>
-                                                                            </div>
-                                                                        </div>
-                                                                    </div>
-                                                                </span>
-                                                            </div>
-                                                            <select class="form-control no-interaction" id="estado">
-                                                                <option th:selected="${ticket.estado == 'Abierto'}">Abierto</option>
-                                                                <option th:selected="${ticket.estado == 'Pendiente'}">Pendiente</option>
-                                                                <option th:selected="${ticket.estado == 'Resuelto'}">Resuelto</option>
-                                                                <option th:selected="${ticket.estado == 'Cerrado'}">Cerrado</option>
-                                                                <option th:selected="${ticket.estado == 'Cancelado'}">Cancelado</option>
-                                                                <option th:selected="${ticket.estado == 'Desactivado'}" 
-                                                                        th:unless="${esSoportista}">Desactivado</option>
-                                                            </select>
-                                                        </div>
-                                                    </div>
-                                                </div>
-
-                                                <div class="grid grid-2">
-                                                    <div class="form-group">
-                                                        <label for="asignadoPara" class="form-label">Asignado para</label>
-                                                        <div class="input-group" 
-                                                             th:classappend="${(ticket.estado == 'Resuelto' or ticket.estado == 'Desactivado')} ? 'no-button' : ''">
-                                                            <input type="text" class="form-control" id="asignadoPara" 
-                                                                   th:value="${ticket.asignadoPara != null ? 
-                                                                   (ticket.asignadoPara.apellido != null && !ticket.asignadoPara.apellido.isEmpty() ? 
-                                                                   ticket.asignadoPara.nombre + ' ' + ticket.asignadoPara.apellido : 
-                                                                   ticket.asignadoPara.nombre) : 
-                                                                   'Sin Asignar'}" 
-                                                                   readonly>
-                                                                <button type="button" 
-                                                                        id="asignarTicket" 
-                                                                        class="btn btn-outline-secondary popover-btn" 
-                                                                        data-popover="Asignar Ticket"
-                                                                        th:unless="${ticket.estado == 'Resuelto' or ticket.estado == 'Desactivado' or ticket.asignadoPara != null}">
-                                                                    <i class="fa-solid fa-user-plus"></i>
-                                                                </button>
-                                                        </div>
-                                                    </div>
-                                                    <div class="grid grid-2">
-                                                        <div class="form-group">
-                                                            <label for="ultimaActualizacion" class="form-label">Última Fecha de Actualización</label>
-                                                            <input type="text" class="form-control" id="ultimaActualizacion" 
-                                                                   th:value="${#dates.format(ticket.fechaActualizacion, 'dd')} + ' de ' + ${#dates.format(ticket.fechaActualizacion, 'MMMM')} + ' del ' + ${#dates.format(ticket.fechaActualizacion, 'yyyy')} + ' - ' + ${#dates.format(ticket.fechaActualizacion, 'HH:mm:ss')}" 
-                                                                   readonly>
-                                                        </div>
-                                                        <div class="form-group">
-                                                            <label for="actualizadoPor" class="form-label">Actualizado por</label>
-                                                            <input type="text" class="form-control" id="actualizadoPor" 
-                                                                   th:value="${lastUpdatedBy != null ? lastUpdatedBy : 'Sistema'}" 
-                                                                   readonly>
-                                                        </div>
-                                                    </div>
-                                                </div>
-
-                                                <!-- Campo Editable por medio del buttom Actualizar Ticket -->
-                                                <div class="form-group">
-                                                    <label for="breveDescripcion" class="form-label">Breve Descripción</label>
-                                                    <input type="text" class="form-control" id="breveDescripcion" th:value="${ticket.titulo}" readonly>
-                                                </div>
-
-                                                <!-- Campo Editable por medio del buttom Actualizar Ticket -->
-                                                <div class="form-group">
-                                                    <label for="descripcion" class="form-label">Descripción</label>
-                                                    <textarea class="form-control" id="descripcion" readonly th:text="${ticket.descripcion}"></textarea>
-                                                </div>
-
-                                                <div class="form-group">
-                                                    <label class="form-label">Archivos adjuntos</label>
-                                                    <div class="attachments-container" th:if="${tieneArchivos}">
-                                                        <div class="files-list">
-                                                            <div th:each="archivo : ${archivosInfo}" class="file-item"
-                                                                 th:attr="data-id=${archivo.id}, 
-                                                                 data-type=${archivo.tipo.startsWith('image/') ? 'image' : 'pdf'},
-                                                                 data-name=${archivo.nombre}">
-                                                                <i th:class="${archivo.tipo.startsWith('image/') ? 'far fa-file-image file-icon' : 
-                                                                   (archivo.tipo == 'application/pdf' ? 'far fa-file-pdf file-icon' : 'far fa-file file-icon')}"></i>
-                                                                <span class="file-name" th:text="${archivo.nombre}"></span>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                    <div class="no-attachments-message" th:unless="${tieneArchivos}">
-                                                        <div class="empty-state">
-                                                            <i class="far fa-folder-open"></i>
-                                                            <p>No se han adjuntado archivos a este ticket</p>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </form>
+                        <!-- Modal para confirmar reapertura del ticket -->
+                        <div class="modal-overlay" id="reabrirTicketModal">
+                            <div class="modal">
+                                <div class="modal-header">
+                                    <h2 class="modal-title">Confirmar Reapertura del Ticket</h2>
+                                </div>
+                                <form th:action="@{/tickets/reabrir/{id}(id=${ticket.idTicket})}" method="POST">
+                                    <div class="modal-body">
+                                        <input type="hidden" name="_csrf" th:value="${_csrf.token}"/>
+                                        <div>
+                                            <p>¿Está seguro que desea reabrir este ticket? El estado cambiará a "Pendiente".</p>
                                         </div>
                                     </div>
-
-                                    <div id="tab2" class="tab-pane">
-                                        <!-- Contenido de la pestaña Respuestas -->
-                                        <div class="card" id="card-tabs" style="padding: 10px 20px 0px 20px;">
-                                            <div class="chat-header">
-                                                <div class="chat-header-top">
-                                                    <h2>Chat de Soporte <span id="totalMessagesCounter">(0 mensajes)</span></h2>
-                                                    <div class="btn-refresh-container popover-btn" data-popover="Actualizar Mensajes">
-                                                        <button id="btnRefreshMessages" class="btn-refresh">
-                                                            <i class="fas fa-sync-alt"></i>
-                                                        </button>
-                                                    </div>
-                                                </div>
-                                                <div class="chat-controls">
-                                                    <!-- Barra de búsqueda -->
-                                                    <div class="search-bar">
-                                                        <input type="text" id="searchMessages" placeholder="Buscar mensajes...">
-                                                            <button id="btnSearch"><i class="fa fa-search"></i></button>
-                                                    </div>
-                                                    <div class="filter-select">
-                                                        <select id="messageFilter">
-                                                            <option value="all">Todos</option>
-                                                            <option value="usuario">Solicitante</option>
-                                                            <option value="soporte">Soporte</option>
-                                                            <option value="notas" 
-                                                                    th:if="${usuarioActual.roles.?[nombre == 'ROL_SOPORTISTA'].size() > 0 or usuarioActual.roles.?[nombre == 'ROL_ADMINISTRADOR'].size() > 0}">
-                                                                Notas Internas
-                                                            </option>
-                                                        </select>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            <div class="chat-messages" id="chatMessagesContainer">
-                                                <!-- Ejemplo de mensaje (Este no se muestra en la vista) -->
-                                                <div class="message">
-                                                    <div class="message-header">
-                                                        <div class="user-avatar">
-                                                            <img src="/img/ImagenDefaultPerfil.jpg" alt="Foto de perfil">
-                                                        </div>
-                                                        <div class="message-info">
-                                                            <span class="user-name-message">Fernando</span>
-                                                            <span class="message-time">25/06/2025, 21:15:00</span>
-                                                        </div>
-                                                        <span class="user-role role-admin">Usuario</span>
-                                                    </div>
-                                                    <div class="message-content">
-                                                        Contenido del Mensaje...
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
+                                    <div class="modal-footer">
+                                        <button type="button" class="btn btn-secondary" onclick="closeReabrirTicketModal()">Cancelar</button>
+                                        <button type="submit" class="btn btn-primary">Reabrir Ticket</button>
                                     </div>
-
-                                    <div id="tab3" class="tab-pane" th:if="${usuarioActual.roles.?[nombre == 'ROL_ADMINISTRADOR'].size() > 0}">
-                                        <div class="card" id="card-tabs" style="padding: 10px 20px 0px 20px;">
-                                            <div class="audit-header">
-                                                <div class="audit-header-top">
-                                                    <h2>Historial de Auditoría</h2>
-                                                    <div class="btn-refresh-container popover-btn" data-popover="Actualizar Historial">
-                                                        <button id="btnRefreshAudit" class="btn-refresh">
-                                                            <i class="fas fa-sync-alt"></i>
-                                                        </button>
-                                                    </div>
-                                                </div>
-                                                <div class="audit-header-top">
-                                                    <div class="audit-filters">
-                                                        <select class="form-control" id="auditFilter">
-                                                            <option value="all">Todas las acciones</option>
-                                                            <option value="CREACION">Creación</option>
-                                                            <option value="CANCELACION">Cancelado</option>
-                                                            <option value="ASIGNACION">Asignaciones</option>
-                                                            <option value="RESPUESTA_PUBLICA">Respuestas públicas</option>
-                                                            <option value="NOTA_INTERNA">Notas internas</option>
-                                                            <option value="ELIMINACION_RESPUESTA_PUBLICA">Eliminación de respuestas</option>
-                                                            <option value="ELIMINACION_NOTA_INTERNA">Eliminación de notas</option>
-                                                            <option value="CAMBIO_ESTADO">Cambios de estado</option>
-                                                            <option value="CIERRE">Cierres</option>
-                                                        </select>
-                                                    </div>
-                                                </div>
-                                            </div>
-
-                                            <div class="audit-container">
-                                                <div class="audit-timeline" id="auditTimeline">
-                                                    <!-- Los registros de auditoría se cargarán aquí dinámicamente -->
-                                                    <div class="loading-audit">
-                                                        <i class="fas fa-spinner fa-spin"></i>
-                                                        <span>Cargando historial...</span>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <div class="card" id="card-message-manager">
-                                        <div class="response-header">
-                                            <h2>Responder Ticket</h2>
-                                            <button type="button" class="response-type" id="responseType" onclick="toggleResponseType()">Respuesta Pública</button>
-                                        </div>
-                                        <form id="formResponderTicket" th:action="@{/tickets/responder/{id}(id=${ticket.idTicket})}" method="POST">
-                                            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
-                                            <input type="hidden" id="esNotaInterna" name="esNotaInterna" value="false">
-                                                <input type="hidden" id="respuesta" name="respuesta">
-                                                    <input type="hidden" id="respuestaTexto" name="respuestaTexto">
-
-                                                        <!-- Editor TinyMCE -->
-                                                        <div class="response-editor-container">
-                                                            <div id="editor"></div>
-                                                        </div>
-
-                                                        <div class="response-actions">
-                                                            <button type="submit" class="btn btn-primary">
-                                                                <i class="fas fa-paper-plane"></i> Enviar Respuesta
-                                                            </button>
-                                                        </div>
-                                                        </form>
-
-                                                        <div th:if="${ticket.estado == 'Desactivado' or 
-                                                             (ticket.estado == 'Cerrado' and not 
-                                                             (usuarioActual.roles.?[nombre == 'ROL_ADMINISTRADOR'].size() > 0 or 
-                                                             (ticket.solicitante.idUsuario == usuarioActual.idUsuario and 
-                                                             usuarioActual.roles.?[nombre == 'ROL_SOPORTISTA'].size() > 0)))}" 
-                                                             class="status-message info">
-                                                            <i class="fas fa-info-circle"></i>
-                                                            <span>
-                                                                Este ticket está <span th:text="${ticket.estado}"></span>. 
-                                                                Por lo que no se aceptan más mensajes.
-                                                            </span>                                    
-                                                        </div>
-                                                        </div>
-
-                                                        <!-- Modal de Asignar Prioridad -->
-                                                        <div class="modal-overlay" id="prioridadModalOverlay">
-                                                            <div class="modal">
-                                                                <div class="modal-header">
-                                                                    <h2 class="modal-title">Asigne la prioridad estimada según el valor de cada celda</h2>
-                                                                    <p class="modal-description">Una vez se actualice la prioridad del ticket, el usuario será notificado de inmediato y la sección para responder el ticket será habilitada para iniciar su respectiva resolución.</p>
-                                                                </div>
-
-                                                                <div class="modal-body">
-                                                                    <!-- Usa Thymeleaf para pasar el ID del ticket -->
-                                                                    <form th:action="@{/tickets/asignar-prioridad/{id}(id=${ticket.idTicket})}" method="POST">
-                                                                        <input type="hidden" name="_csrf" th:value="${_csrf.token}" /> <!-- Token CSRF -->
-                                                                        <div class="form-grid">
-                                                                            <div class="form-row">
-                                                                                <div class="form-group">
-                                                                                    <label class="form-label" for="categoria">Categoría</label>
-                                                                                    <div class="form-control">Hardware</div>
-                                                                                </div>
-
-                                                                                <div class="form-group">
-                                                                                    <label class="form-label" for="impacto">Impacto</label>
-                                                                                    <div class="form-control">Medio</div>
-                                                                                </div>
-
-                                                                                <div class="form-group">
-                                                                                    <label class="form-label" for="prioridad">Prioridad</label>
-                                                                                    <select class="form-select" id="prioridadSelect" name="prioridad" onchange="habilitarBoton()">
-                                                                                        <!-- Mostrar "Sin Asignar" solo si la prioridad actual es "Sin Asignar" -->
-                                                                                        <option th:if="${ticket.prioridad == 'Sin Asignar'}" value="Sin Asignar" th:selected="${ticket.prioridad == 'Sin Asignar'}">Sin Asignar</option>
-                                                                                        <option value="Bajo" th:selected="${ticket.prioridad == 'Bajo'}">Bajo</option>
-                                                                                        <option value="Medio" th:selected="${ticket.prioridad == 'Medio'}">Medio</option>
-                                                                                        <option value="Alto" th:selected="${ticket.prioridad == 'Alto'}">Alto</option>
-                                                                                        <option value="Critico" th:selected="${ticket.prioridad == 'Critico'}">Critico</option>
-                                                                                    </select>
-                                                                                </div>
-                                                                            </div>
-                                                                        </div>
-                                                                </div>
-                                                                <div class="modal-footer">
-                                                                    <button type="submit" class="btn" id="btnActualizarPrioridad" disabled>Actualizar Prioridad</button>
-                                                                    <button type="button" class="btn btn-outline" id="closePrioridadModalBtn">Cerrar</button>
-                                                                </div>
-                                                                </form>
-                                                            </div>
-                                                        </div>
-
-                                                        <!-- Modal para confirmar el cierre del ticket -->
-                                                        <div class="modal-overlay" id="resolveTicketModalOverlay">
-                                                            <div class="modal">
-                                                                <div class="modal-header">
-                                                                    <h2 class="modal-title">Confirmar Cierre del Ticket</h2>
-                                                                </div>
-                                                                <form th:action="@{/tickets/cerrarTicket}" method="post">
-                                                                    <div class="modal-body">
-                                                                        <input type="hidden" name="idTicket" th:value="${ticket.idTicket}">
-                                                                            <div class="form-group">
-                                                                                <p>¿Está seguro que desea cerrar el ticket?</p>
-                                                                            </div>
-                                                                    </div>
-                                                                    <div class="modal-footer">
-                                                                        <button type="button" class="btn btn-secondary" onclick="closeResolveTicketModal()">Cancelar</button>
-                                                                        <button type="submit" class="btn btn-primary">Cerrar Ticket</button>
-                                                                    </div>
-                                                                </form>
-                                                            </div>
-                                                        </div>
-
-                                                        <!-- Modal para mostrar error si no hay prioridad o usuario asignado -->
-                                                        <div class="modal-overlay" id="errorPriorityModalOverlay">
-                                                            <div class="modal">
-                                                                <div class="modal-header">
-                                                                    <h2 class="modal-title">Requisitos no cumplidos</h2>
-                                                                </div>
-                                                                <div class="modal-body">
-                                                                    <div class="form-group">
-                                                                        <p>Para cerrar un ticket primero se le debe asignar un nivel de prioridad y un usuario responsable.</p>
-                                                                    </div>
-                                                                </div>
-                                                                <div class="modal-footer">
-                                                                    <button type="button" class="btn btn-primary" onclick="closeErrorPriorityModal()">Aceptar</button>
-                                                                </div>
-                                                            </div>
-                                                        </div>
-
-                                                        <!-- Modal para asignar tickets -->
-                                                        <div class="modal-overlay" id="assignTicketsModalOverlay">
-                                                            <div class="modal assign-modal">
-                                                                <div class="modal-header">
-                                                                    <h2 class="modal-title">Asignar Ticket</h2>
-                                                                    <p class="modal-description">Seleccione un soportista o administrador para asignar el ticket.</p>
-                                                                </div>
-
-                                                                <div class="modal-body">
-                                                                    <!-- Campo de búsqueda mejorado -->
-                                                                    <div class="form-group">
-                                                                        <label class="form-label" for="soportistaSearchInput">Buscar soportista/administrador</label>
-                                                                        <div class="search-input-container">
-                                                                            <i class="fas fa-search search-icon"></i>
-                                                                            <input type="text" 
-                                                                                   class="form-control search-input" 
-                                                                                   id="soportistaSearchInput" 
-                                                                                   placeholder="Buscar por nombre, código o rol..."
-                                                                                   autocomplete="off">
-                                                                                <button type="button" 
-                                                                                        class="clear-search-btn" 
-                                                                                        id="clearSearchBtn" 
-                                                                                        title="Limpiar búsqueda">
-                                                                                    <i class="fas fa-times"></i>
-                                                                                </button>
-                                                                        </div>
-                                                                    </div>
-
-                                                                    <!-- Contenedor de resultados flotante -->
-                                                                    <div class="floating-results-container" id="floatingResultsContainer">
-                                                                        <!-- Mensaje de carga -->
-                                                                        <div id="loadingMessage" class="loading-message" style="display: none;">
-                                                                            <i class="fas fa-spinner fa-spin"></i>
-                                                                            <span>Cargando soportistas...</span>
-                                                                        </div>
-
-                                                                        <!-- Mensaje de error -->
-                                                                        <div id="errorMessage" class="error-message" style="display: none;">
-                                                                            Error al cargar los soportistas
-                                                                        </div>
-
-                                                                        <!-- Lista de soportistas flotante -->
-                                                                        <div class="floating-results-list" id="soportistasList">
-                                                                            <!-- Los soportistas se cargarán aquí dinámicamente -->
-                                                                        </div>
-                                                                    </div>
-
-                                                                    <!-- Resumen del ticket a asignar -->
-                                                                    <div class="ticket-summary-section">
-                                                                        <div class="section-header">
-                                                                            <i class="fas fa-ticket-alt"></i>
-                                                                            <span>Resumen de tickets (1 ticket)</span>
-                                                                        </div>
-
-                                                                        <div class="ticket-group">
-                                                                            <div class="ticket-group-header">
-                                                                                <span class="badge badge-media">Media</span>
-                                                                                <span class="ticket-count"><span id="ticketCountBadge">1</span> ticket</span>
-                                                                            </div>
-                                                                            <ul class="ticket-list" id="ticketList">
-                                                                                <!-- Ticket actual (puedes agregar más dinámicamente si es necesario) -->
-                                                                                <li class="ticket-item">
-                                                                                    <span class="ticket-id" th:text="${ticket.codigo}">TIC68428073</span> - 
-                                                                                    <span class="ticket-category" th:text="${ticket.categoria}">Solicitud</span>: 
-                                                                                    <span class="ticket-title" th:text="${ticket.titulo}">Solicitud de nueva funcionalidad para reportes</span>
-                                                                                </li>
-                                                                            </ul>
-                                                                        </div>
-                                                                    </div>
-                                                                </div>
-
-                                                                <div class="modal-footer">
-                                                                    <button type="button" class="btn btn-outline" onclick="closeAssignTicketsModal()">
-                                                                        Cancelar
-                                                                    </button>
-                                                                    <button type="button" 
-                                                                            class="btn btn-primary" 
-                                                                            id="confirmAssignBtn" 
-                                                                            disabled>
-                                                                        Confirmar Asignación
-                                                                    </button>
-                                                                </div>
-                                                            </div>
-                                                        </div>
-
-                                                        <!-- Modal para confirmar reapertura del ticket -->
-                                                        <div class="modal-overlay" id="reabrirTicketModal">
-                                                            <div class="modal">
-                                                                <div class="modal-header">
-                                                                    <h2 class="modal-title">Confirmar Reapertura del Ticket</h2>
-                                                                </div>
-                                                                <form th:action="@{/tickets/reabrir/{id}(id=${ticket.idTicket})}" method="POST">
-                                                                    <div class="modal-body">
-                                                                        <input type="hidden" name="_csrf" th:value="${_csrf.token}"/>
-                                                                        <div class="form-group">
-                                                                            <p>¿Está seguro que desea reabrir este ticket? El estado cambiará a "Pendiente".</p>
-                                                                        </div>
-                                                                    </div>
-                                                                    <div class="modal-footer">
-                                                                        <button type="button" class="btn btn-secondary" onclick="closeReabrirTicketModal()">Cancelar</button>
-                                                                        <button type="submit" class="btn btn-primary">Reabrir Ticket</button>
-                                                                    </div>
-                                                                </form>
-                                                            </div>
-                                                        </div>
-
-                                                        <!-- Modal para confirmar la desactivación del ticket -->
-                                                        <div class="modal-overlay" id="deactivateTicketModalOverlay">
-                                                            <div class="modal">
-                                                                <div class="modal-header">
-                                                                    <h2 class="modal-title">Confirmar Desactivación del Ticket</h2>
-                                                                </div>
-                                                                <div class="modal-body">
-                                                                    <p>¿Está seguro que desea desactivar el ticket? Esta acción no se puede deshacer.</p>
-                                                                </div>
-                                                                <div class="modal-footer">
-                                                                    <button type="button" class="btn btn-secondary" onclick="closeDeactivateTicketModal()">Cancelar</button>
-                                                                    <button type="button" class="btn btn-danger" onclick="confirmDeactivateTicket()">Desactivar Ticket</button>
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                        </div>
-                                                        </div>
-                                                        <!-- Funciones y estilos para el modal de asignar ticket -->
-                                                        <script>
-                                                            // Variables globales para el modal de asignación
-                                                            let soportistasData = [];
-                                                            let selectedSoportista = null;
-                                                            let filteredSoportistas = [];
-
-                                                            // Función para abrir el modal de asignación de tickets mejorado
-                                                            function openAssignTicketsModal() {
-                                                                const modalOverlay = document.getElementById('assignTicketsModalOverlay');
-                                                                modalOverlay.classList.add('active');
-                                                                document.body.style.overflow = 'hidden';
-
-                                                                // Limpiar datos previos
-                                                                selectedSoportista = null;
-
-                                                                // Limpiar el campo de búsqueda
-                                                                const searchInput = document.getElementById('soportistaSearchInput');
-                                                                if (searchInput) {
-                                                                    searchInput.value = '';
-                                                                }
-
-                                                                // Ocultar el contenedor flotante inicialmente
-                                                                const resultsContainer = document.getElementById('floatingResultsContainer');
-                                                                if (resultsContainer) {
-                                                                    resultsContainer.style.display = 'none';
-                                                                }
-
-                                                                // Deshabilitar botón de confirmación
-                                                                const confirmBtn = document.getElementById('confirmAssignBtn');
-                                                                if (confirmBtn) {
-                                                                    confirmBtn.disabled = true;
-                                                                }
-
-                                                                // Cargar soportistas
-                                                                loadSoportistas();
-                                                            }
-
-                                                            // Función para cerrar el modal de asignación de tickets
-                                                            function closeAssignTicketsModal() {
-                                                                const modalOverlay = document.getElementById('assignTicketsModalOverlay');
-                                                                modalOverlay.classList.remove('active');
-                                                                document.body.style.overflow = 'auto';
-
-                                                                // Limpiar datos
-                                                                selectedSoportista = null;
-                                                                soportistasData = [];
-                                                                filteredSoportistas = [];
-
-                                                                // Deshabilitar botón de confirmación
-                                                                const confirmBtn = document.getElementById('confirmAssignBtn');
-                                                                if (confirmBtn) {
-                                                                    confirmBtn.disabled = true;
-                                                                }
-                                                            }
-
-                                                            // Función para cargar la lista de soportistas con filtros
-                                                            function loadSoportistas() {
-                                                                const soportistasList = document.getElementById('soportistasList');
-                                                                const loadingMessage = document.getElementById('loadingMessage');
-                                                                const errorMessage = document.getElementById('errorMessage');
-
-                                                                // Obtener usuario actual desde Thymeleaf
-                                                                const usuarioActual = {
-                                                                    id: document.getElementById('usuarioActualId')?.value || null,
-                                                                    rol: document.getElementById('usuarioActualRol')?.value || null
-                                                                };
-
-                                                                // Mostrar mensaje de carga
-                                                                if (loadingMessage)
-                                                                    loadingMessage.style.display = 'flex';
-                                                                if (errorMessage)
-                                                                    errorMessage.style.display = 'none';
-                                                                if (soportistasList)
-                                                                    soportistasList.innerHTML = '';
-
-                                                                // Obtener datos del endpoint
-                                                                fetch('/tickets/usuarios/soportistas')
-                                                                        .then(response => {
-                                                                            if (!response.ok) {
-                                                                                throw new Error('Error en la respuesta del servidor: ' + response.status);
-                                                                            }
-                                                                            return response.json();
-                                                                        })
-                                                                        .then(data => {
-                                                                            console.log('Soportistas cargados:', data);
-
-                                                                            // Filtrar usuarios según los requisitos
-                                                                            soportistasData = data.filter(soportista => {
-                                                                                // 1. Ocultar al usuario actual
-                                                                                if (soportista.id == usuarioActual.id)
-                                                                                    return false;
-
-                                                                                // 2. Si el usuario actual es soportista, ocultar administradores
-                                                                                if (usuarioActual.rol === 'ROL_SOPORTISTA') {
-                                                                                    return soportista.rol === 'ROL_SOPORTISTA';
-                                                                                }
-
-                                                                                return true;
-                                                                            });
-
-                                                                            filteredSoportistas = [...soportistasData];
-
-                                                                            // Ocultar mensaje de carga
-                                                                            if (loadingMessage)
-                                                                                loadingMessage.style.display = 'none';
-
-                                                                            // Renderizar lista de soportistas si hay término de búsqueda
-                                                                            const searchInput = document.getElementById('soportistaSearchInput');
-                                                                            if (searchInput && searchInput.value.trim() !== '') {
-                                                                                renderSoportistasList(filteredSoportistas);
-                                                                            }
-                                                                        })
-                                                                        .catch(error => {
-                                                                            console.error('Error cargando soportistas:', error);
-                                                                            if (loadingMessage)
-                                                                                loadingMessage.style.display = 'none';
-                                                                            if (errorMessage) {
-                                                                                errorMessage.style.display = 'block';
-                                                                                errorMessage.textContent = 'Error al cargar colaboradores: ' + error.message;
-                                                                            }
-                                                                        });
-                                                            }
-
-                                                            // Función para renderizar la lista de soportistas
-                                                            function renderSoportistasList(soportistas) {
-                                                                const soportistasList = document.getElementById('soportistasList');
-                                                                if (!soportistasList)
-                                                                    return;
-
-                                                                soportistasList.innerHTML = '';
-
-                                                                if (!soportistas || soportistas.length === 0) {
-                                                                    soportistasList.innerHTML = '<div class="no-results">No se encontraron colaboradores</div>';
-                                                                    return;
-                                                                }
-
-                                                                soportistas.forEach(soportista => {
-                                                                    const soportistaItem = document.createElement('div');
-                                                                    soportistaItem.className = 'soportista-item';
-                                                                    soportistaItem.setAttribute('data-id', soportista.id);
-
-                                                                    // Determinar el rol del usuario
-                                                                    const rolClass = soportista.rol && soportista.rol.toLowerCase() === 'rol_administrador' ? 'administrador' : 'soportista';
-                                                                    const rolText = soportista.rol && soportista.rol.toLowerCase() === 'rol_administrador' ? 'ADMINISTRADOR' : 'SOPORTISTA';
-
-                                                                    // Construir la URL de la imagen usando el endpoint del controlador
-                                                                    const imagenUrl = soportista.imagen ? `/usuario/imagen/${soportista.id}` : '';
-
-                                                                    // Usar la imagen del usuario si está disponible, de lo contrario usar el icono por defecto
-                                                                    const avatarContent = soportista.imagen
-                                                                            ? `<img src="${imagenUrl}" alt="${soportista.nombreCompleto}" class="soportista-avatar-img" onerror="this.onerror=null; this.parentNode.innerHTML='<i class=\\'fas fa-user\\'></i>'">`
-                                                                            : `<i class="fas fa-user"></i>`;
-
-                                                                    soportistaItem.innerHTML = `
-                                                                                                                            <div class="soportista-avatar">
-                                                                                                                                ${avatarContent}
-                                                                                                                            </div>
-                                                                                                                            <div class="soportista-info">
-                                                                                                                                <div class="soportista-name">${soportista.nombreCompleto || soportista.nombre}</div>
-                                                                                                                                <div class="soportista-id">ID: ${soportista.codigo || soportista.id}</div>
-                                                                                                                            </div>
-                                                                                                                            <div class="soportista-role ${rolClass}">${rolText}</div>
-                                                                                                                        `;
-
-                                                                    // Agregar evento click para seleccionar soportista
-                                                                    soportistaItem.addEventListener('click', () => selectSoportista(soportista, soportistaItem));
-                                                                    soportistasList.appendChild(soportistaItem);
-                                                                });
-                                                            }
-
-                                                            // Función para seleccionar un soportista
-                                                            function selectSoportista(soportista, element) {
-                                                                // Remover selección previa
-                                                                const previousSelected = document.querySelector('.soportista-item.selected');
-                                                                if (previousSelected) {
-                                                                    previousSelected.classList.remove('selected');
-                                                                }
-
-                                                                // Agregar selección al elemento actual
-                                                                element.classList.add('selected');
-                                                                selectedSoportista = soportista;
-
-                                                                // Actualizar el campo de búsqueda con el nombre del soportista seleccionado
-                                                                const searchInput = document.getElementById('soportistaSearchInput');
-                                                                if (searchInput) {
-                                                                    searchInput.value = soportista.nombreCompleto || soportista.nombre;
-                                                                }
-
-                                                                // Ocultar el contenedor flotante
-                                                                const resultsContainer = document.getElementById('floatingResultsContainer');
-                                                                if (resultsContainer) {
-                                                                    resultsContainer.style.display = 'none';
-                                                                }
-
-                                                                // Habilitar botón de confirmación
-                                                                const confirmBtn = document.getElementById('confirmAssignBtn');
-                                                                if (confirmBtn) {
-                                                                    confirmBtn.disabled = false;
-                                                                }
-
-                                                                console.log('Soportista seleccionado:', selectedSoportista);
-                                                            }
-
-                                                            // Función para filtrar soportistas por búsqueda
-                                                            function filterSoportistas() {
-                                                                const searchInput = document.getElementById('soportistaSearchInput');
-                                                                const searchTerm = searchInput.value.toLowerCase().trim();
-                                                                const resultsContainer = document.getElementById('floatingResultsContainer');
-                                                                const loadingMessage = document.getElementById('loadingMessage');
-                                                                const errorMessage = document.getElementById('errorMessage');
-
-                                                                // Mostrar contenedor flotante cuando hay texto
-                                                                if (searchTerm === '') {
-                                                                    resultsContainer.style.display = 'none';
-                                                                    return;
-                                                                }
-
-                                                                // Mostrar contenedor flotante
-                                                                resultsContainer.style.display = 'block';
-                                                                positionFloatingContainer();
-
-                                                                if (soportistasData.length === 0) {
-                                                                    // Mostrar mensaje de carga si aún no hay datos
-                                                                    if (loadingMessage)
-                                                                        loadingMessage.style.display = 'flex';
-                                                                    if (errorMessage)
-                                                                        errorMessage.style.display = 'none';
-                                                                    loadSoportistas();
-                                                                } else {
-                                                                    // Filtrar datos locales
-                                                                    filteredSoportistas = soportistasData.filter(soportista => {
-                                                                        const nombre = (soportista.nombreCompleto || '').toLowerCase();
-                                                                        const codigo = (soportista.codigo || '').toLowerCase();
-                                                                        const correo = (soportista.correo || '').toLowerCase();
-                                                                        return nombre.includes(searchTerm) ||
-                                                                                codigo.includes(searchTerm) ||
-                                                                                correo.includes(searchTerm);
-                                                                    });
-                                                                    renderSoportistasList(filteredSoportistas);
-                                                                }
-                                                            }
-
-                                                            // Función para posicionar el contenedor flotante
-                                                            function positionFloatingContainer() {
-                                                                const searchInput = document.getElementById('soportistaSearchInput');
-                                                                const resultsContainer = document.getElementById('floatingResultsContainer');
-
-                                                                if (searchInput && resultsContainer) {
-                                                                    const inputRect = searchInput.getBoundingClientRect();
-                                                                    const modalBody = document.querySelector('.modal-body');
-                                                                    const modalRect = modalBody.getBoundingClientRect();
-
-                                                                    resultsContainer.style.width = `${inputRect.width}px`;
-                                                                    resultsContainer.style.top = `${inputRect.bottom + window.scrollY}px`;
-                                                                    resultsContainer.style.left = `${inputRect.left + window.scrollX}px`;
-                                                                    resultsContainer.style.maxHeight = `${window.innerHeight - inputRect.bottom - 20}px`;
-                                                                }
-                                                            }
-
-                                                            // Función para limpiar la búsqueda
-                                                            function clearSearch() {
-                                                                const searchInput = document.getElementById('soportistaSearchInput');
-                                                                const resultsContainer = document.getElementById('floatingResultsContainer');
-
-                                                                if (searchInput) {
-                                                                    searchInput.value = '';
-                                                                    resultsContainer.style.display = 'none';
-
-                                                                    // Deseleccionar cualquier soportista seleccionado
-                                                                    selectedSoportista = null;
-                                                                    const selectedItem = document.querySelector('.soportista-item.selected');
-                                                                    if (selectedItem) {
-                                                                        selectedItem.classList.remove('selected');
-                                                                    }
-
-                                                                    // Deshabilitar botón de confirmación
-                                                                    const confirmBtn = document.getElementById('confirmAssignBtn');
-                                                                    if (confirmBtn) {
-                                                                        confirmBtn.disabled = true;
-                                                                    }
-                                                                }
-                                                            }
-
-                                                            // Función para asignar el ticket al soportista seleccionado
-                                                            function confirmAssignTicket() {
-                                                                console.log('Intentando asignar ticket. Soportista seleccionado:', selectedSoportista);
-
-                                                                if (!selectedSoportista) {
-                                                                    alert('Por favor, seleccione un colaborador para asignar el ticket.');
-                                                                    return;
-                                                                }
-
-                                                                // Deshabilitar botón para prevenir múltiples clics
-                                                                const confirmBtn = document.getElementById('confirmAssignBtn');
-                                                                if (confirmBtn) {
-                                                                    confirmBtn.disabled = true;
-                                                                    confirmBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Asignando...';
-                                                                }
-
-                                                                // Obtener el ID del ticket desde la URL de la página
-                                                                const urlParts = window.location.pathname.split('/');
-                                                                const ticketId = urlParts[urlParts.length - 1];
-
-                                                                // Obtener el token CSRF
-                                                                const csrfToken = document.querySelector('input[name="_csrf"]').value;
-
-                                                                // Datos para enviar al servidor
-                                                                const data = {
-                                                                    soportistaId: selectedSoportista.id,
-                                                                    ticketId: ticketId
-                                                                };
-
-                                                                console.log('Enviando datos:', data);
-
-                                                                // Realizar la petición AJAX
-                                                                fetch('/tickets/asignar', {
-                                                                    method: 'POST',
-                                                                    headers: {
-                                                                        'Content-Type': 'application/json',
-                                                                        'X-CSRF-TOKEN': csrfToken
-                                                                    },
-                                                                    body: JSON.stringify(data)
-                                                                })
-                                                                        .then(response => {
-                                                                            console.log('Respuesta recibida:', response.status);
-                                                                            return response.json().then(data => ({
-                                                                                    status: response.status,
-                                                                                    ok: response.ok,
-                                                                                    data: data
-                                                                                }));
-                                                                        })
-                                                                        .then(result => {
-                                                                            console.log('Datos de respuesta:', result);
-
-                                                                            if (result.ok && result.data.success) {
-                                                                                console.log('Asignación exitosa');
-                                                                                // Cerrar el modal
-                                                                                closeAssignTicketsModal();
-                                                                                // Recargar la página para reflejar los cambios
-                                                                                window.location.reload();
-                                                                            } else {
-                                                                                // Manejar errores del servidor
-                                                                                const errorMessage = result.data.error || 'Error desconocido al asignar el ticket';
-                                                                                console.error('Error en la asignación:', errorMessage);
-                                                                                alert('Error al asignar el ticket: ' + errorMessage);
-
-                                                                                // Restaurar el botón
-                                                                                if (confirmBtn) {
-                                                                                    confirmBtn.disabled = false;
-                                                                                    confirmBtn.innerHTML = 'Confirmar Asignación';
-                                                                                }
-                                                                            }
-                                                                        })
-                                                                        .catch(error => {
-                                                                            console.error('Error en la petición:', error);
-                                                                            alert('Error de conexión al asignar el ticket. Por favor, intente nuevamente.');
-
-                                                                            // Restaurar el botón
-                                                                            if (confirmBtn) {
-                                                                                confirmBtn.disabled = false;
-                                                                                confirmBtn.innerHTML = 'Confirmar Asignación';
-                                                                            }
-                                                                        });
-                                                            }
-
-                                                            // Configurar los event listeners para el modal mejorado
-                                                            document.addEventListener('DOMContentLoaded', function () {
-
-                                                                // Botón para abrir el modal de asignación
-                                                                const btnAsignarTicket = document.getElementById('asignarTicket');
-                                                                if (btnAsignarTicket) {
-                                                                    btnAsignarTicket.addEventListener('click', openAssignTicketsModal);
-                                                                    console.log('Event listener agregado al botón asignar ticket');
-                                                                }
-
-                                                                // Campo de búsqueda
-                                                                const searchInput = document.getElementById('soportistaSearchInput');
-                                                                if (searchInput) {
-                                                                    searchInput.addEventListener('input', filterSoportistas);
-                                                                    searchInput.addEventListener('focus', positionFloatingContainer);
-                                                                }
-
-                                                                // Botón para limpiar búsqueda
-                                                                const clearBtn = document.getElementById('clearSearchBtn');
-                                                                if (clearBtn) {
-                                                                    clearBtn.addEventListener('click', clearSearch);
-                                                                }
-
-                                                                // Botón para confirmar la asignación
-                                                                const btnConfirmarAsignacion = document.getElementById('confirmAssignBtn');
-                                                                if (btnConfirmarAsignacion) {
-                                                                    btnConfirmarAsignacion.addEventListener('click', confirmAssignTicket);
-                                                                }
-
-                                                                // Cerrar el modal al hacer clic fuera del contenido
-                                                                const assignModalOverlay = document.getElementById('assignTicketsModalOverlay');
-                                                                if (assignModalOverlay) {
-                                                                    assignModalOverlay.addEventListener('click', function (event) {
-                                                                        if (event.target === assignModalOverlay) {
-                                                                            closeAssignTicketsModal();
-                                                                        }
-                                                                    });
-                                                                }
-
-                                                                // Cerrar el contenedor flotante al hacer clic fuera
-                                                                document.addEventListener('click', function (event) {
-                                                                    const resultsContainer = document.getElementById('floatingResultsContainer');
-                                                                    const searchInput = document.getElementById('soportistaSearchInput');
-
-                                                                    if (resultsContainer && resultsContainer.style.display === 'block' &&
-                                                                            event.target !== searchInput && !resultsContainer.contains(event.target)) {
-                                                                        resultsContainer.style.display = 'none';
-                                                                    }
-                                                                });
-
-                                                                // Agregar inputs hidden para el usuario actual (si no existen)
-                                                                if (!document.getElementById('usuarioActualId')) {
-                                                                    const usuarioIdInput = document.createElement('input');
-                                                                    usuarioIdInput.type = 'hidden';
-                                                                    usuarioIdInput.id = 'usuarioActualId';
-                                                                    // Nota: Este valor debe ser reemplazado por el valor real desde Thymeleaf
-                                                                    usuarioIdInput.value = '[[${usuarioActual?.idUsuario}]]';
-                                                                    document.body.appendChild(usuarioIdInput);
-                                                                    console.log('Input usuarioActualId creado');
-                                                                }
-
-                                                                if (!document.getElementById('usuarioActualRol')) {
-                                                                    const usuarioRolInput = document.createElement('input');
-                                                                    usuarioRolInput.type = 'hidden';
-                                                                    usuarioRolInput.id = 'usuarioActualRol';
-                                                                    // Nota: Este valor debe ser reemplazado por el valor real desde Thymeleaf
-                                                                    usuarioRolInput.value = '[[${usuarioActual?.roles?.get(0)?.nombre}]]';
-                                                                    document.body.appendChild(usuarioRolInput);
-                                                                    console.log('Input usuarioActualRol creado');
-                                                                }
-
-                                                                // Ajustar posición inicial del contenedor flotante
-                                                                positionFloatingContainer();
-                                                            });
-
-                                                            // Ajustar posición del contenedor flotante al redimensionar la ventana
-                                                            window.addEventListener('resize', positionFloatingContainer);
-                                                        </script>
-
-
-                                                        <style>
-                                                            /* Estilos específicos para el modal de asignación de tickets */
-                                                            .assign-modal {
-                                                                max-width: 700px;
-                                                                width: 95%;
-                                                            }
-
-                                                            .assign-modal .modal-body {
-                                                                padding: 24px;
-                                                                max-height: 70vh;
-                                                                overflow-y: auto;
-                                                            }
-
-                                                            /* Campo de búsqueda */
-                                                            .search-input-container {
-                                                                position: relative;
-                                                                display: flex;
-                                                                align-items: center;
-                                                            }
-
-                                                            .search-input-container .search-icon {
-                                                                position: absolute;
-                                                                left: 12px;
-                                                                color: #6c757d;
-                                                                z-index: 1;
-                                                            }
-
-                                                            .search-input {
-                                                                padding-left: 40px !important;
-                                                                padding-right: 40px !important;
-                                                                border-radius: 8px;
-                                                                border: 1px solid #ced4da;
-                                                                font-size: 14px;
-                                                                height: 44px;
-                                                            }
-
-                                                            .search-input:focus {
-                                                                border-color: #007bff;
-                                                                box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
-                                                            }
-
-                                                            .clear-search-btn {
-                                                                position: absolute;
-                                                                right: 8px;
-                                                                background: none;
-                                                                border: none;
-                                                                color: #6c757d;
-                                                                cursor: pointer;
-                                                                padding: 8px;
-                                                                border-radius: 4px;
-                                                                display: none;
-                                                            }
-
-                                                            .clear-search-btn:hover {
-                                                                color: #495057;
-                                                                background-color: #f8f9fa;
-                                                            }
-
-                                                            .search-input:not(:placeholder-shown) + .clear-search-btn {
-                                                                display: block;
-                                                            }
-
-                                                            /* Container de soportistas */
-                                                            .soportistas-container {
-                                                                display: none; /* Oculto por defecto */
-                                                                margin-top: 20px;
-                                                                border: 1px solid #e9ecef;
-                                                                border-radius: 8px;
-                                                                background-color: #f8f9fa;
-                                                                min-height: 200px;
-                                                                position: relative;
-                                                            }
-
-                                                            .soportistas-list {
-                                                                max-height: 300px;
-                                                                overflow-y: auto;
-                                                                padding: 8px;
-                                                            }
-
-                                                            /* Item de soportista */
-                                                            .soportista-item {
-                                                                display: flex;
-                                                                align-items: center;
-                                                                padding: 12px 16px;
-                                                                margin-bottom: 4px;
-                                                                background-color: white;
-                                                                border: 1px solid #e9ecef;
-                                                                border-radius: 6px;
-                                                                cursor: pointer;
-                                                                transition: all 0.2s ease;
-                                                            }
-
-                                                            .soportista-item:hover {
-                                                                background-color: #f1f3f4;
-                                                                border-color: #007bff;
-                                                            }
-
-                                                            .soportista-item.selected {
-                                                                background-color: #e3f2fd;
-                                                                border-color: #007bff;
-                                                                box-shadow: 0 0 0 1px rgba(0, 123, 255, 0.25);
-                                                            }
-
-                                                            .soportista-avatar {
-                                                                width: 40px;
-                                                                height: 40px;
-                                                                border-radius: 50%;
-                                                                background-color: #e9ecef;
-                                                                display: flex;
-                                                                align-items: center;
-                                                                justify-content: center;
-                                                                margin-right: 12px;
-                                                                color: #6c757d;
-                                                                overflow: hidden;
-                                                            }
-
-                                                            .soportista-avatar-img {
-                                                                width: 100%;
-                                                                height: 100%;
-                                                                object-fit: cover;
-                                                            }
-
-                                                            .soportista-avatar i {
-                                                                font-size: 18px;
-                                                            }
-
-                                                            .soportista-info {
-                                                                flex: 1;
-                                                            }
-
-                                                            .soportista-name {
-                                                                font-weight: 600;
-                                                                color: #333;
-                                                                font-size: 14px;
-                                                                margin-bottom: 2px;
-                                                            }
-
-                                                            .soportista-id {
-                                                                font-size: 12px;
-                                                                color: #6c757d;
-                                                            }
-
-                                                            .soportista-role {
-                                                                padding: 4px 8px;
-                                                                border-radius: 4px;
-                                                                font-size: 11px;
-                                                                font-weight: 600;
-                                                                text-transform: uppercase;
-                                                                letter-spacing: 0.5px;
-                                                            }
-
-                                                            .soportista-role.soportista {
-                                                                background-color: #e3f2fd;
-                                                                color: #1976d2;
-                                                            }
-
-                                                            .soportista-role.administrador {
-                                                                background-color: #f3e5f5;
-                                                                color: #7b1fa2;
-                                                            }
-
-                                                            /* Mensajes de estado */
-                                                            .loading-message,
-                                                            .error-message {
-                                                                display: flex;
-                                                                flex-direction: column;
-                                                                align-items: center;
-                                                                justify-content: center;
-                                                                padding: 40px 20px;
-                                                                color: #6c757d;
-                                                                font-size: 14px;
-                                                            }
-
-                                                            .loading-message i {
-                                                                font-size: 24px;
-                                                                margin-bottom: 12px;
-                                                                color: #007bff;
-                                                            }
-
-                                                            .error-message {
-                                                                color: #dc3545;
-                                                            }
-
-                                                            .no-results {
-                                                                text-align: center;
-                                                                padding: 40px 20px;
-                                                                color: #6c757d;
-                                                                font-size: 14px;
-                                                            }
-
-                                                            /* Sección de resumen del ticket */
-                                                            .ticket-summary-section {
-                                                                margin-top: 24px;
-                                                                padding-top: 20px;
-                                                                border-top: 1px solid #e9ecef;
-                                                            }
-
-                                                            .section-header {
-                                                                display: flex;
-                                                                align-items: center;
-                                                                gap: 8px;
-                                                                margin-bottom: 16px;
-                                                                font-weight: 600;
-                                                                color: #495057;
-                                                                font-size: 14px;
-                                                            }
-
-                                                            .section-header i {
-                                                                color: #6c757d;
-                                                            }
-
-                                                            .ticket-group {
-                                                                background-color: #f8f9fa;
-                                                                border: 1px solid #e9ecef;
-                                                                border-radius: 6px;
-                                                                padding: 12px;
-                                                            }
-
-                                                            .ticket-group-header {
-                                                                display: flex;
-                                                                align-items: center;
-                                                                justify-content: space-between;
-                                                                margin-bottom: 8px;
-                                                            }
-
-                                                            .ticket-count {
-                                                                font-size: 12px;
-                                                                color: #6c757d;
-                                                            }
-
-                                                            .ticket-list {
-                                                                list-style: none;
-                                                                padding: 0;
-                                                                margin: 0;
-                                                            }
-
-                                                            .ticket-item {
-                                                                font-size: 13px;
-                                                                color: #495057;
-                                                                line-height: 1.4;
-                                                            }
-
-                                                            .ticket-id {
-                                                                font-weight: 600;
-                                                                color: #007bff;
-                                                            }
-
-                                                            .ticket-category {
-                                                                color: #6c757d;
-                                                            }
-
-                                                            .ticket-title {
-                                                                color: #333;
-                                                            }
-
-                                                            /* Botones del modal */
-                                                            .modal-footer .btn {
-                                                                min-width: 120px;
-                                                                padding: 8px 16px;
-                                                                font-size: 14px;
-                                                                font-weight: 500;
-                                                                border-radius: 6px;
-                                                                transition: all 0.2s ease;
-                                                            }
-
-                                                            .modal-footer .btn-primary:disabled {
-                                                                background-color: #e9ecef;
-                                                                border-color: #e9ecef;
-                                                                color: #6c757d;
-                                                                cursor: not-allowed;
-                                                            }
-
-                                                            .modal-footer .btn-outline {
-                                                                background-color: transparent;
-                                                                border: 1px solid #6c757d;
-                                                                color: #6c757d;
-                                                            }
-
-                                                            .modal-footer .btn-outline:hover {
-                                                                background-color: #6c757d;
-                                                                color: white;
-                                                            }
-
-                                                            /* Responsive */
-                                                            @media (max-width: 768px) {
-                                                                .assign-modal {
-                                                                    width: 95%;
-                                                                    margin: 10px;
-                                                                }
-
-                                                                .assign-modal .modal-body {
-                                                                    padding: 16px;
-                                                                    max-height: 80vh;
-                                                                }
-
-                                                                .soportista-item {
-                                                                    padding: 10px 12px;
-                                                                }
-
-                                                                .soportista-name {
-                                                                    font-size: 13px;
-                                                                }
-
-                                                                .modal-footer {
-                                                                    flex-direction: column-reverse;
-                                                                    gap: 12px;
-                                                                }
-
-                                                                .modal-footer .btn {
-                                                                    width: 100%;
-                                                                }
-                                                            }
-                                                        </style>
-
-                                                        <style>
-                                                            /* Estilos específicos para el modal de asignación de tickets */
-                                                            .assign-modal {
-                                                                max-width: 700px;
-                                                                width: 95%;
-                                                            }
-
-                                                            .assign-modal .modal-body {
-                                                                padding: 24px;
-                                                                max-height: 70vh;
-                                                                overflow-y: auto;
-                                                            }
-
-                                                            /* Campo de búsqueda mejorado */
-                                                            .search-input-container {
-                                                                position: relative;
-                                                                display: flex;
-                                                                align-items: center;
-                                                                margin-bottom: 0;
-                                                            }
-
-                                                            .search-input {
-                                                                padding-left: 40px !important;
-                                                                padding-right: 40px !important;
-                                                                border-radius: 8px;
-                                                                border: 1px solid #ced4da;
-                                                                font-size: 14px;
-                                                                height: 44px;
-                                                                width: 100%;
-                                                            }
-
-                                                            /* Contenedor de resultados flotante */
-                                                            .floating-results-container {
-                                                                display: none;
-                                                                position: absolute;
-                                                                width: calc(100% - 48px); /* Ajustar al ancho del modal-body */
-                                                                max-height: 300px;
-                                                                margin-top: 8px;
-                                                                background: white;
-                                                                border: 1px solid #e9ecef;
-                                                                border-radius: 8px;
-                                                                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-                                                                z-index: 1000;
-                                                                overflow: hidden;
-                                                            }
-
-                                                            .floating-results-list {
-                                                                max-height: 300px;
-                                                                overflow-y: auto;
-                                                            }
-
-                                                            /* Item de soportista mejorado */
-                                                            .soportista-item {
-                                                                display: flex;
-                                                                align-items: center;
-                                                                padding: 12px 16px;
-                                                                border-bottom: 1px solid #f1f3f4;
-                                                                cursor: pointer;
-                                                                transition: all 0.2s ease;
-                                                            }
-
-                                                            .soportista-item:last-child {
-                                                                border-bottom: none;
-                                                            }
-
-                                                            .soportista-item:hover {
-                                                                background-color: #f8f9fa;
-                                                            }
-
-                                                            .soportista-item.selected {
-                                                                background-color: #e3f2fd;
-                                                            }
-                                                        </style>
-                                                        </section>
-                                                        </body>
-                                                        </html>
+                                </form>
+                            </div>
+                        </div>
+
+                        <!-- Modal para confirmar la desactivación del ticket -->
+                        <div class="modal-overlay" id="deactivateTicketModalOverlay">
+                            <div class="modal">
+                                <div class="modal-header">
+                                    <h2 class="modal-title">Confirmar Desactivación del Ticket</h2>
+                                </div>
+                                <div class="modal-body">
+                                    <p>¿Está seguro que desea desactivar el ticket? Esta acción no se puede deshacer.</p>
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-secondary" onclick="closeDeactivateTicketModal()">Cancelar</button>
+                                    <button type="button" class="btn btn-danger" onclick="confirmDeactivateTicket()">Desactivar Ticket</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </body>
+</html>

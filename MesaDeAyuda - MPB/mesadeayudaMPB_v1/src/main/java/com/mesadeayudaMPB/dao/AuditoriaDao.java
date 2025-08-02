@@ -26,4 +26,8 @@ public interface AuditoriaDao extends JpaRepository<Auditoria, Long> {
     
     // Alternativamente, puedes usar este método más simple basado en convenciones de Spring Data
     Page<Auditoria> findByTicket_IdTicket(Long idTicket, Pageable pageable);
+   
+
+@Query(value = "SELECT TOP 50 * FROM Auditoria ORDER BY fecha_accion DESC", nativeQuery = true)
+List<Auditoria> findTop50RecentAuditActions();
 }

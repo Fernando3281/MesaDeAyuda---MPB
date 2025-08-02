@@ -2,7 +2,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml" 
       xmlns:th="http://www.thymeleaf.org">
     <head th:replace="~{layout/plantilla :: head}">
-        <title>Mesa de Ayuda</title>
+        <title>Centro de Soporte</title>
         <meta charset="UTF-8"/>
     </head>
     
@@ -10,7 +10,7 @@
         <link rel="stylesheet" th:href="@{/css/perfil_layout_editar.css}">
     </th:block>
     
-    <th:block th:replace="~{layout/plantilla :: scripts-perfil}"></th:block>
+    <script th:src="@{/js/perfil-funciones.js}" defer></script>
 
     <body>
         <div class="wrapper">
@@ -28,7 +28,7 @@
                 <main class="home-section">
                     <div class="content-wrapper">
 
-                        <section th:replace="~{usuario/segmentos-perfil-info :: perfil-section-editar}"></section>
+                        <section th:replace="~{usuario/segmentos-perfil :: perfil-section-editar}"></section>
 
                     </div>
                 </main>
@@ -36,17 +36,3 @@
         </div>
     </body>
 </html>
-
-<script th:inline="javascript">
-    function previewImage(input) {
-        if (input.files && input.files[0]) {
-            var reader = new FileReader();
-
-            reader.onload = function (e) {
-                document.getElementById('preview-image').src = e.target.result;
-            }
-
-            reader.readAsDataURL(input.files[0]);
-        }
-    }
-</script>

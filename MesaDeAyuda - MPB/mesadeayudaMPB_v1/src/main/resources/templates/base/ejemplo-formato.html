@@ -1,103 +1,35 @@
 <!DOCTYPE html>
-<!--
-Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
-Click nbfs://nbhost/SystemFileSystem/Templates/Other/html.html to edit this template
--->
-
 <html xmlns="http://www.w3.org/1999/xhtml" 
       xmlns:th="http://www.thymeleaf.org">
     <head th:replace="~{layout/plantilla :: head}">
         <title>Mesa de Ayuda</title>
         <meta charset="UTF-8">
-            <meta name="viewport" content="width=device-width, initial-scale=1.0">
-                </head>
-                <body>
-                    <div class="wrapper">
-                        <!-- Incluye el sidebar -->
-                        <div th:replace="~{layout/plantilla :: sidebar}"></div>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    </head>
+    <body>
+        <div class="wrapper">
+            <!-- Incluye el sidebar -->
+            <div th:replace="~{layout/plantilla :: sidebar}"></div>
 
-                        <div class="main-content">
-                            <div th:replace="~{layout/plantilla :: header}"></div>
+            <div class="main-content">
+                <div th:replace="~{layout/plantilla :: header}"></div>
 
-                            <!-- Incluye el navbar -->
-                            <div th:replace="~{layout/plantilla :: navbar}"></div>
+                <!-- Incluye el navbar -->
+                <div th:replace="~{layout/plantilla :: navbar}"></div>
 
-                            <!-- Contenido principal -->
-                            <main class="home-section">
-                                <div class="content-wrapper">
-
-                                </div>
-                            </main>
-                        </div>
+                <!-- Contenido principal -->
+                <main class="home-section">
+                    <div class="content-wrapper">
+                        
+                        <!-- Aqui deberian de insertarse los segmnetos encapsulados con la etiqueta <section> -->
+                        
                     </div>
-                </body>
-            </html>
-
-
-
-
-<!-- Modals BASE -->
-                    
-                    <!-- Contenedor para los botones de prueba -->
-                    <div style="text-align: center; margin-top: 50px;">
-                        <button onclick="showToast('success')">Mostrar Éxito</button>
-                        <button onclick="showToast('info')">Mostrar Información</button>
-                        <button onclick="showToast('warning')">Mostrar Alerta</button>
-                        <button onclick="showToast('error')">Mostrar Error</button>
-                    </div>
-
-                    <!-- Toast de Éxito (Verde) -->
-                    <div id="toast-success" class="toast-modal toast-success">
-                        <div class="toast-content">
-                            <p class="toast-message">
-                                <i class="toast-icon fa-solid fa-circle-check"></i>
-                                <span>"Mensaje generico..."</span>
-                            </p>
-                            <span class="toast-close" onclick="closeToast('success')">
-                                <i class="fa-solid fa-xmark"></i>
-                            </span>
-                        </div>
-                    </div>
-
-                    <!-- Toast de Información (Azul) -->
-                    <div id="toast-info" class="toast-modal toast-info">
-                        <div class="toast-content">
-                            <p class="toast-message">
-                                <i class="toast-icon fa-solid fa-user"></i>
-                                <span>"Mensaje generico..."</span>
-                            </p>
-                            <span class="toast-close" onclick="closeToast('info')">
-                                <i class="fa-solid fa-xmark"></i>
-                            </span>
-                        </div>
-                    </div>
-
-                    <!-- Toast de Alerta (Amarillo) -->
-                    <div id="toast-warning" class="toast-modal toast-warning">
-                        <div class="toast-content">
-                            <p class="toast-message">
-                                <i class="toast-icon fa-solid fa-triangle-exclamation"></i>
-                                <span>"Mensaje generico..."</span>
-                            </p>
-                            <span class="toast-close" onclick="closeToast('warning')">
-                                <i class="fa-solid fa-xmark"></i>
-                            </span>
-                        </div>
-                    </div>
-
-                    <!-- Toast de Error (Rojo) -->
-                    <div id="toast-error" class="toast-modal toast-error">
-                        <div class="toast-content">
-                            <p class="toast-message">
-                                <i class="toast-icon fa-solid fa-server"></i>
-                                <span>"Mensaje generico..."</span>
-                            </p>
-                            <span class="toast-close" onclick="closeToast('error')">
-                                <i class="fa-solid fa-xmark"></i>
-                            </span>
-                        </div>
-                    </div>
-
-                    <footer>
-                        © 2024 Municipalidad de Barva. Todos los derechos reservados.
-                    </footer>
+                </main>
+                
+                <footer>
+                    © 2025 Municipalidad de Barva. Todos los derechos reservados.
+                </footer>
+            </div>
+        </div>
+    </body>
+</html>

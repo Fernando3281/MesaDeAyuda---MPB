@@ -1,6 +1,7 @@
 package com.mesadeayudaMPB.service.impl;
 
 import com.mesadeayudaMPB.dao.UsuarioDao;
+import com.mesadeayudaMPB.domain.Rol;
 import com.mesadeayudaMPB.domain.Usuario;
 import jakarta.servlet.http.HttpSession;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,6 +15,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
+import java.util.List;
 
 @Service
 public class UsuarioDetailsServiceImpl implements UserDetailsService {
@@ -27,30 +29,41 @@ public class UsuarioDetailsServiceImpl implements UserDetailsService {
     @Override
     @Transactional(readOnly = true)
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        // Try to find user by email
         Usuario usuario = usuarioDao.findByCorreoElectronico(username);
-        
+
         if (usuario == null) {
-            throw new UsernameNotFoundException("Usuario no encontrado: " + username);
+            throw new UsernameNotFoundException(username);
         }
-        
+
         if (!usuario.isActivo()) {
             throw new UsernameNotFoundException("Usuario inactivo: " + username);
         }
-        
-        // Clear and update session attributes
+
+        // Actualizar atributos de sesión
         session.removeAttribute("usuarioImagen");
         session.removeAttribute("usuarioNombre");
         session.removeAttribute("usuarioId");
-        
+
         session.setAttribute("usuarioImagen", usuario.getImagen());
         session.setAttribute("usuarioNombre", usuario.getNombre());
         session.setAttribute("usuarioId", usuario.getIdUsuario());
-        
-        // Set up authorities
+
+        // Obtener roles manteniendo el prefijo "ROL_"
         var roles = new ArrayList<GrantedAuthority>();
-        roles.add(new SimpleGrantedAuthority("ROL_USUARIO"));
-        
+        if (usuario.getRoles() != null) {
+            for (Rol rol : usuario.getRoles()) {
+                // Verificar que el rol tenga el prefijo "ROL_" y agregarlo tal cual
+                if (rol.getNombre() != null && rol.getNombre().startsWith("ROL_")) {
+                    roles.add(new SimpleGrantedAuthority(rol.getNombre()));
+                }
+            }
+        }
+
+        // Si no tiene roles, asignar "ROL_USUARIO" por defecto
+        if (roles.isEmpty()) {
+            roles.add(new SimpleGrantedAuthority("ROL_USUARIO"));
+        }
+
         return new User(
                 usuario.getCorreoElectronico(),
                 usuario.getContrasena(),

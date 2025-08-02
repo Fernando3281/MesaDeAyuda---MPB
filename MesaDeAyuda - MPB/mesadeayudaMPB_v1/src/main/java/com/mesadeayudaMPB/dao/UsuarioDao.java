@@ -62,34 +62,36 @@ public interface UsuarioDao extends JpaRepository<Usuario, Long> {
 
     @Query("SELECT u FROM Usuario u WHERE u.activo = :activo")
     Page<Usuario> findByActivo(@Param("activo") boolean activo, Pageable pageable);
-    
+
     @Query("SELECT DISTINCT u FROM Usuario u JOIN u.roles r WHERE r.nombre = :rol")
-Page<Usuario> findByRolesNombre(@Param("rol") String rol, Pageable pageable);
+    Page<Usuario> findByRolesNombre(@Param("rol") String rol, Pageable pageable);
 
-@Query("SELECT u FROM Usuario u JOIN u.roles r WHERE "
-        + "(LOWER(u.nombre) LIKE LOWER(CONCAT('%', :query, '%')) OR "
-        + "LOWER(u.apellido) LIKE LOWER(CONCAT('%', :query, '%')) OR "
-        + "LOWER(u.codigo) LIKE LOWER(CONCAT('%', :query, '%')) OR "
-        + "LOWER(u.correoElectronico) LIKE LOWER(CONCAT('%', :query, '%')) OR "
-        + "CAST(u.numeroTelefono AS string) LIKE CONCAT('%', :query, '%') OR "
-        + "LOWER(u.departamento) LIKE LOWER(CONCAT('%', :query, '%'))) "
-        + "AND r.nombre = :rol")
-Page<Usuario> buscarUsuariosPorRol(@Param("query") String query, @Param("rol") String rol, Pageable pageable);
+    @Query("SELECT u FROM Usuario u JOIN u.roles r WHERE "
+            + "(LOWER(u.nombre) LIKE LOWER(CONCAT('%', :query, '%')) OR "
+            + "LOWER(u.apellido) LIKE LOWER(CONCAT('%', :query, '%')) OR "
+            + "LOWER(u.codigo) LIKE LOWER(CONCAT('%', :query, '%')) OR "
+            + "LOWER(u.correoElectronico) LIKE LOWER(CONCAT('%', :query, '%')) OR "
+            + "CAST(u.numeroTelefono AS string) LIKE CONCAT('%', :query, '%') OR "
+            + "LOWER(u.departamento) LIKE LOWER(CONCAT('%', :query, '%'))) "
+            + "AND r.nombre = :rol")
+    Page<Usuario> buscarUsuariosPorRol(@Param("query") String query, @Param("rol") String rol, Pageable pageable);
 
-@Query("SELECT u FROM Usuario u JOIN u.roles r WHERE u.activo = :activo AND r.nombre = :rol")
-Page<Usuario> findByActivoAndRolesNombre(@Param("activo") boolean activo, @Param("rol") String rol, Pageable pageable);
+    @Query("SELECT u FROM Usuario u JOIN u.roles r WHERE u.activo = :activo AND r.nombre = :rol")
+    Page<Usuario> findByActivoAndRolesNombre(@Param("activo") boolean activo, @Param("rol") String rol, Pageable pageable);
 
-@Query("SELECT u FROM Usuario u JOIN u.roles r WHERE "
-        + "(LOWER(u.nombre) LIKE LOWER(CONCAT('%', :query, '%')) OR "
-        + "LOWER(u.apellido) LIKE LOWER(CONCAT('%', :query, '%')) OR "
-        + "LOWER(u.codigo) LIKE LOWER(CONCAT('%', :query, '%')) OR "
-        + "LOWER(u.correoElectronico) LIKE LOWER(CONCAT('%', :query, '%')) OR "
-        + "CAST(u.numeroTelefono AS string) LIKE CONCAT('%', :query, '%') OR "
-        + "LOWER(u.departamento) LIKE LOWER(CONCAT('%', :query, '%'))) "
-        + "AND u.activo = :activo AND r.nombre = :rol")
-Page<Usuario> buscarUsuariosPorEstadoYRol(@Param("query") String query, 
-                                        @Param("activo") boolean activo, 
-                                        @Param("rol") String rol, 
-                                        Pageable pageable);
+    @Query("SELECT u FROM Usuario u JOIN u.roles r WHERE "
+            + "(LOWER(u.nombre) LIKE LOWER(CONCAT('%', :query, '%')) OR "
+            + "LOWER(u.apellido) LIKE LOWER(CONCAT('%', :query, '%')) OR "
+            + "LOWER(u.codigo) LIKE LOWER(CONCAT('%', :query, '%')) OR "
+            + "LOWER(u.correoElectronico) LIKE LOWER(CONCAT('%', :query, '%')) OR "
+            + "CAST(u.numeroTelefono AS string) LIKE CONCAT('%', :query, '%') OR "
+            + "LOWER(u.departamento) LIKE LOWER(CONCAT('%', :query, '%'))) "
+            + "AND u.activo = :activo AND r.nombre = :rol")
+    Page<Usuario> buscarUsuariosPorEstadoYRol(@Param("query") String query,
+            @Param("activo") boolean activo,
+            @Param("rol") String rol,
+            Pageable pageable);
+
+    boolean existsByCorreoElectronicoAndIdUsuarioNot(String correoElectronico, Long idUsuario);
 
 }
