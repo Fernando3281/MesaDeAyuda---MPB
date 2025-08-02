@@ -57,7 +57,7 @@ public class EmailService {
             helper.setSubject("Recuperación de contraseña");
 
             // URL de recuperación de contraseña
-            String resetUrl = "http://localhost:81/registro/recuperar-contrasena?token=" + token;
+            String resetUrl = "https://mesadeayuda-mpb.onrender.com/registro/recuperar-contrasena?token=" + token;
 
             String htmlContent = loadHtmlTemplate("classpath:templates/recuperacion-contrasena.html")
                     .replace("{{resetUrl}}", resetUrl)
@@ -80,7 +80,7 @@ public class EmailService {
             helper.setSubject("Cambio de contraseña solicitado");
 
             // URL para cambio de contraseña desde usuario logueado
-            String changeUrl = "http://localhost:81/usuario/cambiar-contrasena?token=" + token;
+            String changeUrl = "https://mesadeayuda-mpb.onrender.com/usuario/cambiar-contrasena?token=" + token;
 
             String htmlContent = loadHtmlTemplate("classpath:templates/cambio-contrasena-usuario.html")
                     .replace("{{changeUrl}}", changeUrl)
