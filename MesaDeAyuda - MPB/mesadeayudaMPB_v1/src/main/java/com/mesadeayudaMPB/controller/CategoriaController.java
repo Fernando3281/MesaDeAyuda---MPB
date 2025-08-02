@@ -63,7 +63,7 @@ public class CategoriaController {
         model.addAttribute("end", Math.min((page + 1) * size, pageResult.getTotalElements()));
         model.addAttribute("searchQuery", search);
 
-        return "/categoria/listado";
+        return "categoria/listado";
     }
 
     @PostMapping("/crear")

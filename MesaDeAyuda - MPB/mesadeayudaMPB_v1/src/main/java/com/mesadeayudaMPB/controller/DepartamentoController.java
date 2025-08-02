@@ -73,7 +73,7 @@ public class DepartamentoController {
         model.addAttribute("end", Math.min((page + 1) * size, pageResult.getTotalElements()));
         model.addAttribute("searchQuery", search);
 
-        return "/departamento/listado";
+        return "departamento/listado";
     }
 
     // MÉTODO PARA CREAR DEPARTAMENTO - CORREGIDO
