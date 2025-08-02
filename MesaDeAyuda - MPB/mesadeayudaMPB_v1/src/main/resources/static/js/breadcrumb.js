@@ -10,7 +10,6 @@ document.addEventListener('DOMContentLoaded', function() {
     setupLogoClickListeners();
 });
 
-// Mapeo de rutas mejorado con rutas específicas por rol
 const routeMappings = {
     '/index': 'Inicio',
     '/login': 'Iniciar Sesión',
@@ -42,7 +41,6 @@ const routeMappings = {
     '/registro/cambiar-contrasena': 'Cambiar Contraseña'
 };
 
-// Rutas principales que resetean el breadcrumb
 const mainRoutes = [
     '/tickets/nuevo',
     '/tickets/listado',
@@ -59,7 +57,6 @@ const mainRoutes = [
     '/categoria/listado'
 ];
 
-// Rutas que no requieren breadcrumb (páginas de autenticación)
 const excludedRoutes = [
     '/login',
     '/registro/nuevo',
@@ -68,7 +65,6 @@ const excludedRoutes = [
     '/registro/cambiar-contrasena'
 ];
 
-// Configuración de jerarquías para breadcrumbs contextuales
 const routeHierarchy = {
     '/tickets/manager': ['/tickets/listado', '/tickets/manager'],
     '/tickets/atender': ['/tickets/listado', '/tickets/atender'],
@@ -88,7 +84,6 @@ function initBreadcrumb() {
             ]));
         }
     } catch (e) {
-        console.warn('Error inicializando breadcrumb:', e);
         sessionStorage.setItem('breadcrumbHistory', JSON.stringify([
             { path: '/index', title: 'Inicio' }
         ]));
@@ -124,7 +119,6 @@ function updateBreadcrumb() {
     let basePath = currentPath;
     let pathId = null;
     
-    // Extraer ID de la URL si existe
     const idMatch = currentPath.match(/\/(\d+)$/);
     if (idMatch) {
         pathId = idMatch[1];
@@ -134,7 +128,6 @@ function updateBreadcrumb() {
     let pageTitle = getPageTitle(basePath, pathId);
     let history = getStoredHistory();
     
-    // Verificar si es una ruta principal
     if (mainRoutes.includes(basePath)) {
         history = buildMainRouteHistory(currentPath, pageTitle);
     } else if (routeHierarchy[basePath]) {
@@ -151,7 +144,6 @@ function getPageTitle(basePath, pathId) {
     let pageTitle = routeMappings[basePath];
     
     if (!pageTitle) {
-        // Intentar obtener el título del documento
         const docTitle = document.title.replace(' - Mesa de Ayuda', '').replace(' - Centro de Soporte', '');
         pageTitle = docTitle || 'Página Actual';
     }
@@ -164,7 +156,6 @@ function getStoredHistory() {
         const storedHistory = sessionStorage.getItem('breadcrumbHistory');
         return storedHistory && isValidJson(storedHistory) ? JSON.parse(storedHistory) : [];
     } catch (e) {
-        console.warn('Error recuperando historial:', e);
         return [];
     }
 }
@@ -180,14 +171,12 @@ function buildHierarchicalHistory(basePath, currentPath, pageTitle, pathId) {
     const hierarchy = routeHierarchy[basePath];
     const history = [{ path: '/index', title: 'Inicio' }];
     
-    // Agregar rutas padre
     for (let i = 0; i < hierarchy.length - 1; i++) {
         const parentPath = hierarchy[i];
         const parentTitle = routeMappings[parentPath] || 'Página Padre';
         history.push({ path: parentPath, title: parentTitle });
     }
     
-    // Agregar página actual
     history.push({ path: currentPath, title: pageTitle });
     
     return history;
@@ -197,17 +186,13 @@ function buildNavigationalHistory(history, currentPath, pageTitle) {
     const existingIndex = history.findIndex(item => item.path === currentPath);
     
     if (existingIndex !== -1) {
-        // Si ya existe en el historial, cortar hasta esa posición
         history = history.slice(0, existingIndex + 1);
     } else {
-        // Agregar nueva página al historial
         if (history.length === 0 || history[history.length - 1].path !== currentPath) {
             history.push({ path: currentPath, title: pageTitle });
         }
         
-        // Limitar el historial a máximo 6 elementos (incluyendo Inicio)
         if (history.length > 6) {
-            // Mantener siempre "Inicio" como primer elemento
             const inicio = history[0];
             const restantes = history.slice(-5);
             history = [inicio, ...restantes];
@@ -221,7 +206,7 @@ function saveHistory(history) {
     try {
         sessionStorage.setItem('breadcrumbHistory', JSON.stringify(history));
     } catch (e) {
-        console.warn('Error guardando historial:', e);
+        // Silently handle error
     }
 }
 
@@ -239,12 +224,10 @@ function renderBreadcrumb(history) {
         li.className = 'breadcrumb-item';
         
         if (index === history.length - 1) {
-            // Último elemento (activo)
             li.classList.add('active');
             li.setAttribute('aria-current', 'page');
             li.textContent = item.title;
         } else {
-            // Elementos navegables
             const a = document.createElement('a');
             a.href = item.path;
             a.textContent = item.title;
@@ -267,11 +250,9 @@ function navigateToBreadcrumb(event, index) {
     if (history && history[index]) {
         const targetPath = history[index].path;
         
-        // Actualizar historial cortando hasta el elemento seleccionado
         const newHistory = history.slice(0, index + 1);
         saveHistory(newHistory);
         
-        // Navegar a la ruta
         window.location.href = targetPath;
     }
 }
@@ -286,22 +267,19 @@ function setupNavigationListeners() {
         link.addEventListener('click', function(e) {
             const href = this.getAttribute('href');
             
-            // No procesar enlaces externos o con # 
             if (!href || href.startsWith('#') || href.startsWith('http')) {
                 return;
             }
             
             if (mainRoutes.includes(href)) {
-                // Resetear historial para rutas principales
                 try {
                     sessionStorage.setItem('breadcrumbHistory', JSON.stringify([
                         { path: '/index', title: 'Inicio' }
                     ]));
                 } catch (e) {
-                    console.warn('Error reseteando historial:', e);
+                    // Silently handle error
                 }
             } else {
-                // Agregar página actual al historial antes de navegar
                 const currentPath = window.location.pathname;
                 if (!excludedRoutes.includes(currentPath)) {
                     updateCurrentPageInHistory();
@@ -338,7 +316,7 @@ function clearBreadcrumbHistory() {
     try {
         sessionStorage.removeItem('breadcrumbHistory');
     } catch (e) {
-        console.warn('Error limpiando historial:', e);
+        // Silently handle error
     }
     initBreadcrumb();
 }
@@ -361,7 +339,6 @@ function isAuthPage() {
         return true;
     }
     
-    // Verificaciones adicionales con parámetros
     if (currentPath === '/registro/verificacion' && currentSearch.includes('email=')) {
         return true;
     }
@@ -378,21 +355,20 @@ function isAuthPage() {
     return false;
 }
 
-// Función para actualizar breadcrumb cuando el DOM cambia (útil para SPAs)
 function refreshBreadcrumb() {
     if (shouldShowBreadcrumb()) {
         updateBreadcrumb();
     }
 }
 
-// Escuchar cambios de URL para SPAs (si se implementa en el futuro)
 window.addEventListener('popstate', function() {
     setTimeout(refreshBreadcrumb, 100);
 });
 
-// Funciones de conexión (mantenidas del código original)
+let ultimaConexionActiva = false;
+
 function actualizarUltimaConexion() {
-    if (isAuthPage()) {
+    if (isAuthPage() || !ultimaConexionActiva) {
         return;
     }
 
@@ -400,6 +376,7 @@ function actualizarUltimaConexion() {
                      document.querySelector('meta[name="_csrf"]')?.getAttribute('content');
     
     if (!csrfToken) {
+        ultimaConexionActiva = false;
         return;
     }
 
@@ -422,12 +399,15 @@ function actualizarUltimaConexion() {
             try {
                 JSON.parse(responseText);
             } catch (jsonError) {
-                console.debug('Respuesta no es JSON válido:', responseText);
+                // Silently handle JSON parse error
             }
         }
     })
     .catch(error => {
-        console.debug('Error actualizando conexión:', error);
+        ultimaConexionActiva = false;
+        if (intervaloUltimaConexion) {
+            clearInterval(intervaloUltimaConexion);
+        }
     });
 }
 
@@ -438,26 +418,33 @@ function iniciarActualizacionConexion() {
         return;
     }
 
+    const csrfToken = document.querySelector('input[name="_csrf"]')?.value || 
+                     document.querySelector('meta[name="_csrf"]')?.getAttribute('content');
+    
+    if (!csrfToken) {
+        return;
+    }
+
+    ultimaConexionActiva = true;
+
     if (intervaloUltimaConexion) {
         clearInterval(intervaloUltimaConexion);
     }
 
-    // Primera actualización después de 1 segundo
     setTimeout(() => {
         actualizarUltimaConexion();
     }, 1000);
     
-    // Actualización cada 5 minutos
     intervaloUltimaConexion = setInterval(actualizarUltimaConexion, 300000);
 }
 
-// Event listeners para manejo de visibilidad y cierre
 document.addEventListener('visibilitychange', function() {
     if (isAuthPage()) {
         return;
     }
 
     if (document.visibilityState === 'hidden') {
+        ultimaConexionActiva = false;
         if (intervaloUltimaConexion) {
             clearInterval(intervaloUltimaConexion);
         }
@@ -467,12 +454,12 @@ document.addEventListener('visibilitychange', function() {
 });
 
 window.addEventListener('beforeunload', function() {
+    ultimaConexionActiva = false;
     if (intervaloUltimaConexion) {
         clearInterval(intervaloUltimaConexion);
     }
 });
 
-// Inicialización cuando el DOM está listo
 document.addEventListener('DOMContentLoaded', function() {
     if (!isAuthPage()) {
         setTimeout(() => {
@@ -481,7 +468,6 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 
-// Exportar funciones para uso externo si es necesario
 window.breadcrumbUtils = {
     refresh: refreshBreadcrumb,
     clear: clearBreadcrumbHistory,
