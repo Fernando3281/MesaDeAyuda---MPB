@@ -175,7 +175,7 @@ public class TicketsController {
             model.addAttribute("start", startItem);
             model.addAttribute("end", endItem);
 
-            return "/tickets/listado";
+            return "tickets/listado";
         }
         return "redirect:/login";
     }
@@ -267,7 +267,7 @@ public class TicketsController {
             model.addAttribute("start", startItem);
             model.addAttribute("end", endItem);
 
-            return "/tickets/listado";
+            return "tickets/listado";
         }
         return "redirect:/login";
     }
@@ -366,7 +366,7 @@ public class TicketsController {
             model.addAttribute("start", startItem);
             model.addAttribute("end", endItem);
 
-            return "/tickets/listado";
+            return "tickets/listado";
         }
         return "redirect:/login";
     }
@@ -451,7 +451,7 @@ public class TicketsController {
                 List<Mensajes> mensajes = mensajeService.obtenerMensajesPorTicket(id);
                 model.addAttribute("mensajes", mensajes);
 
-                return "/tickets/manager";
+                return "tickets/manager";
             }
         }
         return "redirect:/login";
@@ -564,7 +564,7 @@ public class TicketsController {
                     Categoria categoria = categoriaService.getCategoriaPorId(idCategoria);
                     if (categoria == null) {
                         redirectAttributes.addFlashAttribute("error", "La categoría seleccionada no es válida");
-                        return "redirect:/tickets/nuevo";
+                        return "redirect:tickets/nuevo";
                     }
 
                     Ticket ticket = new Ticket();
@@ -620,13 +620,13 @@ public class TicketsController {
                     }
 
                     redirectAttributes.addFlashAttribute("success", "Ticket creado exitosamente");
-                    return "redirect:/tickets/listado";
+                    return "redirect:tickets/listado";
                 }
             }
             return "redirect:/login";
         } catch (IOException e) {
             redirectAttributes.addFlashAttribute("error", "Error al crear el ticket: " + e.getMessage());
-            return "redirect:/tickets/nuevo";
+            return "redirect:tickets/nuevo";
         }
     }
 
@@ -1149,7 +1149,7 @@ public class TicketsController {
 
         if ("Sin Asignar".equals(prioridad)) {
             redirectAttributes.addFlashAttribute("error", "No puedes guardar el ticket con la prioridad 'Sin asignar'.");
-            return "redirect:/tickets/manager/" + idTicket;
+            return "redirect:tickets/manager/" + idTicket;
         }
 
         String correoElectronico = authentication.getName();
@@ -1188,7 +1188,7 @@ public class TicketsController {
             redirectAttributes.addFlashAttribute("error", "Usuario no autenticado.");
         }
 
-        return "redirect:/tickets/manager/" + idTicket;
+        return "redirect:tickets/manager/" + idTicket;
     }
 
     @PostMapping("/cerrarTicket")
@@ -1238,7 +1238,7 @@ public class TicketsController {
                 }
 
                 redirectAttributes.addFlashAttribute("success", "Ticket cerrado exitosamente");
-                return "redirect:/tickets/manager/" + idTicket;
+                return "redirect:tickets/manager/" + idTicket;
             } else {
                 redirectAttributes.addFlashAttribute("error", "No se encontró el ticket");
             }
@@ -1641,11 +1641,11 @@ public class TicketsController {
                 }
 
                 redirectAttributes.addFlashAttribute("success", "Ticket reabierto correctamente");
-                return "redirect:/tickets/manager/" + idTicket;
+                return "redirect:tickets/manager/" + idTicket;
             }
         }
         redirectAttributes.addFlashAttribute("error", "No se pudo reabrir el ticket");
-        return "redirect:/tickets/manager/" + idTicket;
+        return "redirect:tickets/manager/" + idTicket;
     }
 
     @GetMapping("/conversacion/{idMensaje}")

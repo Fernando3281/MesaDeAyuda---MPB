@@ -98,7 +98,7 @@ public class RegistroController {
         Usuario pendingUser = (Usuario) session.getAttribute("pendingUser");
 
         if (pendingUser == null || !pendingUser.getCorreoElectronico().equals(email)) {
-            return "redirect:/registro/nuevo";
+            return "redirect:registro/nuevo";
         }
 
         model.addAttribute("email", email);
@@ -113,14 +113,14 @@ public class RegistroController {
         String storedCode = (String) session.getAttribute("verificationCode");
 
         if (pendingUser == null || storedCode == null) {
-            return "redirect:/registro/nuevo";
+            return "redirect:registro/nuevo";
         }
 
         if (verificationService.verifyCode(storedCode, code)) {
             // Verificar si el usuario ya existe
             if (usuarioDao.existsByCorreoElectronico(pendingUser.getCorreoElectronico())) {
                 redirectAttrs.addFlashAttribute("error", "El correo ya está registrado");
-                return "redirect:/registro/nuevo";
+                return "redirect:registro/nuevo";
             }
 
             // Registrar al nuevo usuario
@@ -130,11 +130,11 @@ public class RegistroController {
             session.removeAttribute("pendingUser");
             session.removeAttribute("verificationCode");
 
-            return "redirect:/login?registroExitoso=true";
+            return "redirect:login?registroExitoso=true";
         } else {
             redirectAttrs.addFlashAttribute("error", "Código de verificación inválido");
             redirectAttrs.addAttribute("email", pendingUser.getCorreoElectronico());
-            return "redirect:/registro/verificacion";
+            return "redirect:registro/verificacion";
         }
     }
 
@@ -173,11 +173,11 @@ public class RegistroController {
             emailService.sendPasswordResetLink(email, token);
 
             // Redirigir al login con mensaje de éxito
-            return "redirect:/login?correoEnviado=true";
+            return "redirect:login?correoEnviado=true";
 
         } catch (Exception e) {
             // En caso de error del servidor
-            return "redirect:/registro/recordar?error=server_error";
+            return "redirect:registro/recordar?error=server_error";
         }
     }
 
@@ -207,7 +207,7 @@ public class RegistroController {
     public String mostrarCambiarContrasena(@RequestParam String token, Model model, RedirectAttributes redirectAttrs) {
         // Verificar si el token existe y es válido
         if (!passwordResetTokens.containsKey(token)) {
-            return "redirect:/login?error=token_invalido";
+            return "redirect:login?error=token_invalido";
         }
 
         Map<String, Object> tokenData = passwordResetTokens.get(token);
@@ -216,11 +216,11 @@ public class RegistroController {
         // Verificar si el token ha expirado
         if (LocalDateTime.now().isAfter(expiryTime)) {
             passwordResetTokens.remove(token);
-            return "redirect:/login?error=token_expirado";
+            return "redirect:login?error=token_expirado";
         }
 
         model.addAttribute("token", token);
-        return "registro/cambiar-contrasena";
+        return "registrocambiar-contrasena";
     }
 
     // Método para procesar el cambio de contraseña
@@ -232,7 +232,7 @@ public class RegistroController {
 
         // Verificar si el token existe y es válido
         if (!passwordResetTokens.containsKey(token)) {
-            return "redirect:/login?error=token_invalido";
+            return "redirect:login?error=token_invalido";
         }
 
         Map<String, Object> tokenData = passwordResetTokens.get(token);
@@ -242,12 +242,12 @@ public class RegistroController {
         // Verificar si el token ha expirado
         if (LocalDateTime.now().isAfter(expiryTime)) {
             passwordResetTokens.remove(token);
-            return "redirect:/login?error=token_expirado";
+            return "redirect:login?error=token_expirado";
         }
 
         // Verificar que las contraseñas coincidan
         if (!password.equals(confirmPassword)) {
-            return "redirect:/registro/recuperar-contrasena?token=" + token + "&error=password_mismatch";
+            return "redirect:registro/recuperar-contrasena?token=" + token + "&error=password_mismatch";
         }
 
         try {
@@ -257,10 +257,10 @@ public class RegistroController {
             // Eliminar el token usado
             passwordResetTokens.remove(token);
 
-            return "redirect:/login?contrasenaActualizada=true";
+            return "redirect:login?contrasenaActualizada=true";
 
         } catch (Exception e) {
-            return "redirect:/registro/recuperar-contrasena?token=" + token + "&error=update_failed";
+            return "redirect:registro/recuperar-contrasena?token=" + token + "&error=update_failed";
         }
     }
 }

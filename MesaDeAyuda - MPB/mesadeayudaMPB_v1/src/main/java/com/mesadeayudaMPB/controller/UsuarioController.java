@@ -456,7 +456,7 @@ public class UsuarioController {
         model.addAttribute("start", start);
         model.addAttribute("end", end);
 
-        return "/usuario/listado";
+        return "usuario/listado";
     }
 
     @GetMapping("/crear")
@@ -464,7 +464,7 @@ public class UsuarioController {
         List<Departamento> departamentos = departamentoService.obtenerTodosLosDepartamentos();
         model.addAttribute("usuario", new Usuario());
         model.addAttribute("departamentos", departamentos);
-        return "/usuario/crear";
+        return "usuario/crear";
     }
 
     // Métodos para manejar las acciones CRUD a través de modales
@@ -850,7 +850,7 @@ public class UsuarioController {
     public String mostrarCambiarContrasenaUsuario(@RequestParam String token, Model model) {
         // Verificar si el token existe y es válido
         if (!passwordResetTokens.containsKey(token)) {
-            return "redirect:/usuario/perfil?error=token_invalido";
+            return "redirect:usuario/perfil?error=token_invalido";
         }
 
         Map<String, Object> tokenData = passwordResetTokens.get(token);
@@ -860,16 +860,16 @@ public class UsuarioController {
         // Verificar si el token ha expirado
         if (LocalDateTime.now().isAfter(expiryTime)) {
             passwordResetTokens.remove(token);
-            return "redirect:/usuario/perfil?error=token_expirado";
+            return "redirect:usuario/perfil?error=token_expirado";
         }
 
         // Verificar que es un token de cambio de contraseña
         if (!"CHANGE_PASSWORD".equals(tokenType)) {
-            return "redirect:/usuario/perfil?error=token_invalido";
+            return "redirect:usuario/perfil?error=token_invalido";
         }
 
         model.addAttribute("token", token);
-        return "/usuario/cambiar-contrasena";
+        return "usuario/cambiar-contrasena";
     }
 
 // Método para procesar el cambio de contraseña (usuario logueado)
@@ -881,7 +881,7 @@ public class UsuarioController {
 
         // Verificar si el token existe y es válido
         if (!passwordResetTokens.containsKey(token)) {
-            return "redirect:/usuario/perfil?error=token_invalido";
+            return "redirect:usuario/perfil?error=token_invalido";
         }
 
         Map<String, Object> tokenData = passwordResetTokens.get(token);
@@ -892,17 +892,17 @@ public class UsuarioController {
         // Verificar si el token ha expirado
         if (LocalDateTime.now().isAfter(expiryTime)) {
             passwordResetTokens.remove(token);
-            return "redirect:/usuario/perfil?error=token_expirado";
+            return "redirect:usuario/perfil?error=token_expirado";
         }
 
         // Verificar que es un token de cambio de contraseña
         if (!"CHANGE_PASSWORD".equals(tokenType)) {
-            return "redirect:/usuario/perfil?error=token_invalido";
+            return "redirect:usuario/perfil?error=token_invalido";
         }
 
         // Verificar que las contraseñas coincidan
         if (!password.equals(confirmPassword)) {
-            return "redirect:/usuario/cambiar-contrasena?token=" + token + "&error=password_mismatch";
+            return "redirect:usuario/cambiar-contrasena?token=" + token + "&error=password_mismatch";
         }
 
         try {
@@ -917,10 +917,10 @@ public class UsuarioController {
             passwordResetTokens.remove(token);
 
             // Redirigir con parámetro de éxito para que el JavaScript pueda detectarlo
-            return "redirect:/usuario/cambiar-contrasena?token=" + token + "&success=true";
+            return "redirect:usuario/cambiar-contrasena?token=" + token + "&success=true";
 
         } catch (Exception e) {
-            return "redirect:/usuario/cambiar-contrasena?token=" + token + "&error=update_failed";
+            return "redirect:usuario/cambiar-contrasena?token=" + token + "&error=update_failed";
         }
     }
 
