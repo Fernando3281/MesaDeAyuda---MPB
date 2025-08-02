@@ -1,10 +1,4 @@
-/* 
-    Created on : Aug 18, 2024, 10:41:53 AM
-    Author     : ferva
-*/
-
 /* Normalización y estilos base */
-
 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
 
 * {
@@ -26,6 +20,7 @@ body, html {
     font-size: 0.95em;
     margin: 0;
     padding: 0;
+    height: 100%;
 }
 
 footer {
@@ -39,10 +34,10 @@ footer {
     position: fixed;
     bottom: 0;
     box-sizing: border-box;
+    z-index: 1000;
 }
 
 /*Estilos de Sidebar*/
-
 .sidebar {
     position: fixed;
     top: 0;
@@ -202,6 +197,7 @@ footer {
 .sidebar .nav-links li:hover .sub-menu.blank {
     opacity: 1;
     visibility: visible;
+    pointer-events: none;
     transform: translateX(0);
 }
 
@@ -272,7 +268,6 @@ footer {
 .sidebar.close .profile-details .profile_name,
 .sidebar.close .nav-links li .arrow {
     display: none;
-
 }
 
 .home-section {
@@ -351,7 +346,6 @@ footer {
     cursor: pointer;
 }
 
-
 /* navbar (Breadcrumb) */
 .breadcrumb-container {
     position: fixed;
@@ -395,15 +389,10 @@ footer {
     font-size: 13px;
 }
 
-
-
-
-
-
-/* Estilos de la barra de navegación */
+/* Estilos de la barra de navegacion */
 .header {
     position: fixed;
-    left: 240px;
+    left: 200px;
     right: 0;
     z-index: 1001;
     background-color: #fff;
@@ -474,7 +463,6 @@ footer {
     cursor: pointer;
     margin-right: 10px;
     font-size: 13px;
-    transition: all 0.3s ease;
 }
 
 .btn-new:hover {
@@ -505,7 +493,6 @@ footer {
     color: #333333;
     margin-right: 5px;
 }
-
 
 /* User profile y dropdown estilos*/
 .user-profile-content {
@@ -567,7 +554,6 @@ footer {
     flex-direction: column;
     color: #7e8590;
 }
-
 
 /* Estilo del menu desplegable */
 .dropdown-menu::before {
@@ -654,11 +640,7 @@ footer {
     animation: fadeOut 0.3s ease-out forwards;
 }
 
-
-
-
 /*Contenido principal*/
-
 .content-wrapper {
     margin-top: 70px;
     padding: 20px;
@@ -699,89 +681,6 @@ textarea.form-control:focus {
     outline: none;
     border-color: #007bff;
     box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.1);
-}
-
-
-@media screen and (max-width: 840px) {
-    .sidebar {
-        transform: translateX(-100%);
-    }
-
-    .sidebar.show {
-        transform: translateX(0);
-    }
-
-    .main-content {
-        margin-left: 0 !important;
-        width: 100% !important;
-    }
-
-    .header, .breadcrumb-container {
-        left: 0 !important;
-        width: 100% !important;
-    }
-
-    .mobile-toggle {
-        display: block;
-    }
-
-    .header-left {
-        display: flex;
-        align-items: center;
-    }
-
-    .header {
-        left: 0 !important;
-        padding: 10px;
-    }
-
-    .header-right {
-        gap: 10px;
-    }
-
-    .notifications-button {
-        display: none;
-    }
-
-    .header-right .user-profile .user-name {
-        display: none;
-    }
-}
-
-@media screen and (min-width: 841px) {
-    .sidebar {
-        transform: none;
-    }
-
-    .mobile-toggle {
-        display: none;
-    }
-
-    .sidebar.close ~ .main-content {
-        margin-left: 68px;
-    }
-
-    .sidebar.close ~ .header,
-    .sidebar.close ~ .breadcrumb-container {
-        left: 68px;
-    }
-
-    .header-right {
-        display: flex;
-        align-items: center;
-    }
-
-    .notifications-button {
-        display: flex;
-    }
-
-    .header-right .user-profile span {
-        display: block;
-    }
-
-    .user-profile {
-        display: flex;
-    }
 }
 
 .toggle-password {
@@ -873,7 +772,6 @@ textarea.form-control:focus {
     }
 }
 
-
 /* 1. Modal de éxito (verde) */
 .toast-success .toast-content {
     background-color: #dff2e1;
@@ -926,27 +824,167 @@ textarea.form-control:focus {
     color: #dc3545;
 }
 
-/*Popover Hover*/
-.popover {
-    position: absolute;
-    background: rgba(17, 17, 17, 0.90);
-    border: 1px solid #1d1d1d;
-    border-radius: 8px;
-    padding: 8px;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-    z-index: 1000;
-    display: none;
-    font-size: 12px;
-    color: #f0f0f0;
+/* Media queries para responsive design */
+@media screen and (max-width: 840px) {
+    .sidebar {
+        transform: translateX(-100%);
+        z-index: 1003;
+        box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
+    }
+
+    .sidebar.show {
+        transform: translateX(0);
+    }
+
+    .main-content {
+        margin-left: 0 !important;
+        width: 100% !important;
+    }
+
+    .header, .breadcrumb-container {
+        left: 0 !important;
+        width: 100% !important;
+    }
+
+    .header {
+        padding: 10px 15px;
+    }
+
+    .header h1 {
+        font-size: 16px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-width: 180px;
+    }
+
+    .mobile-toggle {
+        display: block;
+        margin-right: 10px;
+    }
+
+    .header-right {
+        gap: 8px;
+    }
+
+    .user-profile img {
+        width: 28px;
+        height: 28px;
+    }
+
+    .content-wrapper {
+        margin-top: 100px;
+        padding: 15px;
+    }
+
+    .sidebar .logo-details {
+        height: 70px;
+    }
+
+    .sidebar .logo-details img {
+        height: 50px;
+    }
+
+    .sidebar .nav-links {
+        padding-bottom: 100px;
+    }
+
+    .sidebar-toggle {
+        display: none;
+    }
+
+    .dropdown-menu {
+        right: 10px;
+        max-width: calc(100% - 20px);
+    }
+
+    .notifications-button {
+        display: none;
+    }
+
+    .header-right .user-profile .user-name {
+        display: none;
+    }
+
+    body.sidebar-open {
+        overflow: hidden;
+    }
 }
 
-.popover::after {
-    content: '';
-    position: absolute;
-    top: 100%;
-    left: 50%;
-    transform: translateX(-50%);
-    border-width: 8px;
-    border-style: solid;
-    border-color: #1d1d1d transparent transparent transparent;
+
+
+@media screen and (max-width: 420px) {
+    .header h1 {
+        max-width: 120px;
+        font-size: 14px;
+    }
+
+    .btn-new {
+        padding: 3px 6px;
+        font-size: 11px;
+    }
+
+    .user-profile img {
+        width: 24px;
+        height: 24px;
+    }
+
+    .content-wrapper {
+        margin-top: 90px;
+        padding: 10px;
+    }
+}
+
+@media screen and (min-width: 841px) {
+    .sidebar {
+        transform: none;
+    }
+
+    .mobile-toggle {
+        display: none;
+    }
+
+    .sidebar.close ~ .main-content {
+        margin-left: 68px;
+    }
+
+    .sidebar.close ~ .header,
+    .sidebar.close ~ .breadcrumb-container {
+        left: 68px;
+    }
+
+    .header-right {
+        display: flex;
+        align-items: center;
+    }
+
+    .notifications-button {
+        display: flex;
+    }
+
+    .header-right .user-profile span {
+        display: block;
+    }
+
+    .user-profile {
+        display: flex;
+    }
+}
+
+/* Animaciones */
+@keyframes shake {
+    0%, 100% { transform: rotate(0deg); }
+    20%, 60% { transform: rotate(-5deg); }
+    40%, 80% { transform: rotate(5deg); }
+}
+
+@keyframes fadeOut {
+    from {
+        opacity: 1;
+        transform: translateY(0);
+    }
+    to {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
 }

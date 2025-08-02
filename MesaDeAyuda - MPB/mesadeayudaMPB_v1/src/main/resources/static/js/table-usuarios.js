@@ -1,25 +1,56 @@
 document.addEventListener("DOMContentLoaded", function () {
-    // 1. Configuración de la tabla y redimensionamiento de columnas
     const table = document.querySelector('.tickets-table');
     const tableContainer = document.querySelector('.table-container');
-    const sidebar = document.querySelector('.sidebar');
 
     const defaultColumnWidths = [
-        50, // ID
-        80, // Imagen
-        80, // Código
-        180, // Nombre Completo
-        200, // Correo Electrónico
-        150, // Departamento
-        120, // Teléfono
-        150, // Roles
-        90, // Estado
-        150, // Última Conexión
-        100  // Acciones
+        50,
+        80,
+        80,
+        180,
+        200,
+        150,
+        120,
+        150,
+        90,
+        150,
+        100
     ];
     let currentColumnWidths = [...defaultColumnWidths];
 
-    // Funciones para manejo del redimensionamiento de columnas
+    if (performance.navigation.type === performance.navigation.TYPE_RELOAD) {
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.has('search') || urlParams.has('estado') || urlParams.has('rol') ||
+                urlParams.has('sortColumn') || urlParams.has('sortDirection')) {
+            window.location.href = `/usuario/listado?page=0&size=15`;
+        }
+    }
+
+    function getCurrentFilterUrl() {
+        const urlParams = new URLSearchParams(window.location.search);
+        const searchInput = document.getElementById('searchInput');
+        const statusFilter = document.getElementById('statusFilter');
+        const roleFilter = document.getElementById('roleFilter');
+        const recordsPerPage = document.getElementById('recordsPerPage');
+
+        const page = urlParams.get('page') || '0';
+        const size = recordsPerPage?.value || urlParams.get('size') || '15';
+        const sortColumn = urlParams.get('sortColumn') || '0';
+        const sortDirection = urlParams.get('sortDirection') || 'asc';
+        const searchQuery = searchInput?.value.trim() || urlParams.get('search') || '';
+        const statusValue = statusFilter?.value || urlParams.get('estado') || '';
+        const roleValue = roleFilter?.value || urlParams.get('rol') || '';
+
+        let url = `/usuario/listado?page=${page}&size=${size}&sortColumn=${sortColumn}&sortDirection=${sortDirection}`;
+        if (searchQuery)
+            url += `&search=${encodeURIComponent(searchQuery)}`;
+        if (statusValue)
+            url += `&estado=${statusValue}`;
+        if (roleValue)
+            url += `&rol=${roleValue}`;
+
+        return url;
+    }
+
     function adjustTableWidth() {
         if (!table || !tableContainer)
             return;
@@ -52,13 +83,16 @@ document.addEventListener("DOMContentLoaded", function () {
         });
     }
 
-    // 2. Funciones para el ordenamiento de la tabla
     function initSorting() {
         const headers = table?.querySelectorAll('thead th');
         if (!headers)
             return;
 
-        const sortState = {column: null, direction: 'asc'};
+        const urlParams = new URLSearchParams(window.location.search);
+        const sortState = {
+            column: parseInt(urlParams.get('sortColumn')) || 0,
+            direction: urlParams.get('sortDirection') || 'asc'
+        };
 
         headers.forEach((header, index) => {
             const sortIcon = header.querySelector('.sort-icons i');
@@ -67,25 +101,16 @@ document.addEventListener("DOMContentLoaded", function () {
 
             sortIcon.style.cursor = 'pointer';
             sortIcon.addEventListener('click', () => {
-                sortState.column = sortState.column === index
-                        ? (sortState.direction === 'asc' ? index : null)
-                        : index;
-
-                sortState.direction = sortState.column === index
-                        ? (sortState.direction === 'asc' ? 'desc' : 'asc')
-                        : 'asc';
+                const newDirection = sortState.column === index && sortState.direction === 'asc' ? 'desc' : 'asc';
+                sortState.column = index;
+                sortState.direction = newDirection;
 
                 updateSortIcons(sortState.column, sortState.direction);
-                sortTable(index, sortState.direction);
-                adjustTableWidth();
+                applySortAndFilters(index, newDirection);
             });
         });
 
-        // Orden inicial por ID ascendente
-        sortState.column = 0;
-        sortState.direction = 'asc';
         updateSortIcons(sortState.column, sortState.direction);
-        sortTable(0, sortState.direction);
     }
 
     function updateSortIcons(activeColumn, direction) {
@@ -104,175 +129,113 @@ document.addEventListener("DOMContentLoaded", function () {
         });
     }
 
-    function sortTable(columnIndex, direction) {
-        const tbody = table?.querySelector('tbody');
-        if (!tbody || tbody.querySelectorAll('tr').length <= 1)
-            return;
+    function applySortAndFilters(columnIndex, direction) {
+        const searchInput = document.getElementById('searchInput');
+        const statusFilter = document.getElementById('statusFilter');
+        const roleFilter = document.getElementById('roleFilter');
+        const recordsPerPage = document.getElementById('recordsPerPage');
 
-        const rows = Array.from(tbody.querySelectorAll('tr:not([colspan])'));
-        if (rows.length === 0)
-            return;
+        const searchQuery = searchInput?.value.trim() || '';
+        const statusValue = statusFilter?.value || '';
+        const roleValue = roleFilter?.value || '';
+        const size = recordsPerPage?.value || '15';
 
-        const emptyRow = tbody.querySelector('tr[colspan]');
+        const urlParams = new URLSearchParams(window.location.search);
+        const currentPage = urlParams.get('page') || '0';
 
-        rows.sort((rowA, rowB) => {
-            const cellA = rowA.querySelector(`td:nth-child(${columnIndex + 1})`);
-            const cellB = rowB.querySelector(`td:nth-child(${columnIndex + 1})`);
-            if (!cellA || !cellB)
-                return 0;
+        showLoader(true);
 
-            let valueA = cellA.textContent.trim();
-            let valueB = cellB.textContent.trim();
+        let url = `/usuario/listado?page=${currentPage}&size=${size}&sortColumn=${columnIndex}&sortDirection=${direction}`;
+        if (searchQuery)
+            url += `&search=${encodeURIComponent(searchQuery)}`;
+        if (statusValue)
+            url += `&estado=${statusValue}`;
+        if (roleValue)
+            url += `&rol=${roleValue}`;
 
-            // Tratamiento especial para fechas (Última Conexión)
-            if (columnIndex === 9) {
-                if (valueA === 'Sin conexión')
-                    valueA = '01/01/1970 00:00:00';
-                if (valueB === 'Sin conexión')
-                    valueB = '01/01/1970 00:00:00';
-
-                // Parsear fecha con horas, minutos y segundos
-                const parseDate = (dateStr) => {
-                    const [datePart, timePart] = dateStr.split(' ');
-                    if (!datePart || !timePart)
-                        return new Date(0);
-
-                    const [day, month, year] = datePart.split('/');
-                    const [hours, minutes, seconds] = timePart.split(':');
-
-                    // Asegurar que tenemos segundos (si no vienen, asumir 00)
-                    const secs = seconds !== undefined ? seconds : '00';
-
-                    return new Date(
-                            year, month - 1, day,
-                            hours || 0, minutes || 0, secs || 0
-                            );
-                };
-
-                const dateA = parseDate(valueA);
-                const dateB = parseDate(valueB);
-
-                return direction === 'asc'
-                        ? dateA - dateB
-                        : dateB - dateA;
-            }
-
-            // Para valores numéricos (ID)
-            if (columnIndex === 0) {
-                const numA = parseInt(valueA) || 0;
-                const numB = parseInt(valueB) || 0;
-                return direction === 'asc' ? numA - numB : numB - numA;
-            }
-
-            // Ordenamiento alfanumérico
-            return direction === 'asc'
-                    ? valueA.localeCompare(valueB)
-                    : valueB.localeCompare(valueA);
-        });
-
-        tbody.innerHTML = '';
-        rows.forEach(row => tbody.appendChild(row));
-        if (emptyRow)
-            tbody.appendChild(emptyRow);
+        window.location.href = url;
     }
 
-    // 3. Funciones para los filtros y paginación
     function handleSearch() {
         const searchInput = document.getElementById('searchInput');
         const statusFilter = document.getElementById('statusFilter');
         const roleFilter = document.getElementById('roleFilter');
         const recordsPerPage = document.getElementById('recordsPerPage');
 
-        const searchQuery = searchInput.value.trim();
-        const statusValue = statusFilter.value;
-        const roleValue = roleFilter.value;
-        const size = recordsPerPage.value;
+        const searchQuery = searchInput?.value.trim() || '';
+        const statusValue = statusFilter?.value || '';
+        const roleValue = roleFilter?.value || '';
+        const size = recordsPerPage?.value || '15';
+
+        const urlParams = new URLSearchParams(window.location.search);
+        const sortColumn = urlParams.get('sortColumn') || '0';
+        const sortDirection = urlParams.get('sortDirection') || 'asc';
 
         showLoader(true);
 
-        // Construir URL para la búsqueda
-        let url = `/usuario/listado?page=0&size=${size}`;
-
-        if (searchQuery) {
+        let url = `/usuario/listado?page=0&size=${size}&sortColumn=${sortColumn}&sortDirection=${sortDirection}`;
+        if (searchQuery)
             url += `&search=${encodeURIComponent(searchQuery)}`;
-        }
-        if (statusValue) {
+        if (statusValue)
             url += `&estado=${statusValue}`;
-        }
-        if (roleValue) {
+        if (roleValue)
             url += `&rol=${roleValue}`;
-        }
 
-        // Redirigir a la nueva URL con los filtros
         window.location.href = url;
     }
 
-// Modificar los botones de paginación para mantener los filtros
     function setupPagination() {
         const recordsPerPage = document.getElementById('recordsPerPage');
-        if (!recordsPerPage)
-            return;
+        const paginationButtons = document.querySelectorAll('.pagination-btn, .page-number');
 
-        recordsPerPage.addEventListener('change', function () {
-            const size = this.value;
-            const urlParams = new URLSearchParams(window.location.search);
-            const searchQuery = urlParams.get('search') || '';
-            const estadoFiltro = urlParams.get('estado') || '';
-            const rolFiltro = urlParams.get('rol') || '';
+        const urlParams = new URLSearchParams(window.location.search);
+        const searchQuery = urlParams.get('search') || '';
+        const estadoFiltro = urlParams.get('estado') || '';
+        const rolFiltro = urlParams.get('rol') || '';
+        const sortColumn = urlParams.get('sortColumn') || '0';
+        const sortDirection = urlParams.get('sortDirection') || 'asc';
+        const size = urlParams.get('size') || '15';
 
-            let newUrl = `${window.location.pathname}?page=0&size=${size}`;
-
-            if (searchQuery)
-                newUrl += `&search=${encodeURIComponent(searchQuery)}`;
-            if (estadoFiltro)
-                newUrl += `&estado=${estadoFiltro}`;
-            if (rolFiltro)
-                newUrl += `&rol=${rolFiltro}`;
-
-            window.location.href = newUrl;
-        });
-
-        // Configurar los botones de paginación para mantener los filtros
-        document.querySelectorAll('.pagination-btn, .page-number').forEach(btn => {
-            btn.addEventListener('click', function (e) {
-                e.preventDefault();
-
-                const urlParams = new URLSearchParams(window.location.search);
-                const searchQuery = urlParams.get('search') || '';
-                const estadoFiltro = urlParams.get('estado') || '';
-                const rolFiltro = urlParams.get('rol') || '';
-                const size = urlParams.get('size') || '15';
-
-                let page = 0;
-                if (this.getAttribute('data-page')) {
-                    page = parseInt(this.getAttribute('data-page'));
-                } else if (this.getAttribute('href') && this.getAttribute('href').includes('page=')) {
-                    const match = this.getAttribute('href').match(/page=(\d+)/);
-                    if (match)
-                        page = parseInt(match[1]);
-                }
-
-                let newUrl = `${window.location.pathname}?page=${page}&size=${size}`;
-
+        if (recordsPerPage) {
+            recordsPerPage.value = size;
+            recordsPerPage.addEventListener('change', function () {
+                let newUrl = `${window.location.pathname}?page=0&size=${this.value}&sortColumn=${sortColumn}&sortDirection=${sortDirection}`;
                 if (searchQuery)
                     newUrl += `&search=${encodeURIComponent(searchQuery)}`;
                 if (estadoFiltro)
                     newUrl += `&estado=${estadoFiltro}`;
                 if (rolFiltro)
                     newUrl += `&rol=${rolFiltro}`;
+                window.location.href = newUrl;
+            });
+        }
 
+        paginationButtons.forEach(btn => {
+            btn.addEventListener('click', function (e) {
+                e.preventDefault();
+
+                let page = 0;
+                if (this.classList.contains('page-number')) {
+                    page = parseInt(this.textContent) - 1;
+                } else if (this.getAttribute('href')) {
+                    const match = this.getAttribute('href').match(/page=(\d+)/);
+                    if (match)
+                        page = parseInt(match[1]);
+                }
+
+                let newUrl = `${window.location.pathname}?page=${page}&size=${size}&sortColumn=${sortColumn}&sortDirection=${sortDirection}`;
+                if (searchQuery)
+                    newUrl += `&search=${encodeURIComponent(searchQuery)}`;
+                if (estadoFiltro)
+                    newUrl += `&estado=${estadoFiltro}`;
+                if (rolFiltro)
+                    newUrl += `&rol=${rolFiltro}`;
                 window.location.href = newUrl;
             });
         });
-
-        // Establecer valor actual
-        const urlParams = new URLSearchParams(window.location.search);
-        recordsPerPage.value = urlParams.get('size') || '15';
     }
 
-    // Función para configurar eventos después de actualizar la tabla
     function setupTableEvents() {
-        // Reconfigurar eventos de los botones de acción
         document.querySelectorAll('button[data-action="edit"]').forEach(btn => {
             btn.addEventListener('click', function (e) {
                 e.preventDefault();
@@ -302,7 +265,6 @@ document.addEventListener("DOMContentLoaded", function () {
 
         if (searchInput) {
             let searchTimeout;
-
             searchInput.addEventListener('input', function () {
                 clearTimeout(searchTimeout);
                 searchTimeout = setTimeout(() => {
@@ -310,7 +272,6 @@ document.addEventListener("DOMContentLoaded", function () {
                 }, 500);
             });
 
-            // Manejar la tecla Enter
             searchInput.addEventListener('keyup', function (e) {
                 if (e.key === 'Enter') {
                     clearTimeout(searchTimeout);
@@ -328,53 +289,22 @@ document.addEventListener("DOMContentLoaded", function () {
         }
     }
 
-    // Asegurar que los botones Cancelar funcionen en todos los modals
     function setupModalCancelButtons() {
-        document.querySelectorAll('.neon-modal .btn-secondary').forEach(btn => {
+        document.querySelectorAll('.modal-overlay .btn-outline').forEach(btn => {
             btn.addEventListener('click', function () {
-                const modal = this.closest('.neon-modal');
+                const modal = this.closest('.modal-overlay');
                 if (modal) {
-                    closeNeonModal(modal.id);
+                    closeModal(modal.id);
                 }
             });
         });
     }
 
-    function setupPagination() {
-        const recordsPerPage = document.getElementById('recordsPerPage');
-        if (!recordsPerPage)
-            return;
-
-        recordsPerPage.addEventListener('change', function () {
-            const size = this.value;
-            const urlParams = new URLSearchParams(window.location.search);
-            const searchQuery = urlParams.get('search') || '';
-            const estadoFiltro = urlParams.get('estado') || '';
-            const rolFiltro = urlParams.get('rol') || '';
-
-            let newUrl = `${window.location.pathname}?page=0&size=${size}`;
-
-            if (searchQuery)
-                newUrl += `&search=${encodeURIComponent(searchQuery)}`;
-            if (estadoFiltro)
-                newUrl += `&estado=${estadoFiltro}`;
-            if (rolFiltro)
-                newUrl += `&rol=${rolFiltro}`;
-
-            window.location.href = newUrl;
-        });
-
-        // Establecer valor actual
-        const urlParams = new URLSearchParams(window.location.search);
-        recordsPerPage.value = urlParams.get('size') || '15';
-    }
-
-    // 4. Funciones para los modales
-    function openNeonModal(modalId) {
+    function openModal(modalId) {
         const modal = document.getElementById(modalId);
         if (modal) {
-            modal.style.display = "block";
-            document.body.style.overflow = "hidden";
+            modal.classList.add('active');
+            document.body.style.overflow = 'hidden';
 
             const firstInput = modal.querySelector('input:not([type="hidden"])');
             if (firstInput)
@@ -382,11 +312,11 @@ document.addEventListener("DOMContentLoaded", function () {
         }
     }
 
-    function closeNeonModal(modalId) {
+    function closeModal(modalId) {
         const modal = document.getElementById(modalId);
         if (modal) {
-            modal.style.display = "none";
-            document.body.style.overflow = "auto";
+            modal.classList.remove('active');
+            document.body.style.overflow = 'auto';
 
             const form = modal.querySelector('form');
             if (form)
@@ -394,7 +324,6 @@ document.addEventListener("DOMContentLoaded", function () {
         }
     }
 
-    // 5. Funciones para carga de datos de usuario
     function loadUserData(userId) {
         showLoader(true);
 
@@ -402,13 +331,6 @@ document.addEventListener("DOMContentLoaded", function () {
             headers: {'Accept': 'application/json'}
         })
                 .then(response => {
-                    const contentType = response.headers.get('content-type');
-                    if (!contentType || !contentType.includes('application/json')) {
-                        return response.text().then(text => {
-                            throw new Error(`Respuesta no JSON: ${text.substring(0, 100)}...`);
-                        });
-                    }
-
                     if (!response.ok) {
                         return response.json().then(err => {
                             throw new Error(err.error || `Error HTTP: ${response.status}`);
@@ -425,7 +347,6 @@ document.addEventListener("DOMContentLoaded", function () {
                     const usuario = data.usuario;
                     const roles = data.roles || [];
 
-                    // Llenar formulario
                     document.getElementById('editUserId').value = usuario.idUsuario;
                     document.getElementById('editNombre').value = usuario.nombre || '';
                     document.getElementById('editApellido').value = usuario.apellido || '';
@@ -434,10 +355,8 @@ document.addEventListener("DOMContentLoaded", function () {
                     document.getElementById('editNumeroTelefono').value = usuario.numeroTelefono || '';
                     document.getElementById('editActivo').checked = usuario.activo;
 
-                    // Imagen actual
                     const currentImageContainer = document.getElementById('currentImageContainer');
                     const currentImage = document.getElementById('currentImage');
-
                     if (usuario.tieneImagen) {
                         currentImage.src = `/usuario/imagen/${usuario.idUsuario}?${new Date().getTime()}`;
                         currentImageContainer.style.display = 'block';
@@ -445,7 +364,6 @@ document.addEventListener("DOMContentLoaded", function () {
                         currentImageContainer.style.display = 'none';
                     }
 
-                    // Rol
                     const rolSelect = document.getElementById('editRol');
                     if (roles && roles.length > 0) {
                         rolSelect.value = roles[0];
@@ -453,10 +371,9 @@ document.addEventListener("DOMContentLoaded", function () {
                         rolSelect.value = '';
                     }
 
-                    openNeonModal('neonEditModal');
+                    openModal('editModal');
                 })
                 .catch(error => {
-                    console.error('Error al cargar usuario:', error);
                     showToast('error', `Error al cargar datos: ${error.message}`);
                 })
                 .finally(() => {
@@ -464,15 +381,35 @@ document.addEventListener("DOMContentLoaded", function () {
                 });
     }
 
-    // 6. Funciones para formularios
     function handleCreateFormSubmit(event) {
         event.preventDefault();
         const form = event.target;
         const formData = new FormData(form);
+        const correoElectronico = formData.get('correoElectronico');
+
+        fetch(`/usuario/validar-correo?correo=${encodeURIComponent(correoElectronico)}`)
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Error al validar correo electrónico');
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data.existe) {
+                    showToast('error', 'El correo electrónico ya está registrado');
+                    return;
+                }
+                enviarFormularioCrear(form, formData);
+            })
+            .catch(error => {
+                showToast('error', 'Error al validar correo electrónico');
+            });
+    }
+
+    function enviarFormularioCrear(form, formData) {
         const submitButton = form.querySelector('button[type="submit"]');
         const originalButtonText = submitButton.innerHTML;
 
-        // Validación de campos obligatorios
         const requiredFields = {
             'nombre': 'Nombre',
             'correoElectronico': 'Correo electrónico',
@@ -481,7 +418,6 @@ document.addEventListener("DOMContentLoaded", function () {
         };
 
         let missingFields = [];
-
         for (const [field, name] of Object.entries(requiredFields)) {
             if (!formData.get(field)) {
                 missingFields.push(name);
@@ -493,7 +429,6 @@ document.addEventListener("DOMContentLoaded", function () {
             return;
         }
 
-        // Validación de contraseña
         const password = formData.get('contrasena');
         if (password.length < 3) {
             showToast('error', 'La contraseña debe tener al menos 3 caracteres');
@@ -507,9 +442,7 @@ document.addEventListener("DOMContentLoaded", function () {
         fetch(form.action, {
             method: 'POST',
             body: formData,
-            headers: {
-                'Accept': 'application/json'
-            }
+            headers: {'Accept': 'application/json'}
         })
                 .then(response => {
                     if (!response.ok) {
@@ -524,17 +457,12 @@ document.addEventListener("DOMContentLoaded", function () {
                         throw new Error(data.message || 'Error al crear usuario');
                     }
 
-                    closeNeonModal('neonCreateModal');
-
-                    // Guardar mensaje en sessionStorage antes de recargar
+                    closeModal('createModal');
                     sessionStorage.setItem('successMessage', data.message || 'Usuario creado exitosamente');
                     sessionStorage.setItem('successType', 'create');
-
-                    // Recargar la página para mostrar cambios
-                    window.location.reload();
+                    window.location.href = getCurrentFilterUrl();
                 })
                 .catch(error => {
-                    console.error('Error al crear usuario:', error);
                     showToast('error', error.message);
                 })
                 .finally(() => {
@@ -548,24 +476,43 @@ document.addEventListener("DOMContentLoaded", function () {
         event.preventDefault();
         const form = event.target;
         const formData = new FormData(form);
+        const correoElectronico = formData.get('correoElectronico');
+        const userId = formData.get('idUsuario');
+
+        fetch(`/usuario/validar-correo?correo=${encodeURIComponent(correoElectronico)}&excluir=${userId}`)
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Error al validar correo electrónico');
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data.existe) {
+                    showToast('error', 'El correo electrónico ya está registrado');
+                    return;
+                }
+                enviarFormularioEditar(form, formData);
+            })
+            .catch(error => {
+                showToast('error', 'Error al validar correo electrónico');
+            });
+    }
+
+    function enviarFormularioEditar(form, formData) {
         const submitButton = form.querySelector('button[type="submit"]');
         const originalButtonText = submitButton.innerHTML;
 
-        // Validación de campos obligatorios
         if (!formData.get('nombre')?.trim()) {
             showToast('error', 'El campo Nombre es obligatorio');
             return;
         }
 
-        // Manejo especial del checkbox 'activo'
         const activeCheckbox = form.querySelector('input[name="activo"][type="checkbox"]');
         if (activeCheckbox) {
-            // Eliminar el input hidden de 'activo' para evitar duplicados
             const hiddenActive = form.querySelector('input[name="activo"][type="hidden"]');
             if (hiddenActive) {
                 formData.delete('activo');
             }
-            // Establecer el valor correcto basado en si está marcado o no
             formData.set('activo', activeCheckbox.checked ? 'true' : 'false');
         }
 
@@ -576,9 +523,7 @@ document.addEventListener("DOMContentLoaded", function () {
         fetch(form.action, {
             method: 'POST',
             body: formData,
-            headers: {
-                'Accept': 'application/json'
-            }
+            headers: {'Accept': 'application/json'}
         })
                 .then(response => {
                     if (!response.ok) {
@@ -593,17 +538,12 @@ document.addEventListener("DOMContentLoaded", function () {
                         throw new Error(data.message || 'Error al actualizar usuario');
                     }
 
-                    closeNeonModal('neonEditModal');
-
-                    // Guardar mensaje en sessionStorage antes de recargar
+                    closeModal('editModal');
                     sessionStorage.setItem('successMessage', data.message || 'Usuario actualizado exitosamente');
                     sessionStorage.setItem('successType', 'update');
-
-                    // Recargar la página para mostrar cambios
-                    window.location.reload();
+                    window.location.href = getCurrentFilterUrl();
                 })
                 .catch(error => {
-                    console.error('Error al actualizar usuario:', error);
                     showToast('error', error.message);
                 })
                 .finally(() => {
@@ -615,7 +555,6 @@ document.addEventListener("DOMContentLoaded", function () {
 
     function handleDeleteFormSubmit(event) {
         event.preventDefault();
-
         const form = event.target;
         const submitButton = form.querySelector('button[type="submit"]');
         const originalButtonText = submitButton.innerHTML;
@@ -643,24 +582,55 @@ document.addEventListener("DOMContentLoaded", function () {
                 })
                 .then(data => {
                     if (data.success) {
-                        // Cerrar modal primero
-                        closeNeonModal('neonDeleteModal');
-
-                        // Guardar mensaje en sessionStorage antes de recargar
+                        closeModal('deleteModal');
                         sessionStorage.setItem('successMessage', data.message || 'Usuario eliminado exitosamente');
                         sessionStorage.setItem('successType', 'delete');
 
-                        // Recargar la página para mostrar cambios
-                        window.location.reload();
+                        const urlParams = new URLSearchParams(window.location.search);
+                        let currentPage = parseInt(urlParams.get('page') || '0');
+                        const size = parseInt(urlParams.get('size') || '15');
+                        const sortColumn = urlParams.get('sortColumn') || '0';
+                        const sortDirection = urlParams.get('sortDirection') || 'asc';
+                        const searchQuery = urlParams.get('search') || '';
+                        const estadoFiltro = urlParams.get('estado') || '';
+                        const rolFiltro = urlParams.get('rol') || '';
+
+                        const pageInfoElement = document.getElementById('pageInfo');
+                        let totalItems = 0;
+                        let currentPageItems = 0;
+                        if (pageInfoElement) {
+                            const match = pageInfoElement.textContent.match(/Mostrando (\d+) a (\d+) de (\d+) registros/);
+                            if (match) {
+                                const start = parseInt(match[1]);
+                                const end = parseInt(match[2]);
+                                totalItems = parseInt(match[3]);
+                                currentPageItems = end - start + 1;
+                            }
+                        }
+
+                        const totalItemsAfterDeletion = totalItems - 1;
+                        const totalPagesAfterDeletion = Math.ceil(totalItemsAfterDeletion / size);
+                        if (currentPageItems === 1 && currentPage > 0 && totalItemsAfterDeletion > 0) {
+                            currentPage--;
+                        } else if (totalItemsAfterDeletion === 0) {
+                            currentPage = 0;
+                        }
+
+                        let url = `/usuario/listado?page=${currentPage}&size=${size}&sortColumn=${sortColumn}&sortDirection=${sortDirection}`;
+                        if (searchQuery)
+                            url += `&search=${encodeURIComponent(searchQuery)}`;
+                        if (estadoFiltro)
+                            url += `&estado=${estadoFiltro}`;
+                        if (rolFiltro)
+                            url += `&rol=${rolFiltro}`;
+
+                        window.location.href = url;
                     } else {
                         throw new Error(data.message);
                     }
                 })
                 .catch(error => {
-                    console.error('Error al eliminar usuario:', error);
                     showToast('error', error.message);
-
-                    // Restaurar botón en caso de error
                     submitButton.innerHTML = originalButtonText;
                     submitButton.disabled = false;
                     showLoader(false);
@@ -671,10 +641,9 @@ document.addEventListener("DOMContentLoaded", function () {
         document.getElementById('deleteUserId').value = userId;
         document.getElementById('deleteUserName').textContent = userName;
         document.getElementById('formDeleteUser').setAttribute('action', `/usuario/eliminar/${userId}`);
-        openNeonModal('neonDeleteModal');
+        openModal('deleteModal');
     }
 
-    // 7. Funciones auxiliares
     function showToast(type, message) {
         const toast = document.getElementById(`toast-${type}`);
         if (!toast)
@@ -694,23 +663,18 @@ document.addEventListener("DOMContentLoaded", function () {
             loader.style.display = show ? 'flex' : 'none';
     }
 
-    // Función para mostrar mensajes después de recargar la página
     function checkForSuccessMessages() {
         const successMessage = sessionStorage.getItem('successMessage');
         const successType = sessionStorage.getItem('successType');
 
         if (successMessage) {
-            // Mostrar el toast con un pequeño delay para que la página termine de cargar
             setTimeout(() => {
                 showToast('success', successMessage);
             }, 100);
-
-            // Limpiar los mensajes del sessionStorage
             sessionStorage.removeItem('successMessage');
             sessionStorage.removeItem('successType');
         }
 
-        // También verificar mensaje de eliminación (manteniendo compatibilidad)
         const deleteMessage = sessionStorage.getItem('deleteSuccessMessage');
         if (deleteMessage) {
             setTimeout(() => {
@@ -720,31 +684,63 @@ document.addEventListener("DOMContentLoaded", function () {
         }
     }
 
-    // 8. Configuración inicial
+    function setupEmailValidation() {
+        const createEmailInput = document.getElementById('correoElectronico');
+        const editEmailInput = document.getElementById('editCorreoElectronico');
+        
+        if (createEmailInput) {
+            createEmailInput.addEventListener('blur', validateEmail);
+        }
+        
+        if (editEmailInput) {
+            editEmailInput.addEventListener('blur', validateEmail);
+        }
+    }
+
+    function validateEmail(event) {
+        const emailInput = event.target;
+        const email = emailInput.value.trim();
+        const form = emailInput.closest('form');
+        const userId = form?.querySelector('input[name="idUsuario"]')?.value;
+        
+        if (!email) return;
+        
+        let url = `/usuario/validar-correo?correo=${encodeURIComponent(email)}`;
+        if (userId) {
+            url += `&excluir=${userId}`;
+        }
+        
+        fetch(url)
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Error al validar correo electrónico');
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data.existe) {
+                    emailInput.setCustomValidity('Este correo electrónico ya está registrado');
+                    showToast('error', 'Este correo electrónico ya está registrado');
+                } else {
+                    emailInput.setCustomValidity('');
+                }
+            })
+            .catch(error => {
+            });
+    }
+
     function initialize() {
-        // Verificar mensajes de éxito al cargar la página
         checkForSuccessMessages();
 
-        // Configurar el botón de crear usuario
         const btnCreateUser = document.getElementById('btnCreateUser');
         if (btnCreateUser) {
             btnCreateUser.addEventListener('click', function (e) {
                 e.preventDefault();
-                openNeonModal('neonCreateModal');
+                openModal('createModal');
             });
         }
 
-        // Verificar si hay parámetros de éxito en la URL
-        const urlParams = new URLSearchParams(window.location.search);
-        if (urlParams.has('updated')) {
-            showToast('success', 'Usuario actualizado correctamente');
-            // Limpiar el parámetro de la URL sin recargar
-            history.replaceState(null, '', window.location.pathname);
-        }
-
-        // Configuración de la tabla
         if (table) {
-            // Redimensionamiento
             let isResizing = false;
             let currentResizer = null;
             let startX, startWidth;
@@ -826,7 +822,6 @@ document.addEventListener("DOMContentLoaded", function () {
             initSorting();
         }
 
-        // Configuración de eventos
         const createForm = document.getElementById('formCreateUser');
         if (createForm)
             createForm.addEventListener('submit', handleCreateFormSubmit);
@@ -839,9 +834,7 @@ document.addEventListener("DOMContentLoaded", function () {
         if (deleteForm)
             deleteForm.addEventListener('submit', handleDeleteFormSubmit);
 
-        // Eventos delegados
         document.addEventListener('click', function (e) {
-            // Botones de edición
             if (e.target.closest('button[data-action="edit"]')) {
                 e.preventDefault();
                 const button = e.target.closest('button[data-action="edit"]');
@@ -853,7 +846,6 @@ document.addEventListener("DOMContentLoaded", function () {
                 loadUserData(userId);
             }
 
-            // Enlaces de eliminación
             if (e.target.closest('a[href^="/usuario/eliminar/"]')) {
                 e.preventDefault();
                 const link = e.target.closest('a[href^="/usuario/eliminar/"]');
@@ -861,30 +853,15 @@ document.addEventListener("DOMContentLoaded", function () {
                 const userName = link.closest('tr').querySelector('td:nth-child(4)').textContent;
                 openDeleteModal(userId, userName);
             }
-        });
 
-        // Cerrar modales
-        document.addEventListener('click', function (event) {
-            if (event.target.classList.contains('close-modal') ||
-                    event.target.closest('.close-modal')) {
-                const modal = event.target.closest('.neon-modal');
+            if (e.target.classList.contains('close-modal') || e.target.closest('.close-modal')) {
+                const modal = e.target.closest('.modal-overlay');
                 if (modal) {
-                    closeNeonModal(modal.id);
+                    closeModal(modal.id);
                 }
             }
         });
 
-        document.addEventListener('click', function (event) {
-            if (event.target.classList.contains('close-modal') ||
-                    event.target.closest('#close-modal')) {
-                const modal = event.target.closest('.neon-modal');
-                if (modal) {
-                    closeNeonModal(modal.id);
-                }
-            }
-        });
-
-        // Cerrar toasts
         document.querySelectorAll('.toast-close').forEach(closeBtn => {
             closeBtn.addEventListener('click', function () {
                 const toast = this.closest('.toast-modal');
@@ -893,17 +870,15 @@ document.addEventListener("DOMContentLoaded", function () {
             });
         });
 
-        // Configurar filtros y paginación
         setupFilters();
         setupPagination();
         setupModalCancelButtons();
         setupTableEvents();
+        setupEmailValidation();
 
-        // Fixed header al hacer scroll
         const searchSection = document.querySelector(".search-section");
         if (searchSection) {
             const offsetTop = searchSection.offsetTop;
-
             window.addEventListener("scroll", function () {
                 const scrollTop = window.scrollY;
                 if (scrollTop >= offsetTop) {
@@ -916,7 +891,6 @@ document.addEventListener("DOMContentLoaded", function () {
             });
         }
 
-        // Resize optimizado
         let resizeTimeout;
         window.addEventListener('resize', () => {
             if (resizeTimeout)
@@ -925,6 +899,5 @@ document.addEventListener("DOMContentLoaded", function () {
         });
     }
 
-    // Iniciar todo
     initialize();
 });

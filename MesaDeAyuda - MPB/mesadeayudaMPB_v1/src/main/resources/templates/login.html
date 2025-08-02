@@ -2,18 +2,17 @@
 <html xmlns="http://www.w3.org/1999/xhtml" 
       xmlns:th="http://www.thymeleaf.org">
     <head th:replace="~{layout/plantilla :: head}">
-        <title>Mesa de Ayuda</title>
+        <title>Centro de Soporte</title>
         <meta charset="UTF-8"/>
     </head>
 
-    <th:block th:replace="~{layout/plantilla :: scripts-login}"></th:block>
-    <!-- Recordar remplazar el formato para integrar los archivos js a las distintas interfaces y asi lograr no saturar la plantilla.html -->
+    <script th:src="@{/js/login-funciones.js}" defer></script>
     <script th:src="@{/js/mostrar-contraseña.js}" defer></script>
 
     <body class="body-unlogged">
         <div class="login-container" id="contenedor">
             <div class="login-form">
-                <h1 class="h1-login">Mesa de Ayuda</h1>
+                <h1 class="h1-login">Centro de Soporte</h1>
                 <div class="shield-login"></div>
 
                 <form class="form-elements-login" 

@@ -1,4 +1,15 @@
-/* Estilos generales para la sección de mensajes */
+:root {
+    --primary-color: #2196f3;
+    --secondary-color: #0d8bf2;
+    --bg-light: #f5f7fa;
+    --bg-white: #fff;
+    --border-color: #f0f0f0;
+    --text-dark: #333;
+    --text-muted: #666;
+    --text-light: #888;
+    --shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
 .mensajes-section {
     padding: 0;
     background-color: #f9f9f9;
@@ -12,23 +23,33 @@
 
 .mensajes-title {
     color: #333;
-    margin-bottom: 0;
     padding: 15px 20px;
     font-size: 18px;
     font-weight: 500;
     background-color: #fff;
     border-bottom: 1px solid #f0f0f0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.mobile-ticket-toggle {
+    display: none;
+    background: none;
+    border: none;
+    color: #333;
+    font-size: 16px;
+    cursor: pointer;
+    padding: 8px;
 }
 
 .mensajes-content {
     flex: 1;
     display: flex;
-    gap: 0;
     height: 100%;
     overflow: hidden;
 }
 
-/* Panel lateral con lista de tickets - Más compacto */
 .tickets-list {
     width: 280px;
     background-color: #fff;
@@ -37,6 +58,11 @@
     height: 100%;
     display: flex;
     flex-direction: column;
+    transition: transform 0.3s ease;
+}
+
+.tickets-list.show {
+    transform: translateX(0);
 }
 
 .ticket-search {
@@ -44,12 +70,33 @@
     border-bottom: 1px solid #f0f0f0;
 }
 
+.search-container {
+    position: relative;
+}
+
 .ticket-search input {
     width: 100%;
-    padding: 6px 12px;
+    padding: 6px 30px 6px 12px;
     border: 1px solid #ddd;
     border-radius: 4px;
     font-size: 13px;
+}
+
+.clear-search {
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    color: #666;
+    font-size: 12px;
+    cursor: pointer;
+    display: none;
+}
+
+.clear-search:hover {
+    color: #333;
 }
 
 .tickets-list-container {
@@ -57,21 +104,15 @@
     overflow-y: auto;
 }
 
-.empty-ticket-message {
-    padding: 20px;
-    color: #777;
-    text-align: center;
-    margin: 20px 0;
-}
-
 .ticket-item {
     padding: 12px 15px;
     cursor: pointer;
-    transition: all 0.2s;
+    transition: background-color 0.2s, border-left 0.2s;
     display: flex;
     flex-direction: column;
     border-bottom: 1px solid #f5f5f5;
     background-color: transparent;
+    animation: fadeIn 0.3s ease;
 }
 
 .ticket-item:hover {
@@ -80,7 +121,7 @@
 
 .ticket-item.active {
     background-color: #e6f0ff;
-    border-left: 3px solid #4a90e2;
+    border-left: 3px solid var(--primary-color);
 }
 
 .ticket-code {
@@ -111,50 +152,25 @@
     color: #777;
 }
 
-/* Área de mensajes - Más compacta y con mejor uso del espacio */
-.messages-area:not(.has-selected) #messagesList {
-    display: none;
-}
-
-/* Agrega esto a tu archivo mensajes.css */
-.ticket-item {
-    position: relative;
-}
-
-.message-indicator {
-    position: absolute;
-    top: 10px;
-    right: 10px;
-    color: #2196F3;
-    font-size: 14px;
-}
-
-.message-indicator .fa-envelope {
-    color: #2196F3;
-}
-
-/* Opcional: estilo para mensajes no leídos */
-.ticket-item[data-has-messages="true"] {
-    border-left: 3px solid #2196F3;
-}
-
 .messages-area {
     flex: 1;
     display: flex;
-    position: relative;
     flex-direction: column;
-    background-color: #f5f7fa;
+    background-color: var(--bg-light);
     overflow: hidden;
     height: 100%;
+}
+
+.messages-area:not(.has-selected) #messagesList {
+    display: none;
 }
 
 .messages-header {
     padding: 12px 20px;
     background-color: #fff;
     border-bottom: 1px solid #f0f0f0;
-    z-index: 2;
+    overflow: hidden;
 }
-
 .messages-header h2 {
     color: #333;
     margin-bottom: 0;
@@ -163,15 +179,15 @@
 }
 
 .ticket-title-main {
-    word-wrap: break-word;
-    overflow-wrap: break-word;
-    word-break: break-word;
     font-size: 15px;
     line-height: 1.3;
     margin-bottom: 5px;
     font-weight: 500;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
 }
-
 .ticket-details {
     display: flex;
     gap: 15px;
@@ -192,11 +208,9 @@
     display: flex;
     flex-direction: column;
     gap: 12px;
-    background-color: #f5f7fa;
-    scroll-behavior: smooth;
+    background-color: var(--bg-light);
 }
 
-/* Estilos para los contenedores de mensajes - Más compactos */
 .message-container {
     display: flex;
     gap: 10px;
@@ -204,7 +218,6 @@
     max-width: 100%;
 }
 
-/* Mensajes del usuario (alineados a la derecha) */
 .my-message {
     justify-content: flex-end;
     margin-left: auto;
@@ -223,7 +236,6 @@
     border-bottom-right-radius: 4px;
 }
 
-/* Mensajes del soportista (alineados a la izquierda) */
 .other-message {
     justify-content: flex-start;
     margin-right: auto;
@@ -238,12 +250,11 @@
 }
 
 .other-message .message-content {
-    background-color: #ffffff;
+    background-color: #fff;
     border-bottom-left-radius: 4px;
     border: 1px solid #e0e0e0;
 }
 
-/* Estilos comunes para ambos tipos de mensajes */
 .message-avatar {
     width: 32px;
     height: 32px;
@@ -262,9 +273,8 @@
 .message-content {
     padding: 10px 12px;
     border-radius: 12px;
-    position: relative;
     word-break: break-word;
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+    box-shadow: var(--shadow);
 }
 
 .message-header {
@@ -288,38 +298,77 @@
 }
 
 .message-text {
-    color: #444;
-    line-height: 1.4;
-    white-space: pre-line;
+    font-family: "Poppins", sans-serif;
     font-size: 13px;
+    line-height: 1.5;
+    color: #333;
 }
 
-.message-time i {
-    margin-right: 3px;
-    color: #888;
-    font-size: 11px;
+.message-text p {
+    margin: 0;
+    padding: 0;
 }
 
-.message-attachments {
-    margin-top: 8px;
-    display: flex;
-    flex-wrap: wrap;
-    gap: 6px;
+.message-text h1,
+.message-text h2,
+.message-text h3,
+.message-text h4,
+.message-text h5,
+.message-text h6 {
+    margin: 10px 0;
+    font-weight: 600;
+    color: #222;
 }
 
-.attachment {
-    display: inline-block;
-    padding: 4px 8px;
-    background-color: rgba(0, 0, 0, 0.05);
-    border-radius: 4px;
-    font-size: 11px;
-    color: #555;
+.message-text ul,
+.message-text ol {
+    padding-left: 25px;
 }
 
-/* Estilos para notas internas */
-.internal-note .message-content {
-    border-left: 3px solid #ffc107;
-    background-color: #fffbf0;
+.message-text li {
+    margin-bottom: 5px;
+}
+
+.message-text a {
+    color: #007bff;
+    text-decoration: underline;
+}
+
+.message-text a:hover {
+    color: #0056b3;
+}
+
+.message-text strong,
+.message-text b {
+    font-weight: 700;
+}
+
+.message-text em,
+.message-text i {
+    font-style: italic;
+}
+
+.message-text u {
+    text-decoration: underline;
+}
+
+.message-text span[style*="line-through"],
+.message-text s,
+.message-text strike,
+.message-text del {
+    text-decoration: line-through;
+    background-color: transparent;
+}
+
+.message-text span:empty {
+    display: none;
+}
+
+.message-text hr {
+    border: 0;
+    height: 1px;
+    background-color: #ddd;
+    margin: 15px 0;
 }
 
 .internal-note-badge {
@@ -333,48 +382,7 @@
     font-weight: 500;
 }
 
-/* Ocultar header cuando no hay ticket seleccionado */
-.messages-area .messages-header {
-    display: none;
-}
-
-.messages-area.has-selected .messages-header {
-    display: block;
-}
-
-/* Estilo para el estado sin selección */
-.no-selection-container {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    height: 100%;
-    padding: 40px;
-    text-align: center;
-    color: #666;
-}
-
-.no-selection-icon {
-    font-size: 48px;
-    color: #ccc;
-    margin-bottom: 20px;
-}
-
-.no-selection-title {
-    font-size: 18px;
-    font-weight: 500;
-    margin-bottom: 10px;
-    color: #444;
-}
-
-.no-selection-description {
-    font-size: 14px;
-    margin-bottom: 20px;
-    max-width: 400px;
-    line-height: 1.5;
-}
-
-/* Estilos para el estado sin mensajes */
+.no-selection-container,
 .no-messages-container {
     display: flex;
     flex-direction: column;
@@ -411,8 +419,8 @@
     align-items: center;
     gap: 8px;
     padding: 10px 16px;
-    background-color: #2196f3;
-    color: white;
+    background-color: var(--primary-color);
+    color: #fff;
     border-radius: 6px;
     text-decoration: none;
     font-weight: 500;
@@ -420,38 +428,34 @@
 }
 
 .no-messages-action:hover {
-    background-color: #0d8bf2;
+    background-color: var(--secondary-color);
     text-decoration: none;
 }
 
-/* Ocultar header cuando no hay selección */
-.messages-area:not(.has-selected) .messages-header {
-    display: none;
-}
-
-/* Mostrar área de mensajes centrada cuando no hay selección */
-.messages-area:not(.has-selected) .messages-list {
+#noSelectionPlaceholder {
     display: flex;
     align-items: center;
     justify-content: center;
     height: 100%;
-    padding: 0;
+    width: 100%;
+    background-color: #f5f7fa;
+    z-index: 1;
 }
 
-/* Área de escritura de mensajes - Más compacta */
 .message-input-area {
     padding: 12px 15px;
     background-color: #fff;
     border-top: 1px solid #f0f0f0;
     display: flex;
     gap: 8px;
-    align-items: center;
+    align-items: flex-end;
 }
 
 .message-input-container {
     flex: 1;
     display: flex;
     gap: 8px;
+    align-items: flex-end;
 }
 
 .message-input {
@@ -469,12 +473,12 @@
 }
 
 .message-input:focus {
-    border-color: #2196f3;
+    border-color: var(--primary-color);
 }
 
 .send-button {
-    background-color: #2196f3;
-    color: white;
+    background-color: var(--primary-color);
+    color: #fff;
     border: none;
     border-radius: 18px;
     padding: 8px 16px;
@@ -486,15 +490,14 @@
 }
 
 .send-button:hover {
-    background-color: #0d8bf2;
+    background-color: var(--secondary-color);
 }
 
 .send-button:disabled {
-    background-color: #cccccc;
+    background-color: #ccc;
     cursor: not-allowed;
 }
 
-/* Estilos para roles específicos */
 .role-admin .sender-name {
     color: #d32f2f;
 }
@@ -503,40 +506,61 @@
     color: #1976d2;
 }
 
-/* Barra de scroll personalizada */
-.messages-list::-webkit-scrollbar {
+.messages-list::-webkit-scrollbar,
+.tickets-list::-webkit-scrollbar {
     width: 6px;
 }
 
-.messages-list::-webkit-scrollbar-track {
+.messages-list::-webkit-scrollbar-track,
+.tickets-list::-webkit-scrollbar-track {
     background: #f1f1f1;
     border-radius: 3px;
 }
 
-.messages-list::-webkit-scrollbar-thumb {
+.messages-list::-webkit-scrollbar-thumb,
+.tickets-list::-webkit-scrollbar-thumb {
     background: #c1c1c1;
     border-radius: 3px;
 }
 
-.messages-list::-webkit-scrollbar-thumb:hover {
+.messages-list::-webkit-scrollbar-thumb:hover,
+.tickets-list::-webkit-scrollbar-thumb:hover {
     background: #a8a8a8;
 }
 
-/* Media Queries */
 @media (max-width: 992px) {
     .mensajes-content {
         flex-direction: column;
     }
-    
+
     .tickets-list {
         width: 100%;
-        max-height: 200px;
+        max-height: 250px;
         border-right: none;
         border-bottom: 1px solid #f0f0f0;
+        transform: translateX(-100%);
+        position: absolute;
+        top: 0;
+        left: 0;
+        background: #fff;
+        z-index: 10;
     }
-    
+
+    .tickets-list.show {
+        transform: translateX(0);
+        box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
+    }
+
+    .mobile-ticket-toggle {
+        display: block;
+    }
+
     .messages-area {
-        height: calc(100% - 200px);
+        height: calc(100% - 50px);
+    }
+
+    #noSelectionPlaceholder {
+        height: calc(100% - 50px);
     }
 }
 
@@ -544,53 +568,53 @@
     .mensajes-section {
         height: calc(100vh - 120px);
     }
-    
+
     .ticket-item {
         padding: 10px 12px;
     }
-    
+
     .ticket-title {
         font-size: 12px;
     }
-    
+
     .ticket-metadata {
         font-size: 10px;
     }
-    
+
     .messages-header {
         padding: 10px 15px;
     }
-    
+
     .ticket-title-main {
         font-size: 14px;
     }
-    
+
     .ticket-details {
         font-size: 11px;
         gap: 10px;
     }
-    
+
     .message-content {
         max-width: 90%;
     }
-    
+
     .message-avatar {
         width: 28px;
         height: 28px;
     }
-    
+
     .sender-name {
         font-size: 12px;
     }
-    
+
     .message-text {
         font-size: 12px;
     }
-    
+
     .message-time {
         font-size: 10px;
     }
-    
+
     .send-button {
         padding: 6px 12px;
         height: 36px;
@@ -601,41 +625,26 @@
     .mensajes-section {
         height: calc(100vh - 100px);
     }
-    
+
     .messages-list {
         padding: 10px;
         gap: 8px;
     }
-    
+
     .message-content {
         padding: 8px 10px;
     }
-    
+
     .message-input-area {
         padding: 8px 10px;
     }
-    
+
     .message-input {
         padding: 8px 10px;
         min-height: 34px;
     }
-    
+
     .send-button {
         height: 34px;
     }
-}
-
-
-/* Reemplaza los estilos existentes para el noSelectionPlaceholder */
-#noSelectionPlaceholder {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    height: 100%;
-    width: 100%;
-    position: absolute;
-    top: 0;
-    left: 0;
-    background-color: #f5f7fa;
-    z-index: 1;
 }

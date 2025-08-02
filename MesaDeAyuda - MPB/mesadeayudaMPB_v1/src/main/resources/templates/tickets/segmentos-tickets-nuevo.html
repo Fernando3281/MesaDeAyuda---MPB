@@ -1,323 +1,338 @@
 <!DOCTYPE html>
-<html xmlns="http://www.w3.org/1999/xhtml" 
-      xmlns:th="http://www.thymeleaf.org">
-    <head th:replace="~{layout/plantilla :: head}">
-        <title>Mesa de Ayuda</title>
-    </head>
-    <body>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{layout/plantilla :: head}">
+    <title>Centro de Soporte</title>
+    <meta charset="UTF-8"/>
+</head>
+<body>
+    <section th:fragment="nuevo-ticket">
+        <div class="content-container">
+            <div class="main-form">
+                <div th:if="${error}" class="alert alert-danger alert-dismissible fade show" role="alert">
+                    <span th:text="${error}"></span>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
 
-        <section th:fragment="nuevo-ticket">
-            <div class="content-container">
-                <div class="main-form">
-
-                    <!-- Agregar después del título del formulario -->
-                    <div th:if="${error}" class="alert alert-danger alert-dismissible fade show" role="alert">
-                        <span th:text="${error}"></span>
-                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                    </div>
-
-                    <h1><b>Crear Nuevo Ticket</b> 
-                        <span class="info-icon">
-                            <i class="fas fa-info-circle"></i>
-                            <div class="popover-container">
-                                <div class="popover">
-                                    <div class="popover-title">Información Relevante</div>
-                                    <div class="popover-content">
-                                        <ul>
-                                            <li><strong>Categoría:</strong> Según su criterio, seleccione la categoría que corresponda al tipo de su solicitud.</li>
-                                            <li><strong>Impacto:</strong> Según su criterio, seleccione el nivel de impacto que mejor refleje la importancia de su solicitud.</li>
-                                        </ul>
-                                    </div>
+                <h1><b>Crear Nuevo Ticket</b> 
+                    <span class="info-icon">
+                        <i class="fas fa-info-circle"></i>
+                        <div class="popover-container">
+                            <div class="popover">
+                                <div class="popover-title">Información Relevante</div>
+                                <div class="popover-content">
+                                    <ul>
+                                        <li><strong>Categoría:</strong> Según su criterio, seleccione la categoría que corresponda al tipo de su solicitud.</li>
+                                        <li><strong>Impacto:</strong> Según su criterio, seleccione el nivel de impacto que mejor refleje el nivel de atencion a su solicitud.</li>
+                                    </ul>
                                 </div>
                             </div>
-                        </span>
-                    </h1>
-                    <p class="description1">Describe tu situación y le atenderemos lo más pronto posible</p>
-
-                    <form th:action="@{/tickets/guardar}" method="post" enctype="multipart/form-data">
-                        <div class="form-group">
-                            <label id="txtLayout">Breve Descripción</label>
-                            <input type="text" name="titulo" class="form-control" maxlength="80" placeholder="Ingrese una breve descripcion sobre su solicitud..." required>
-                                <div class="character-count">0 / 80</div>
                         </div>
+                    </span>
+                </h1>
+                <p class="description1">Describe tu situación y le atenderemos lo más pronto posible</p>
 
-                        <div class="form-group">
-                            <label for="problemDescription" id="txtLayout">Descripción del Problema</label>
-                            <textarea id="problemDescription" name="descripcion" class="form-control" rows="5" placeholder="Ingrese una descripcion detallada sobre su solicitud..." required></textarea>
+                <form th:action="@{/tickets/guardar}" method="post" enctype="multipart/form-data">
+                    <div class="form-group">
+                        <label id="txtLayout">Breve Descripción</label>
+                        <input type="text" name="titulo" class="form-control" maxlength="80" placeholder="Ingrese una breve descripcion sobre su solicitud..." required>
+                        <div class="character-count">0 / 80</div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="problemDescription" id="txtLayout">Descripción del Problema</label>
+                        <textarea id="problemDescription" name="descripcion" class="form-control" rows="5" placeholder="Ingrese una descripcion detallada sobre su solicitud..." required></textarea>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group half">
+                            <label for="category" id="txtLayout">Categoría</label>
+                            <select id="category" name="categoria" class="form-control" required>
+                                <option value="">Seleccione una categoría...</option>
+                                <option th:each="categoria : ${categorias}" 
+                                        th:value="${categoria.idCategoria}"
+                                        th:text="${categoria.nombre}">
+                                </option>
+                            </select>
                         </div>
+                        <div class="form-group half">
+                            <label for="impact" id="txtLayout">Impacto (Opcional)</label>
+                            <select id="impact" name="impacto" class="form-control">
+                                <option value="">Seleccione un nivel...</option>
+                                <option value="Mínimo">Mínimo</option>
+                                <option value="Regular">Regular</option>
+                                <option value="Importante">Importante</option>
+                                <option value="Urgente">Urgente</option>
+                            </select>
+                        </div>
+                    </div>
 
-                        <div class="form-row">
-                            <div class="form-group half">
-                                <label for="category" id="txtLayout">Categoría</label>
-                                <select id="category" name="categoria" class="form-control" required>
-                                    <option value="">Seleccione una categoría...</option>
-                                    <option th:each="categoria : ${categorias}" 
-                                            th:value="${categoria.idCategoria}"
-                                            th:text="${categoria.nombre}">
-                                    </option>
-                                </select>
+                    <div class="form-group">
+                        <label id="txtLayout">Adjuntar Archivos (Máximo 2)</label>
+                        <div class="upload-box" id="uploadBox">
+                            <input type="file" 
+                                   name="imagenes"
+                                   multiple 
+                                   accept="image/*,.pdf"
+                                   class="form-control" 
+                                   id="imageInput"
+                                   style="opacity: 0; position: absolute; width: 100%; height: 100%; left: 0; top: 0; cursor: pointer;">
+                            <div id="uploadText">
+                                <i class="fas fa-cloud-upload-alt"></i>
+                                <p>Arrastre sus archivos aquí o haga clic para seleccionar</p>
+                                <span>Formatos aceptados: JPG, PNG, GIF, PDF (Max: 5MB)</span>
                             </div>
-                            <div class="form-group half">
-                                <label for="impact" id="txtLayout">Impacto (Opcional)</label>
-                                <select id="impact" name="impacto" class="form-control">
-                                    <option value="">Seleccione un nivel...</option>
-                                    <option value="Mínimo">Mínimo</option>
-                                    <option value="Regular">Regular</option>
-                                    <option value="Importante">Importante</option>
-                                    <option value="Urgente">Urgente</option>
-                                </select>
-                            </div>
+                            <div id="imagePreviewContainer" class="image-preview-container"></div>
                         </div>
+                    </div>
 
-                        <!-- Caja para subir imágenes y PDFs -->
-                        <div class="form-group">
-                            <label id="txtLayout">Adjuntar Archivos (Máximo 2)</label>
-                            <div class="upload-box" id="uploadBox">
-                                <input type="file" 
-                                       name="imagenes"
-                                       multiple 
-                                       accept="image/*,.pdf"
-                                       class="form-control" 
-                                       id="imageInput"
-                                       style="opacity: 0; position: absolute; width: 100%; height: 100%; left: 0; top: 0; cursor: pointer;">
-                                    <div id="uploadText">
-                                        <i class="fas fa-cloud-upload-alt"></i>
-                                        <p>Arrastre sus archivos aquí o haga clic para seleccionar</p>
-                                        <span>Formatos aceptados: JPG, PNG, GIF, PDF (Max: 5MB)</span>
-                                    </div>
-                                    <div id="imagePreviewContainer" class="image-preview-container"></div>
-                            </div>
-                        </div>
+                    <div class="admin-fields-container" th:if="${usuario.roles.?[nombre == 'ROL_SOPORTISTA' or nombre == 'ROL_ADMINISTRADOR'].size() > 0}">
+                        <button type="button" class="admin-fields-toggle" id="adminFieldsToggle">
+                            <span>Opciones de Adicionales</span>
+                            <i class="fas fa-chevron-down"></i>
+                        </button>
 
-                        <!-- Campos exclusivos para administradores o soportistas -->
-                        <div class="admin-fields-container" th:if="${usuario.roles.?[nombre == 'ROL_SOPORTISTA' or nombre == 'ROL_ADMINISTRADOR'].size() > 0}">
-                            <button type="button" class="admin-fields-toggle" id="adminFieldsToggle">
-                                <span>Opciones de Adicionales</span>
-                                <i class="fas fa-chevron-down"></i>
-                            </button>
-
-                            <div class="admin-fields" id="adminFields">
-                                <div class="form-row">
-                                    <div class="form-group half">
-                                        <label for="estado" id="txtLayout">Estado</label>
-                                        <select id="estado" name="estado" class="form-control">
+                        <div class="admin-fields" id="adminFields">
+                            <div class="form-row">
+                                <div class="form-group half">
+                                    <label for="estado" id="txtLayout">Estado</label>
+                                    <select id="estado" name="estado" class="form-control">
+                                        <th:block th:if="${esUsuario}">
+                                            <option value="Abierto">En Revisión</option>
+                                            <option value="Pendiente">En Progreso</option>
+                                            <option value="Resuelto">Solucionado</option>
+                                        </th:block>
+                                        <th:block th:unless="${esUsuario}">
                                             <option value="Abierto">Abierto</option>
                                             <option value="Pendiente">Pendiente</option>
                                             <option value="Resuelto">Resuelto</option>
-                                        </select>
-                                    </div>
-                                    <div class="form-group half">
-                                        <label for="prioridad" id="txtLayout">Prioridad</label>
-                                        <select id="prioridad" name="prioridad" class="form-control">
-                                            <option value="Sin Asignar">Sin Asignar</option>
-                                            <option value="Bajo">Bajo</option>
-                                            <option value="Medio">Medio</option>
-                                            <option value="Alto">Alto</option>
-                                            <option value="Critico">Critico</option>
-                                        </select>
-                                    </div>
+                                        </th:block>
+                                    </select>
                                 </div>
+                                <div class="form-group half">
+                                    <label for="prioridad" id="txtLayout">Prioridad</label>
+                                    <select id="prioridad" name="prioridad" class="form-control">
+                                        <option value="Sin Asignar">Sin Asignar</option>
+                                        <option value="Bajo">Bajo</option>
+                                        <option value="Medio">Medio</option>
+                                        <option value="Alto">Alto</option>
+                                        <option value="Critico">Critico</option>
+                                    </select>
+                                </div>
+                            </div>
 
-                                <div class="form-group">
-                                    <div class="form-group half">
-                                        <label id="txtLayout">Asignar a</label>
-                                        <div class="asignar-soportista-container">
-                                            <button type="button" class="btn btn-secondary" id="btnAsignarSoportista" 
-                                                    data-bs-toggle="modal" data-bs-target="#asignarSoportistaModal">
-                                                <i class="fas fa-user-tie me-1"></i>
-                                                <span id="nombreSoportista">Asignar a soportista...</span>
+                            <div class="form-group">
+                                <div class="form-group half">
+                                    <label id="txtLayout">Asignar a</label>
+                                    <div class="asignar-soportista-container">
+                                        <button type="button" class="btn btn-secondary" id="btnAsignarSoportista" 
+                                                data-bs-toggle="modal" data-bs-target="#asignarSoportistaModal">
+                                            <i class="fas fa-user-tie me-1"></i>
+                                            <span id="nombreSoportista">Asignar a soportista...</span>
+                                        </button>
+                                        <div class="soportista-buttons">
+                                            <button type="button" class="btn btn-sm btn-change-soportista" id="btnCambiarSoportista" Title="Remplazar" disabled>
+                                                <i class="fas fa-sync-alt"></i>
                                             </button>
-                                            <div class="soportista-buttons">
-                                                <button type="button" class="btn btn-sm btn-change-soportista" id="btnCambiarSoportista" disabled>
-                                                    <i class="fas fa-sync-alt"></i>
-                                                </button>
-                                                <button type="button" class="btn btn-sm btn-remove-soportista" id="btnEliminarSoportista" disabled>
-                                                    <i class="fas fa-times"></i>
-                                                </button>
-                                            </div>
+                                            <button type="button" class="btn btn-sm btn-remove-soportista" id="btnEliminarSoportista" Title="Descartar" disabled>
+                                                <i class="fas fa-times"></i>
+                                            </button>
                                         </div>
-                                        <input type="hidden" id="asignadoParaId" name="asignadoParaId">
                                     </div>
+                                    <input type="hidden" id="asignadoParaId" name="asignadoParaId">
                                 </div>
                             </div>
                         </div>
+                    </div>
 
-                        <!-- Modal simplificado que utiliza la lista filtrada del controlador -->
-                        <div class="modal" id="asignarSoportistaModal" tabindex="-1" aria-hidden="true">
-                            <div class="modal-dialog modal-dialog-centered modal-lg">
-                                <div class="modal-content">
-                                    <div class="modal-header">
-                                        <h5 class="modal-title">Asignar Ticket a Colaborador</h5>
-                                    </div>
-                                    <div class="modal-body">
-                                        <div class="mb-3">
-                                            <label class="form-label" style="text-align: center;">Buscar colaborador</label>
-                                            <div class="input-group mb-3" style="min-width: 480px;">
-                                                <input type="text" class="form-control-search-colaborador" id="searchSoportista" placeholder="Buscar por nombre, código o rol...">
-                                                    <button class="btn btn-outline-secondary" type="button" id="btnClearSearch">
-                                                        <i class="fas fa-times"></i>
-                                                    </button>
-                                            </div>
+                    <div class="modal" id="asignarSoportistaModal" tabindex="-1" aria-hidden="true">
+                        <div class="modal-dialog modal-dialog-centered modal-lg">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h5 class="modal-title">Asignar Ticket a Colaborador</h5>
+                                </div>
+                                <div class="modal-body">
+                                    <div class="mb-3">
+                                        <label class="form-label" style="text-align: center;">Buscar colaborador</label>
+                                        <div class="input-group mb-3" style="min-width: 480px;">
+                                            <input type="text" class="form-control-search-colaborador" id="searchSoportista" placeholder="Buscar por nombre, código o rol...">
+                                            <button class="btn btn-outline-secondary" type="button" id="btnClearSearch">
+                                                <i class="fas fa-times"></i>
+                                            </button>
+                                        </div>
 
-                                            <!-- Lista de soportistas con más información -->
-                                            <div class="soportistas-list" id="soportistasList">
-                                                <div class="list-group" id="selectSoportista">
-                                                    <div th:each="soportista : ${usuariosAsignables}" 
-                                                         class="list-group-item list-group-item-action soportista-item"
-                                                         th:attr="data-id=${soportista.idUsuario}">
-                                                        <img th:src="@{'/usuario/imagen/' + ${soportista.idUsuario}}"
-                                                             class="user-img"
-                                                             onerror="this.onerror=null; this.src='/img/default-user.png'">
+                                        <div class="soportistas-list" id="soportistasList">
+                                            <div class="list-group" id="selectSoportista">
+                                                <div th:each="soportista : ${usuariosAsignables}" 
+                                                     class="list-group-item list-group-item-action soportista-item"
+                                                     th:attr="data-id=${soportista.idUsuario}">
+                                                    <img th:src="@{'/usuario/imagen/' + ${soportista.idUsuario}}"
+                                                         class="user-img"
+                                                         onerror="this.onerror=null; this.src='/img/default-user.png'">
 
-                                                            <div class="soportista-info">
-                                                                <div class="soportista-info-header">
-                                                                    <span class="soportista-name" th:text="${soportista.nombre + ' ' + soportista.apellido}"></span>
-                                                                    <div class="soportista-roles">
-                                                                        <span th:each="rol : ${soportista.roles}" 
-                                                                              class="role-badge"
-                                                                              th:text="${rol.nombre.replace('ROL_', '')}"></span>
-                                                                    </div>
-
-                                                                </div>
-                                                                <span class="soportista-code" th:text="${'ID: ' + soportista.codigo}"></span>
+                                                    <div class="soportista-info">
+                                                        <div class="soportista-info-header">
+                                                            <span class="soportista-name" th:text="${soportista.nombre + ' ' + soportista.apellido}"></span>
+                                                            <div class="soportista-roles">
+                                                                <span th:each="rol : ${soportista.roles}" 
+                                                                      class="role-badge"
+                                                                      th:text="${rol.nombre.replace('ROL_', '')}"></span>
                                                             </div>
+                                                        </div>
+                                                        <span class="soportista-code" th:text="${'ID: ' + soportista.codigo}"></span>
                                                     </div>
                                                 </div>
                                             </div>
                                         </div>
-                                        <div id="infoSoportista" class="mt-3" style="display: none;">
-                                            <div class="alert alert-info">
-                                                <i class="fas fa-info-circle me-2"></i>
-                                                <span id="infoText"></span>
-                                            </div>
+                                    </div>
+                                    <div id="infoSoportista" class="mt-3" style="display: none;">
+                                        <div class="alert alert-info">
+                                            <i class="fas fa-info-circle me-2"></i>
+                                            <span id="infoText"></span>
                                         </div>
                                     </div>
-                                    <div class="modal-footer">
-                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                                        <button type="button" class="btn btn-primary" id="confirmarAsignacion">Confirmar</button>
-                                    </div>
                                 </div>
-                            </div>
-                        </div>
-
-                        <!-- Modal para vista previa de PDF -->
-                        <div id="pdfModal" class="pdf-modal">
-                            <span class="close-pdf-modal"><i class="fa-solid fa-xmark"></i></span>
-                            <iframe id="pdfModalContent" class="pdf-modal-content" frameborder="0"></iframe>
-                        </div>
-
-                        <!-- Modal para vista previa -->
-                        <div id="imageModal" class="image-modal">
-                            <span class="close-modal"><i class="fa-solid fa-xmark"></i></span>
-                            <img id="modalImage" class="modal-content">
-                        </div>
-
-                        <!-- Modal de Confirmacion -->
-                        <div id="successModal" class="modal fade" tabindex="-1" aria-hidden="true">
-                            <div class="modal-dialog modal-dialog-centered">
-                                <div class="modal-content" id="modalConfirmacion">
-                                    <div class="modal-body" style="text-align: center;">
-                                        <!-- Check Animation -->
-                                        <div class="success-checkmark">
-                                            <div class="check-icon">
-                                                <span class="icon-line line-tip"></span>
-                                                <span class="icon-line line-long"></span>
-                                                <div class="icon-circle"></div>
-                                                <div class="icon-fix"></div>
-                                            </div>
-                                        </div>
-                                        <h3>¡Ticket enviado correctamente!</h3>
-                                        <p>Tu ticket ha sido registrado en nuestro sistema y será atendido pronto.</p>
-                                        <button id="confirmButton" class="btn">
-                                            Entendido
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <button type="submit" id="submitButton" class="btn-submit">
-                            Enviar Ticket <i class="fa-solid fa-paper-plane"></i>
-                        </button>
-                    </form>
-                </div>
-
-                <div class="sidebarContent">
-                    <div class="card">
-                        <div style="border-bottom: 1px solid #dedede;">
-                            <h2 id="h2Listado" style="cursor: pointer;" th:onclick="|window.location.href='@{/usuario/historial}'|">
-                                Tickets Activos 
-                                <i class="fa-solid fa-chevron-right hover-arrow"></i>
-                            </h2>
-                        </div>
-                        <div class="ticket-list">
-                            <div th:each="ticket : ${ticketsAbiertos}" class="ticket-item" 
-                                 th:onclick="|window.location.href='@{/usuario/detalles/}${ticket.idTicket}'|"
-                                 style="cursor: pointer;">
-                                <div class="ticket-header">
-                                    <span class="ticket-id">
-                                        <i class="fa-solid fa-ticket"></i>
-                                        <span th:text="${ticket.codigo}"></span>
-                                    </span>
-                                    <span class="status-badge">
-                                        <i class="far fa-clock"></i> En Revisión
-                                    </span>
-                                </div>
-                                <div class="ticket-title" th:text="${ticket.titulo}">Problema con el sistema de Facturación</div>
-                                <div class="ticket-details">
-                                    <div class="ticket-info">
-                                        <span class="ticket-property">
-                                            <i class="fa-solid fa-tag"></i> Categoría: 
-                                        </span>
-                                        <span class="ticket-value" th:text="${ticket.categoria}">Hardware</span>
-                                    </div>
-                                    <div class="ticket-info">
-                                        <span class="ticket-property">
-                                            <i class="fa-solid fa-flag"></i> Prioridad: 
-                                        </span>
-                                        <span class="ticket-value" th:text="${ticket.prioridad}">Bajo</span>
-                                    </div>
-                                    <div class="ticket-date">
-                                        <i class="far fa-calendar-alt"></i>
-                                        <span th:text="${#dates.format(ticket.fechaApertura, 'dd-MM-yyyy')}">23-08-2024</span>
-                                    </div>
-                                </div>
-                            </div>
-                            <div th:if="${ticketsAbiertos.empty}" class="no-tickets">
-                                <div class="empty-state">
-                                    <div class="empty-icon">
-                                        <i class="fas fa-ticket-alt"></i>
-                                    </div>
-                                    <h3>No tienes tickets pendientes</h3>
-                                    <p>Actualmente no hay solicitudes pendientes en tu cuenta.</p>
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                                    <button type="button" class="btn btn-primary" id="confirmarAsignacion">Confirmar</button>
                                 </div>
                             </div>
                         </div>
                     </div>
 
-                    <div class="card">
-                        <h2>Información de Contacto</h2>
-                        <p class="description2">Recuerde mantener sus datos actualizados para lograr ayudarle con su solicitud.</p>
-                        <div class="contact-info">
-                            <div class="form-group">
-                                <label id="txtLayout">Nombre Completo</label>
-                                <input id="txtInput" class="form-control" type="text" th:value="${usuario.nombre} + ' ' + ${usuario.apellido}" readonly>
+                    <div id="pdfModal" class="pdf-modal">
+                        <span class="close-pdf-modal"><i class="fa-solid fa-xmark"></i></span>
+                        <iframe id="pdfModalContent" class="pdf-modal-content" frameborder="0"></iframe>
+                    </div>
+
+                    <div id="imageModal" class="image-modal">
+                        <span class="close-modal"><i class="fa-solid fa-xmark"></i></span>
+                        <img id="modalImage" class="modal-content">
+                    </div>
+
+                    <div id="successModal" class="modal fade" tabindex="-1" aria-hidden="true">
+                        <div class="modal-dialog modal-dialog-centered">
+                            <div class="modal-content" id="modalConfirmacion">
+                                <div class="modal-body" style="text-align: center;">
+                                    <div class="success-checkmark">
+                                        <div class="check-icon">
+                                            <span class="icon-line line-tip"></span>
+                                            <span class="icon-line line-long"></span>
+                                            <div class="icon-circle"></div>
+                                            <div class="icon-fix"></div>
+                                        </div>
+                                    </div>
+                                    <h3>¡Ticket enviado correctamente!</h3>
+                                    <p>Tu ticket ha sido registrado en nuestro sistema y será atendido pronto.</p>
+                                    <button id="confirmButton" class="btn">
+                                        Entendido
+                                    </button>
+                                </div>
                             </div>
-                            <div class="form-group">
-                                <label id="txtLayout">Número de Teléfono</label>
-                                <input id="txtInput" class="form-control" type="tel" 
-                                       th:value="${usuario.numeroTelefono == 0 ? 'Sin Información...' : '+506 ' + usuario.numeroTelefono}" 
-                                       readonly>
+                        </div>
+                    </div>
+
+                    <button type="submit" id="submitButton" class="btn-submit">
+                        Enviar Ticket <i class="fa-solid fa-paper-plane"></i>
+                    </button>
+                </form>
+            </div>
+
+            <div class="sidebarContent">
+                <div class="card">
+                    <div style="border-bottom: 1px solid #dedede;">
+                        <h2 id="h2Listado" style="cursor: pointer;" th:onclick="|window.location.href='@{/usuario/historial}'|">
+                            Tickets Activos 
+                            <i class="fa-solid fa-chevron-right hover-arrow"></i>
+                        </h2>
+                    </div>
+                    <div class="ticket-list">
+                        <div th:each="ticket : ${ticketsAbiertos}" class="ticket-item" 
+                             th:onclick="|window.location.href='@{/usuario/detalles/}${ticket.idTicket}'|"
+                             style="cursor: pointer;">
+                            <div class="ticket-header">
+                                <span class="ticket-id">
+                                    <i class="fa-solid fa-ticket"></i>
+                                    <span th:text="${ticket.codigo}"></span>
+                                </span>
+                                <span class="status-badge">
+                                    <th:block th:with="esUsuario=${#lists.contains(usuario.roles.![nombre], 'ROL_USUARIO') 
+                                              and not #lists.contains(usuario.roles.![nombre], 'ROL_ADMINISTRADOR') 
+                                              and not #lists.contains(usuario.roles.![nombre], 'ROL_SOPORTISTA')}">
+                                        <span th:if="${esUsuario}" 
+                                              th:text="${ticket.estado == 'Abierto'} ? 'En Revisión' : 
+                                              (${ticket.estado == 'Pendiente'} ? 'En Progreso' : 
+                                              (${ticket.estado == 'Resuelto'} ? 'Solucionado' : ${ticket.estado}))">
+                                            Estado
+                                        </span>
+                                        <span th:unless="${esUsuario}" th:text="${ticket.estado}">
+                                            Estado
+                                        </span>
+                                    </th:block>
+                                </span>
                             </div>
-                            <div class="form-group">
-                                <label id="txtLayout">Correo Electrónico</label>
-                                <input id="txtInput" class="form-control" type="email" th:value="${usuario.correoElectronico}" readonly>
+                            <div class="ticket-title" th:text="${ticket.titulo}">Problema con el sistema de Facturación</div>
+                            <div class="ticket-details">
+                                <div class="ticket-info">
+                                    <span class="ticket-property">
+                                        <i class="fa-solid fa-tag"></i> Categoría: 
+                                    </span>
+                                    <span class="ticket-value" th:text="${ticket.categoria}">Hardware</span>
+                                </div>
+                                <div class="ticket-info">
+                                    <span class="ticket-property">
+                                        <i class="fa-solid fa-flag"></i> Prioridad: 
+                                    </span>
+                                    <span class="ticket-value" th:text="${ticket.prioridad}">Bajo</span>
+                                </div>
+                                <div class="ticket-date">
+                                    <i class="far fa-calendar-alt"></i>
+                                    <span th:text="${#dates.format(ticket.fechaApertura, 'dd-MM-yyyy')}">23-08-2024</span>
+                                </div>
                             </div>
+                        </div>
+                        <div th:if="${ticketsAbiertos.empty}" class="no-tickets">
+                            <div class="empty-state">
+                                <div class="empty-icon">
+                                    <i class="fas fa-ticket-alt"></i>
+                                </div>
+                                <h3>No tienes tickets pendientes</h3>
+                                <p>Actualmente no hay solicitudes pendientes en tu cuenta.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h2>Información de Contacto</h2>
+                    <p class="description2">Recuerde mantener sus datos actualizados para lograr ayudarle con su solicitud.</p>
+                    <div class="contact-info">
+                        <div class="form-group">
+                            <label id="txtLayout">Nombre Completo</label>
+                            <input id="txtInput" class="form-control" type="text" 
+                                   th:value="${usuario.apellido != null and usuario.apellido != ''} ? 
+                                   ${usuario.nombre + ' ' + usuario.apellido} : 
+                                   ${usuario.nombre}" 
+                                   readonly>
+                        </div>
+                        <div class="form-group">
+                            <label id="txtLayout">Número de Teléfono</label>
+                            <input id="txtInput" class="form-control" type="tel" 
+                                   th:if="${usuario.numeroTelefono != null and usuario.numeroTelefono != ''}" 
+                                   th:value="${'+506 ' + usuario.numeroTelefono}" 
+                                   readonly>
+                            <input id="txtInput" class="form-control" type="tel" 
+                                   th:unless="${usuario.numeroTelefono != null and usuario.numeroTelefono != ''}" 
+                                   value="Sin Información..." 
+                                   readonly>
+                        </div>
+                        <div class="form-group">
+                            <label id="txtLayout">Correo Electrónico</label>
+                            <input id="txtInput" class="form-control" type="email" th:value="${usuario.correoElectronico}" readonly>
                         </div>
                     </div>
                 </div>
             </div>
-        </section>
-
-    </body>
+        </div>
+    </section>
+</body>
 </html>

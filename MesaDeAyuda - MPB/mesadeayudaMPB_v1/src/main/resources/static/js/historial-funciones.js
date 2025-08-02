@@ -1,281 +1,394 @@
 document.addEventListener('DOMContentLoaded', function () {
-    // Elementos del filtrado
     const filterChips = document.querySelectorAll('.filter-chip');
     const filterDropdowns = document.querySelectorAll('.filter-dropdown');
     const clearFilters = document.getElementById('clearFilters');
     const activeFilters = document.getElementById('activeFilters');
     const searchInput = document.getElementById('searchInput');
     const ticketList = document.getElementById('ticketList');
-    const dateFrom = document.getElementById('dateFrom');
-    const dateTo = document.getElementById('dateTo');
+    const fechaFrom = document.getElementById('fechaFrom');
+    const fechaTo = document.getElementById('fechaTo');
 
-    // Modal de cancelación
     const cancelModal = document.getElementById('cancelTicketModal');
     const confirmCancel = document.getElementById('confirmCancel');
     const closeCancelModal = document.getElementById('closeCancelModal');
     let currentTicketId = null;
 
-    // Función para obtener CSRF token
+    const fileModal = document.getElementById('fileModal');
+    const modalFileImage = document.getElementById('modalFileImage');
+    const modalFilePdf = document.getElementById('modalFilePdf');
+    const modalFileName = document.getElementById('modalFileName');
+    const closeModal = document.querySelector('.close-modal');
+
+    const ticketListContainer = document.querySelector('.ticket-list-container');
+    const esSoportistaOAdmin = ticketListContainer ? ticketListContainer.dataset.esSoportistaAdmin === 'true' : false;
+
+    if (fechaFrom && fechaTo) {
+        flatpickr("#fechaFrom", {
+            dateFormat: "d/m/Y",
+            locale: "es",
+            placeholder: "dd/mm/yyyy",
+            allowInput: true
+        });
+
+        flatpickr("#fechaTo", {
+            dateFormat: "d/m/Y",
+            locale: "es",
+            placeholder: "dd/mm/yyyy",
+            allowInput: true
+        });
+    }
+
     function getCsrfToken() {
         const metaTag = document.querySelector('meta[name="_csrf"]');
         return metaTag ? metaTag.getAttribute('content') : null;
     }
 
-    // Función para obtener CSRF header
     function getCsrfHeader() {
         const metaTag = document.querySelector('meta[name="_csrf_header"]');
         return metaTag ? metaTag.getAttribute('content') : 'X-CSRF-TOKEN';
     }
 
-    // Inicialización
-    activeFilters.style.display = 'none';
-    document.querySelectorAll('input[type="checkbox"]').forEach(cb => {
-        cb.checked = false;
-    });
+    function hayFiltrosAplicados() {
+        const checkboxesMarcados = document.querySelectorAll('input[type="checkbox"]:checked').length > 0;
+        const hayFiltroFecha = fechaFrom && fechaTo && (fechaFrom.value || fechaTo.value);
+        return checkboxesMarcados || hayFiltroFecha;
+    }
 
-    // 1. Funcionalidad de Filtrado
-    // ----------------------------
+    function actualizarVisibilidadBotonLimpiar() {
+        if (clearFilters) {
+            clearFilters.style.display = hayFiltrosAplicados() ? 'flex' : 'none';
+        }
+    }
 
-    // Toggle filter dropdowns
-    filterChips.forEach(chip => {
-        chip.addEventListener('click', (e) => {
-            const filterType = chip.dataset.filter;
-            const dropdown = document.getElementById(`${filterType}Filter`);
+    function mapearEstadoParaFiltro(estadoMostrado) {
+        if (!esSoportistaOAdmin) {
+            switch (estadoMostrado.toLowerCase()) {
+                case 'en revisión':
+                    return 'abierto';
+                case 'en progreso':
+                    return 'pendiente';
+                case 'solucionado':
+                    return 'resuelto';
+                case 'desactivado':
+                    return 'desactivado';
+                case 'cancelado':
+                    return 'cancelado';
+                default:
+                    return estadoMostrado.toLowerCase();
+            }
+        }
+        return estadoMostrado.toLowerCase();
+    }
 
-            // Close other dropdowns
-            filterDropdowns.forEach(d => {
-                if (d.id !== `${filterType}Filter`) {
+    if (ticketList) {
+        if (activeFilters) activeFilters.style.display = 'none';
+        document.querySelectorAll('input[type="checkbox"]').forEach(cb => {
+            cb.checked = false;
+        });
+        if (fechaFrom) fechaFrom.value = '';
+        if (fechaTo) fechaTo.value = '';
+        if (searchInput) searchInput.value = '';
+
+        actualizarVisibilidadBotonLimpiar();
+
+        filterChips.forEach(chip => {
+            chip.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const filterType = chip.dataset.filter;
+                const dropdown = document.getElementById(`${filterType}Filter`);
+
+                const isCurrentlyActive = chip.classList.contains('active');
+
+                filterDropdowns.forEach(d => {
                     d.style.display = 'none';
+                });
+                filterChips.forEach(c => {
+                    c.classList.remove('active');
+                });
+
+                if (!isCurrentlyActive) {
+                    dropdown.style.display = 'block';
+                    chip.classList.add('active');
+
+                    const chipRect = chip.getBoundingClientRect();
+                    dropdown.style.top = `${chipRect.bottom + window.scrollY + 8}px`;
+                    dropdown.style.left = `${chipRect.left}px`;
+                }
+            });
+        });
+
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('.filter-chip') && !e.target.closest('.filter-dropdown')) {
+                filterDropdowns.forEach(dropdown => {
+                    dropdown.style.display = 'none';
+                });
+                filterChips.forEach(chip => {
+                    chip.classList.remove('active');
+                });
+            }
+        });
+
+        function updateActiveFilters() {
+            if (!activeFilters) return;
+            
+            activeFilters.innerHTML = '';
+            let hasActiveFilters = false;
+
+            document.querySelectorAll('input[type="checkbox"]:checked').forEach(checkbox => {
+                hasActiveFilters = true;
+                const filterTag = document.createElement('div');
+                filterTag.className = 'active-filter-tag';
+                filterTag.innerHTML = `
+                    ${checkbox.value}
+                    <i class="fas fa-times" data-filter="${checkbox.name}" data-value="${checkbox.value}"></i>
+                `;
+                activeFilters.appendChild(filterTag);
+            });
+
+            if (fechaFrom && fechaTo && (fechaFrom.value || fechaTo.value)) {
+                hasActiveFilters = true;
+                const dateFilterTag = document.createElement('div');
+                dateFilterTag.className = 'active-filter-tag';
+                const fechaDesde = fechaFrom.value || '...';
+                const fechaHasta = fechaTo.value || '...';
+                dateFilterTag.innerHTML = `
+                    ${fechaDesde} / ${fechaHasta}
+                    <i class="fas fa-times" data-filter="date"></i>
+                `;
+                activeFilters.appendChild(dateFilterTag);
+            }
+
+            activeFilters.style.display = hasActiveFilters ? 'flex' : 'none';
+            actualizarVisibilidadBotonLimpiar();
+        }
+
+        if (activeFilters) {
+            activeFilters.addEventListener('click', (e) => {
+                if (e.target.matches('.fa-times')) {
+                    const filterType = e.target.dataset.filter;
+                    const filterValue = e.target.dataset.value;
+
+                    if (filterType === 'date') {
+                        if (fechaFrom) fechaFrom.value = '';
+                        if (fechaTo) fechaTo.value = '';
+                        if (fechaFrom && fechaFrom._flatpickr) fechaFrom._flatpickr.clear();
+                        if (fechaTo && fechaTo._flatpickr) fechaTo._flatpickr.clear();
+                    } else {
+                        const checkbox = document.querySelector(`input[name="${filterType}"][value="${filterValue}"]`);
+                        if (checkbox) checkbox.checked = false;
+                    }
+
+                    filterTickets();
+                    updateActiveFilters();
+                }
+            });
+        }
+
+        if (clearFilters) {
+            clearFilters.addEventListener('click', () => {
+                document.querySelectorAll('input[type="checkbox"]').forEach(cb => cb.checked = false);
+                if (fechaFrom) fechaFrom.value = '';
+                if (fechaTo) fechaTo.value = '';
+                if (fechaFrom && fechaFrom._flatpickr) fechaFrom._flatpickr.clear();
+                if (fechaTo && fechaTo._flatpickr) fechaTo._flatpickr.clear();
+                if (searchInput) searchInput.value = '';
+                filterTickets();
+                updateActiveFilters();
+            });
+        }
+
+        function filterTickets() {
+            if (!ticketList) return;
+            
+            const tickets = ticketList.getElementsByClassName('ticket-card');
+            const searchText = searchInput ? searchInput.value.toLowerCase() : '';
+            const selectedStatuses = Array.from(document.querySelectorAll('input[name="status"]:checked')).map(cb => cb.value.toLowerCase());
+            const selectedPriorities = Array.from(document.querySelectorAll('input[name="priority"]:checked')).map(cb => cb.value.toLowerCase());
+            const selectedCategories = Array.from(document.querySelectorAll('input[name="category"]:checked')).map(cb => cb.value.toLowerCase());
+            const noMatchesMessage = document.getElementById('noMatchesMessage');
+            const noTicketsMessage = document.querySelector('.no-tickets-message');
+
+            let visibleTickets = 0;
+
+            Array.from(tickets).forEach(ticket => {
+                const ticketPriority = ticket.dataset.priority.toLowerCase();
+                const ticketCategory = ticket.dataset.category.toLowerCase();
+                const ticketStatus = ticket.dataset.status.toLowerCase();
+                const ticketDateElement = ticket.querySelector('.date span');
+                const ticketDateText = ticketDateElement ? ticketDateElement.textContent : '';
+
+                const estadoOriginal = mapearEstadoParaFiltro(ticketStatus);
+
+                const statusMatch = selectedStatuses.length === 0 || selectedStatuses.includes(estadoOriginal);
+                const priorityMatch = selectedPriorities.length === 0 || selectedPriorities.includes(ticketPriority);
+                const categoryMatch = selectedCategories.length === 0 || selectedCategories.includes(ticketCategory);
+
+                const matchesSearch = searchText === '' || ticket.textContent.toLowerCase().includes(searchText);
+
+                const matchesDate = checkDateRange(ticketDateText);
+
+                const isVisible = matchesSearch && statusMatch && priorityMatch && categoryMatch && matchesDate;
+
+                ticket.style.display = isVisible ? 'block' : 'none';
+
+                if (isVisible) {
+                    visibleTickets++;
                 }
             });
 
-            // Toggle current dropdown
-            dropdown.style.display = dropdown.style.display === 'block' ? 'none' : 'block';
+            const ticketCounter = document.getElementById('ticketCounter');
+            if (ticketCounter) ticketCounter.textContent = visibleTickets;
 
-            // Position dropdown below chip
-            const chipRect = chip.getBoundingClientRect();
-            dropdown.style.top = `${chipRect.bottom + window.scrollY + 8}px`;
-            dropdown.style.left = `${chipRect.left}px`;
-
-            // Toggle active state
-            chip.classList.toggle('active');
-        });
-    });
-
-    // Close dropdowns when clicking outside
-    document.addEventListener('click', (e) => {
-        if (!e.target.closest('.filter-chip') && !e.target.closest('.filter-dropdown')) {
-            filterDropdowns.forEach(dropdown => {
-                dropdown.style.display = 'none';
-            });
-            filterChips.forEach(chip => {
-                chip.classList.remove('active');
+            if (noMatchesMessage) {
+                noMatchesMessage.style.display = visibleTickets === 0 && tickets.length > 0 ? 'flex' : 'none';
+            }
+            if (noTicketsMessage) {
+                noTicketsMessage.style.display = tickets.length === 0 ? 'flex' : 'none';
+            }
+        }
+        
+        const clearFiltersFromNoMatches = document.getElementById('clearFiltersFromNoMatches');
+        if (clearFiltersFromNoMatches) {
+            clearFiltersFromNoMatches.addEventListener('click', () => {
+                document.querySelectorAll('input[type="checkbox"]').forEach(cb => cb.checked = false);
+                if (fechaFrom) fechaFrom.value = '';
+                if (fechaTo) fechaTo.value = '';
+                if (fechaFrom && fechaFrom._flatpickr) fechaFrom._flatpickr.clear();
+                if (fechaTo && fechaTo._flatpickr) fechaTo._flatpickr.clear();
+                if (searchInput) searchInput.value = '';
+                filterTickets();
+                updateActiveFilters();
             });
         }
-    });
 
-    // Update active filters display
-    function updateActiveFilters() {
-        activeFilters.innerHTML = '';
-        let hasActiveFilters = false;
+        function checkDateRange(dateText) {
+            if (!dateText || (!fechaFrom && !fechaTo)) return true;
+            if (!fechaFrom.value && !fechaTo.value) return true;
 
-        // Get all checked filters
-        document.querySelectorAll('input[type="checkbox"]:checked').forEach(checkbox => {
-            hasActiveFilters = true;
-            const filterTag = document.createElement('div');
-            filterTag.className = 'active-filter-tag';
-            filterTag.innerHTML = `
-                ${checkbox.value}
-                <i class="fas fa-times" data-filter="${checkbox.name}" data-value="${checkbox.value}"></i>
-            `;
-            activeFilters.appendChild(filterTag);
-        });
+            try {
+                const [day, month, year] = dateText.split('-');
+                const ticketDate = new Date(`${year}-${month}-${day}`);
 
-        // Add date range if selected
-        if (dateFrom.value || dateTo.value) {
-            hasActiveFilters = true;
-            const dateFilterTag = document.createElement('div');
-            dateFilterTag.className = 'active-filter-tag';
-            dateFilterTag.innerHTML = `
-                ${dateFrom.value || '...'} - ${dateTo.value || '...'}
-                <i class="fas fa-times" data-filter="date"></i>
-            `;
-            activeFilters.appendChild(dateFilterTag);
-        }
+                const from = fechaFrom && fechaFrom.value ? parseFlatpickrDate(fechaFrom.value) : null;
+                const to = fechaTo && fechaTo.value ? parseFlatpickrDate(fechaTo.value) : null;
 
-        // Show/hide active filters container
-        activeFilters.style.display = hasActiveFilters ? 'flex' : 'none';
-    }
-
-    // Remove individual filters when clicking on X
-    activeFilters.addEventListener('click', (e) => {
-        if (e.target.matches('.fa-times')) {
-            const filterType = e.target.dataset.filter;
-            const filterValue = e.target.dataset.value;
-
-            if (filterType === 'date') {
-                dateFrom.value = '';
-                dateTo.value = '';
-            } else {
-                const checkbox = document.querySelector(`input[name="${filterType}"][value="${filterValue}"]`);
-                if (checkbox) checkbox.checked = false;
+                if (from && to) {
+                    return ticketDate >= from && ticketDate <= to;
+                } else if (from) {
+                    return ticketDate >= from;
+                } else if (to) {
+                    return ticketDate <= to;
+                }
+            } catch (e) {
+                return true;
             }
 
-            filterTickets();
-            updateActiveFilters();
+            return true;
         }
-    });
 
-    // Clear all filters
-    clearFilters.addEventListener('click', () => {
-        document.querySelectorAll('input[type="checkbox"]').forEach(cb => cb.checked = false);
-        dateFrom.value = '';
-        dateTo.value = '';
-        searchInput.value = '';
-        filterTickets();
-        updateActiveFilters();
-    });
+        function parseFlatpickrDate(dateStr) {
+            if (!dateStr) return null;
+            const [day, month, year] = dateStr.split('/');
+            return new Date(`${year}-${month}-${day}`);
+        }
 
-    // Filter tickets based on all criteria
-    function filterTickets() {
-        const tickets = ticketList.getElementsByClassName('ticket-card');
-        const searchText = searchInput.value.toLowerCase();
-        const selectedStatuses = Array.from(document.querySelectorAll('input[name="status"]:checked')).map(cb => cb.value);
-        const selectedPriorities = Array.from(document.querySelectorAll('input[name="priority"]:checked')).map(cb => cb.value);
-        const selectedCategories = Array.from(document.querySelectorAll('input[name="category"]:checked')).map(cb => cb.value);
-
-        let visibleTickets = 0;
-
-        Array.from(tickets).forEach(ticket => {
-            const ticketPriority = ticket.dataset.priority.toLowerCase();
-            const ticketCategory = ticket.dataset.category.toLowerCase();
-            const ticketStatus = ticket.dataset.status.toLowerCase();
-            const ticketDate = ticket.querySelector('.date').textContent;
-
-            // If no filters are selected in a category, treat it as if all are selected
-            const statusMatch = selectedStatuses.length === 0 || selectedStatuses.includes(ticketStatus);
-            const priorityMatch = selectedPriorities.length === 0 || selectedPriorities.includes(ticketPriority);
-            const categoryMatch = selectedCategories.length === 0 || selectedCategories.includes(ticketCategory);
-            
-            // Check if ticket matches all criteria
-            const matchesSearch = ticket.textContent.toLowerCase().includes(searchText);
-            const matchesDate = checkDateRange(ticketDate);
-
-            const isVisible = matchesSearch && 
-                            statusMatch && 
-                            priorityMatch && 
-                            categoryMatch && 
-                            matchesDate;
-
-            ticket.style.display = isVisible ? 'block' : 'none';
-
-            if (isVisible) {
-                visibleTickets++;
-            }
+        if (searchInput) {
+            searchInput.addEventListener('input', filterTickets);
+        }
+        
+        document.querySelectorAll('input[name="status"], input[name="priority"], input[name="category"]').forEach(checkbox => {
+            checkbox.addEventListener('change', () => {
+                filterTickets();
+                updateActiveFilters();
+            });
         });
 
-        // Update the counter
-        document.getElementById('ticketCounter').textContent = visibleTickets;
-    }
-
-    // Helper function to check if a date falls within the selected range
-    function checkDateRange(ticketDate) {
-        if (!dateFrom.value && !dateTo.value) return true;
-
-        const date = new Date(ticketDate);
-        const from = dateFrom.value ? new Date(dateFrom.value) : null;
-        const to = dateTo.value ? new Date(dateTo.value) : null;
-
-        if (from && to) {
-            return date >= from && date <= to;
-        } else if (from) {
-            return date >= from;
-        } else if (to) {
-            return date <= to;
+        const applyDateButton = document.querySelector('.apply-date');
+        if (applyDateButton) {
+            applyDateButton.addEventListener('click', () => {
+                filterTickets();
+                updateActiveFilters();
+                const dateFilter = document.getElementById('dateFilter');
+                if (dateFilter) dateFilter.style.display = 'none';
+            });
         }
 
-        return true;
-    }
+        if (fechaFrom) {
+            fechaFrom.addEventListener('change', () => {
+                updateActiveFilters();
+            });
+        }
+        
+        if (fechaTo) {
+            fechaTo.addEventListener('change', () => {
+                updateActiveFilters();
+            });
+        }
 
-    // Event listeners for filter changes
-    searchInput.addEventListener('input', filterTickets);
-    document.querySelectorAll('input[type="checkbox"]').forEach(checkbox => {
-        checkbox.addEventListener('change', () => {
-            filterTickets();
-            updateActiveFilters();
-        });
-    });
-
-    // Date filter application
-    document.querySelector('.apply-date').addEventListener('click', () => {
         filterTickets();
         updateActiveFilters();
-        document.getElementById('dateFilter').style.display = 'none';
-    });
+    }
 
-    // Initialize filters and counter
-    filterTickets();
-    updateActiveFilters();
-
-    // 2. Funcionalidad de Cancelación de Tickets
-    // ------------------------------------------
-
-    // Manejar clic en botones de cancelar
-    document.addEventListener('click', function(e) {
-        if (e.target.classList.contains('cancel-button') || e.target.closest('.cancel-button')) {
-            e.preventDefault();
-            const ticketCard = e.target.closest('.ticket-card');
-            currentTicketId = ticketCard.dataset.id;
-            console.log('Ticket ID para cancelar:', currentTicketId); // Debug
-            showCancelModal();
-        }
-    });
-
-    // Mostrar modal de cancelación
     function showCancelModal(ticketId) {
-    const ticketCard = document.querySelector(`.ticket-card[data-id="${ticketId}"]`);
-    if (ticketCard) {
-        // Obtener información del ticket
-        const ticketCode = ticketCard.querySelector('.ticket-id span').textContent;
-        const ticketTitle = ticketCard.querySelector('.ticket-content h3').textContent;
-        
-        // Mostrar información en el modal
-        document.getElementById('ticketToCancelCode').textContent = ticketCode;
-        document.getElementById('ticketToCancelTitle').textContent = ticketTitle;
-        
-        currentTicketId = ticketId;
-        document.body.classList.add('modal-open');
-        cancelModal.style.display = 'flex';
-    }
-}
+        const ticketCard = document.querySelector(`.ticket-card[data-id="${ticketId}"]`);
+        const ticketDetails = document.querySelector('.ticket-details');
+        let ticketCode, ticketTitle;
 
-    // Ocultar modal de cancelación
+        if (ticketCard) {
+            const ticketIdElement = ticketCard.querySelector('.ticket-id span');
+            const ticketTitleElement = ticketCard.querySelector('.ticket-content h3');
+            ticketCode = ticketIdElement ? ticketIdElement.textContent : '';
+            ticketTitle = ticketTitleElement ? ticketTitleElement.textContent : '';
+        } else if (ticketDetails) {
+            const ticketIdElement = ticketDetails.querySelector('.ticket-id span');
+            const ticketTitleElement = ticketDetails.querySelector('.ticket-title');
+            ticketCode = ticketIdElement ? ticketIdElement.textContent : '';
+            ticketTitle = ticketTitleElement ? ticketTitleElement.textContent : '';
+        }
+
+        if (ticketCode && ticketTitle) {
+            const ticketToCancelCode = document.getElementById('ticketToCancelCode');
+            const ticketToCancelTitle = document.getElementById('ticketToCancelTitle');
+            
+            if (ticketToCancelCode) ticketToCancelCode.textContent = ticketCode;
+            if (ticketToCancelTitle) ticketToCancelTitle.textContent = ticketTitle;
+            
+            currentTicketId = ticketId;
+            document.body.classList.add('modal-open');
+            if (cancelModal) cancelModal.style.display = 'flex';
+        }
+    }
+
     function hideCancelModal() {
         document.body.classList.remove('modal-open');
-        cancelModal.style.display = 'none';
+        if (cancelModal) cancelModal.style.display = 'none';
         currentTicketId = null;
+        const ticketToCancelCode = document.getElementById('ticketToCancelCode');
+        const ticketToCancelTitle = document.getElementById('ticketToCancelTitle');
+        if (ticketToCancelCode) ticketToCancelCode.textContent = '';
+        if (ticketToCancelTitle) ticketToCancelTitle.textContent = '';
     }
 
-    // Función para cancelar el ticket
     function cancelTicket() {
         if (!currentTicketId) {
-            console.error('No hay ticket ID para cancelar');
             alert('Error: No se pudo identificar el ticket a cancelar');
             return;
         }
 
-        // Mostrar indicador de carga
-        confirmCancel.disabled = true;
-        confirmCancel.innerHTML = '<i class="fa fa-spinner fa-spin"></i> Procesando...';
-        
+        if (confirmCancel) {
+            confirmCancel.disabled = true;
+            confirmCancel.innerHTML = '<i class="fa fa-spinner fa-spin"></i> Procesando...';
+        }
+
         const csrfToken = getCsrfToken();
         const csrfHeader = getCsrfHeader();
-        
+
         if (!csrfToken) {
-            console.error('CSRF token no encontrado');
             alert('Error de seguridad: Token CSRF no encontrado');
-            confirmCancel.disabled = false;
-            confirmCancel.textContent = 'Confirmar';
+            if (confirmCancel) {
+                confirmCancel.disabled = false;
+                confirmCancel.textContent = 'Confirmar';
+            }
             return;
         }
 
@@ -283,13 +396,7 @@ document.addEventListener('DOMContentLoaded', function () {
             'Content-Type': 'application/json',
             'X-Requested-With': 'XMLHttpRequest'
         };
-        
-        // Agregar CSRF header
         headers[csrfHeader] = csrfToken;
-
-        console.log('Enviando petición de cancelación...'); // Debug
-        console.log('URL:', `/tickets/cancelar/${currentTicketId}`); // Debug
-        console.log('Headers:', headers); // Debug
 
         fetch(`/tickets/cancelar/${currentTicketId}`, {
             method: 'POST',
@@ -297,45 +404,39 @@ document.addEventListener('DOMContentLoaded', function () {
             credentials: 'include'
         })
         .then(response => {
-            console.log('Respuesta recibida:', response.status, response.statusText); // Debug
-            
-            // Restaurar botón
-            confirmCancel.disabled = false;
-            confirmCancel.textContent = 'Confirmar';
-            
+            if (confirmCancel) {
+                confirmCancel.disabled = false;
+                confirmCancel.textContent = 'Confirmar';
+            }
+
             if (!response.ok) {
                 return response.json().then(err => {
-                    console.error('Error del servidor:', err); // Debug
                     throw new Error(err.error || `Error ${response.status}: ${response.statusText}`);
-                }).catch(parseError => {
-                    console.error('Error parsing JSON:', parseError); // Debug
-                    throw new Error(`Error ${response.status}: ${response.statusText}`);
                 });
             }
             return response.json();
         })
         .then(data => {
-            console.log('Datos recibidos:', data); // Debug
             if (data.success) {
-                // Ocultar modal y recargar la página
                 hideCancelModal();
-
-                window.location.reload();
+                if (document.querySelector('.ticket-details')) {
+                    window.location.href = '/usuario/historial';
+                } else {
+                    window.location.reload();
+                }
             } else {
                 throw new Error(data.error || 'Error al cancelar el ticket');
             }
         })
         .catch(error => {
-            console.error('Error completo:', error); // Debug
             alert('Error al cancelar el ticket: ' + error.message);
-            
-            // Restaurar botón en caso de error
-            confirmCancel.disabled = false;
-            confirmCancel.textContent = 'Confirmar';
+            if (confirmCancel) {
+                confirmCancel.disabled = false;
+                confirmCancel.textContent = 'Confirmar';
+            }
         });
     }
 
-    // Event listeners para el modal de cancelación
     if (confirmCancel) {
         confirmCancel.addEventListener('click', cancelTicket);
     }
@@ -344,22 +445,90 @@ document.addEventListener('DOMContentLoaded', function () {
         closeCancelModal.addEventListener('click', hideCancelModal);
     }
 
-    // Cerrar modal al hacer clic fuera
     if (cancelModal) {
-        cancelModal.addEventListener('click', function(e) {
+        cancelModal.addEventListener('click', function (e) {
             if (e.target === cancelModal) {
                 hideCancelModal();
             }
         });
     }
 
-    // Cerrar modal con ESC
-    document.addEventListener('click', function(e) {
-    if (e.target.classList.contains('cancel-button') || e.target.closest('.cancel-button')) {
-        e.preventDefault();
-        const ticketCard = e.target.closest('.ticket-card');
-        const ticketId = ticketCard.dataset.id;
-        showCancelModal(ticketId);
+    document.addEventListener('click', function (e) {
+        const cancelButton = e.target.closest('.cancel-button');
+        if (cancelButton) {
+            e.preventDefault();
+            const ticketCard = cancelButton.closest('.ticket-card');
+            let ticketId;
+            
+            if (ticketCard) {
+                ticketId = ticketCard.dataset.id;
+            } else {
+                const ticketDetails = cancelButton.closest('.ticket-details');
+                if (ticketDetails) {
+                    const ticketIdElement = ticketDetails.querySelector('.ticket-id span');
+                    ticketId = ticketIdElement ? ticketIdElement.textContent.replace('#', '') : '';
+                }
+            }
+            
+            if (ticketId) {
+                showCancelModal(ticketId);
+            }
+        }
+    });
+
+    document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape') {
+            hideCancelModal();
+            if (fileModal) {
+                fileModal.style.display = 'none';
+                if (modalFileImage) modalFileImage.style.display = 'none';
+                if (modalFilePdf) modalFilePdf.style.display = 'none';
+                if (modalFileName) modalFileName.textContent = '';
+            }
+        }
+    });
+
+    if (fileModal) {
+        document.querySelectorAll('.file-item').forEach(fileItem => {
+            fileItem.addEventListener('click', () => {
+                const src = fileItem.dataset.src;
+                const type = fileItem.dataset.type;
+                const filename = fileItem.dataset.filename;
+
+                if (modalFileName) modalFileName.textContent = filename;
+
+                if (type === 'image' && modalFileImage) {
+                    modalFileImage.src = src;
+                    modalFileImage.style.display = 'block';
+                    if (modalFilePdf) modalFilePdf.style.display = 'none';
+                } else if (type === 'pdf' && modalFilePdf) {
+                    modalFilePdf.src = src;
+                    modalFilePdf.style.display = 'block';
+                    if (modalFileImage) modalFileImage.style.display = 'none';
+                }
+
+                if (fileModal) fileModal.style.display = 'block';
+            });
+        });
+
+        if (closeModal) {
+            closeModal.addEventListener('click', () => {
+                if (fileModal) fileModal.style.display = 'none';
+                if (modalFileImage) modalFileImage.style.display = 'none';
+                if (modalFilePdf) modalFilePdf.style.display = 'none';
+                if (modalFileName) modalFileName.textContent = '';
+            });
+        }
+
+        if (fileModal) {
+            fileModal.addEventListener('click', function (e) {
+                if (e.target === fileModal) {
+                    fileModal.style.display = 'none';
+                    if (modalFileImage) modalFileImage.style.display = 'none';
+                    if (modalFilePdf) modalFilePdf.style.display = 'none';
+                    if (modalFileName) modalFileName.textContent = '';
+                }
+            });
+        }
     }
-});
 });

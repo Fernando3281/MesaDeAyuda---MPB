@@ -1,14 +1,3 @@
-/*
-Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
-Click nbfs://nbhost/SystemFileSystem/Templates/Other/CascadeStyleSheet.css to edit this template
-*/
-/* 
-    Created on : Oct 4, 2024, 1:25:37 PM
-    Author     : ferva
-*/
-
-/* //////////////////// Panel Perfil //////////////////// */
-
 .settings-container {
     max-width: 600px;
     margin: 0 auto;
@@ -21,7 +10,7 @@ Click nbfs://nbhost/SystemFileSystem/Templates/Other/CascadeStyleSheet.css to ed
     gap: 20px;
 }
 
-.settings-item {
+.settings-item, .settings-item-logout {
     background: #fff;
     border-radius: 15px;
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.0);
@@ -30,6 +19,11 @@ Click nbfs://nbhost/SystemFileSystem/Templates/Other/CascadeStyleSheet.css to ed
 }
 
 .settings-item:hover {
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+    border-color: #434e6c;
+}
+
+.settings-item-logout:hover {
     box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
     border-color: #434e6c;
 }

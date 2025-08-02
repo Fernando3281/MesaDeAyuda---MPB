@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" 
+      xmlns:th="http://www.thymeleaf.org">
+    <head th:replace="~{layout/plantilla :: head}">
+        <title>Centro de Soporte</title>
+        <meta charset="UTF-8"/>
+    </head>
+    <body>
+        <section th:fragment="section-bienvenida">
+            <!-- Seccion de bienvenida -->
+            <div class="welcome-section">
+                <h1>Bienvenido a su Centro de Soporte</h1>
+                <p>Gestiona tus solicitudes de soporte de manera eficiente</p>
+                <div class="welcome-actions">
+                    <a th:href="@{/tickets/nuevo}" class="btn btn-primary">
+                        Crear Ticket
+                    </a>
+                </div>
+            </div>
+        </section>
+
+        <section th:fragment="section-dashboard" sec:authorize="hasAuthority('ROL_ADMINISTRADOR') or hasAuthority('ROL_SOPORTISTA')">            <!-- Sección de estadísticas con datos dinamicos -->
+            <div class="stats-section">
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="fas fa-users"></i>
+                    </div>
+                    <div class="stat-info">
+                        <span class="stat-number" id="collaborators-count" th:text="${totalColaboradores}"></span>
+                        <span class="stat-label">Colaboradores</span>
+                    </div>
+                </div>
+                <div class="stat-card urgent">
+                    <div class="stat-icon pending">
+                        <i class="fas fa-clock"></i>
+                    </div>
+                    <div class="stat-info">
+                        <span class="stat-number" id="pending-count" th:text="${misTicketsPendientes}"></span>
+                        <span class="stat-label">Mis Tickets Pendientes</span>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon completed">
+                        <i class="fas fa-check-circle"></i>
+                    </div>
+                    <div class="stat-info">
+                        <span class="stat-number" id="completed-count" th:text="${misTicketsResueltos}"></span>
+                        <span class="stat-label">Mis Tickets Resueltos</span>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon incoming">
+                        <i class="far fa-clock"></i>
+                    </div>
+                    <div class="stat-info">
+                        <span class="stat-number" id="open-tickets-count" th:text="${ticketsAbiertos}"></span>
+                        <span class="stat-label">Tickets Entrantes</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Seccion de graficos -->
+            <div class="charts-section">
+                <div class="chart-container">
+                    <div class="chart-header">
+                        <h3>Tickets por Mes</h3>
+                        <select id="chartPeriod" onchange="updateChart()">
+                            <option value="6months">Últimos 6 meses</option>
+                            <option value="year">Último año</option>
+                            <option value="quarter">Último trimestre</option>
+                        </select>
+                    </div>
+                    <canvas id="ticketsChart"></canvas>
+                </div>
+            </div>
+        </section>
+
+        <section th:fragment="section-principal">
+            <!-- Ejemplo de posibles accesos directos -->
+            
+            
+            <div class="quick-actions-section">
+                <h2>Acciones Rápidas</h2>
+                <div class="actions-grid">
+                    <div class="action-card">
+                        <i class="fas fa-search action-icon"></i>
+                        <h4>Buscar Tickets</h4>
+                        <p>Encuentra tickets por ID, usuario o descripción</p>
+                    </div>
+                    <div class="action-card">
+                        <i class="fas fa-user-circle action-icon"></i>
+                        <h4>Mis Tickets</h4>
+                        <p>Ver todos mis tickets activos y completados</p>
+                    </div>
+                    <div class="action-card">
+                        <i class="fas fa-book action-icon"></i>
+                        <h4>Base de Conocimiento</h4>
+                        <p>Consulta guías y tutoriales</p>
+                    </div>
+                    <div class="action-card">
+                        <i class="fas fa-chart-bar action-icon"></i>
+                        <h4>Reportes</h4>
+                        <p>Genera reportes personalizados</p>
+                    </div>
+                </div>
+            </div>
+            
+
+            <!-- Servicios simplificados -->
+            <div class="services-section">
+                <h2>Servicios</h2>
+                <div class="services-grid">
+                    <div class="service-card">
+                        <div class="service-header">
+                            <i class="fas fa-headset service-icon"></i>
+                            <h3>Soporte Personalizado</h3>
+                        </div>
+                        <p>Solicite soporte personalizado con nuestro equipo y manténgase en contacto continuo para resolver sus consultas o inconvenientes</p>
+                        <button class="btn service-btn">
+                        <a th:href="@{/tickets/nuevo}" class="a-btn-services">
+                                Solicitar
+                            </a>
+                        </button>
+                    </div>
+                    <div class="service-card">
+                        <div class="service-header">
+                           <i class="fa-solid fa-comments"></i>
+                                <h3>Chat en Linea</h3>
+                        </div>
+                        <p>Acceda a los mensajes de soporte relacionados con su ticket y mantenga un seguimiento continuo del proceso de resolución.</p>
+                        <button class="btn service-btn">
+                            <a th:href="@{/mensajes/listado}" class="a-btn-services">
+                                Ver Mensajes
+                            </a>
+                        </button>
+                    </div>
+                    <div class="service-card">
+                        <div class="service-header">
+                            <i class="fas fa-history service-icon"></i>
+                            <h3>Historial Detallado</h3>
+                        </div>
+                        <p>Acceda a información de operaciones anteriores y gestione fácilmente sus tickets de soporte, con seguimiento continuo desde su historial.</p>
+                        <button class="btn service-btn">
+                            <a th:href="@{/usuario/historial}" class="a-btn-services">
+                                Ver Historial
+                            </a>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sección de FAQ -->
+            <div class="faq-section">
+                <div class="faq-header">
+                    <h2>Preguntas Frecuentes</h2>
+                </div>
+                <div class="faq-container" id="faqContainer">
+                    <div class="faq-item" data-keywords="crear ticket nuevo solicitud">
+                        <div class="faq-question">
+                            <span>¿Cómo puedo crear un nuevo ticket?</span>
+                            <i class="fas fa-chevron-down"></i>
+                        </div>
+                        <div class="faq-answer">
+                            Puedes crear un nuevo ticket haciendo clic en el botón "Crear Ticket" en la parte superior o accediendo al menú de tickets.
+                        </div>
+                    </div>
+                    <div class="faq-item" data-keywords="tiempo respuesta promedio horas">
+                        <div class="faq-question">
+                            <span>¿Cuál es el tiempo de respuesta promedio?</span>
+                            <i class="fas fa-chevron-down"></i>
+                        </div>
+                        <div class="faq-answer">
+                            Nuestro tiempo de respuesta promedio es de 24 horas durante horario laboral.
+                        </div>
+                    </div>
+                    <div class="faq-item" data-keywords="adjuntar archivos documentos pdf jpg">
+                        <div class="faq-question">
+                            <span>¿Puedo adjuntar archivos en mis tickets?</span>
+                            <i class="fas fa-chevron-down"></i>
+                        </div>
+                        <div class="faq-answer">
+                            Sí, puedes adjuntar archivos de hasta 5MB en formatos JPG, PNG, GIF y PDF.
+                        </div>
+                    </div>
+                    <div class="faq-item" data-keywords="verificar estado ticket seguimiento">
+                        <div class="faq-question">
+                            <span>¿Cómo puedo verificar el estado de mi ticket?</span>
+                            <i class="fas fa-chevron-down"></i>
+                        </div>
+                        <div class="faq-answer">
+                            Puedes verificar el estado desde el panel de historial o recibirás notificaciones por email con cada actualización de estado.
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+
+            <div class="contact-section">
+                <div class="contact-header">
+                    <h2>Contactanos</h2>
+                </div>
+                <div class="contact-container">
+                    <div class="contact-info">
+                        <div class="contact-item">
+                            <i class="fas fa-map-marker-alt contact-icon"></i>
+                            <div class="contact-details">
+                                <h3>Dirección</h3>
+                                <p>Heredia, Barva, Costa Rica</p>
+                            </div>
+                        </div>
+
+                        <div class="contact-item">
+                            <i class="fas fa-envelope contact-icon"></i>
+                            <div class="contact-details">
+                                <h3>Correo Oficial</h3>
+                                <p>alcaldia@munibarva.go.cr</p>
+                            </div>
+                        </div>
+
+                        <div class="contact-item">
+                            <i class="fas fa-clock contact-icon"></i>
+                            <div class="contact-details">
+                                <h3>Horario</h3>
+                                <p>Lunes a viernes de 7:00 AM - 3:00 PM</p>
+                            </div>
+                        </div>
+
+                        <div class="contact-item">
+                            <i class="fas fa-phone contact-icon"></i>
+                            <div class="contact-details">
+                                <h3>Número de Contacto</h3>
+                                <p>2260-3292</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="social-section">
+                        <h3>Síguenos en:</h3>
+                        <div class="social-links">
+                            <a href="https://www.youtube.com/@muni_barva" class="social-link youtube-link" target="_blank" rel="noopener noreferrer">
+                                <i class="fab fa-youtube"></i>
+                                YouTube
+                            </a>
+                            <a href="https://www.facebook.com/MunicipalidadBarva" class="social-link facebook-link" target="_blank" rel="noopener noreferrer">
+                                <i class="fab fa-facebook-f"></i>
+                                Facebook
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </body>
+</html>

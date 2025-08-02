@@ -2,19 +2,18 @@ package com.mesadeayudaMPB.service.impl;
 
 import com.mesadeayudaMPB.dao.RolDao;
 import com.mesadeayudaMPB.dao.UsuarioDao;
-import com.mesadeayudaMPB.domain.Usuario;
 import com.mesadeayudaMPB.domain.Rol;
+import com.mesadeayudaMPB.domain.Usuario;
 import com.mesadeayudaMPB.service.UsuarioService;
-import java.io.IOException;
-import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
+
+import java.io.IOException;
+import java.util.List;
 
 @Service
 public class UsuarioServiceImpl implements UsuarioService {
@@ -62,9 +61,9 @@ public class UsuarioServiceImpl implements UsuarioService {
     }
 
     @Override
-    @Transactional
-    public void delete(Usuario usuario) {
-        usuarioDao.delete(usuario);
+    @Transactional(readOnly = true)
+    public boolean existeUsuarioPorNombreOCorreoElectronico(String nombre, String correoElectronico) {
+        return usuarioDao.existsByNombreOrCorreoElectronico(nombre, correoElectronico);
     }
 
     @Override
@@ -83,9 +82,21 @@ public class UsuarioServiceImpl implements UsuarioService {
     }
 
     @Override
+    @Transactional
+    public void delete(Usuario usuario) {
+        usuarioDao.delete(usuario);
+    }
+
+    @Override
     @Transactional(readOnly = true)
-    public boolean existeUsuarioPorNombreOCorreoElectronico(String nombre, String correoElectronico) {
-        return usuarioDao.existsByNombreOrCorreoElectronico(nombre, correoElectronico);
+    public Long contarUsuariosPorDepartamento(String nombreDepartamento) {
+        return usuarioDao.countByDepartamento(nombreDepartamento);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<Usuario> getUsuariosPorRoles(List<String> roles) {
+        return usuarioDao.findByRolesNombreIn(roles);
     }
 
     @Override
@@ -120,76 +131,61 @@ public class UsuarioServiceImpl implements UsuarioService {
 
     @Override
     @Transactional(readOnly = true)
-    public Long contarUsuariosPorDepartamento(String nombreDepartamento) {
-        return usuarioDao.countByDepartamento(nombreDepartamento);
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public List<Usuario> getUsuariosPorRoles(List<String> roles) {
-        return usuarioDao.findByRolesNombreIn(roles);
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public Page<Usuario> getUsuariosPaginados(int page, int size) {
-        Pageable pageable = PageRequest.of(page, size, Sort.by("nombre").ascending());
+    public Page<Usuario> getUsuariosPaginados(Pageable pageable) {
         return usuarioDao.findAll(pageable);
     }
 
     @Override
     @Transactional(readOnly = true)
-    public Page<Usuario> buscarUsuarios(String query, int page, int size) {
-        Pageable pageable = PageRequest.of(page, size, Sort.by("nombre").ascending());
+    public Page<Usuario> getUsuariosPaginadosOrdenadosPorId(Pageable pageable) {
+        return usuarioDao.findAll(pageable);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<Usuario> buscarUsuarios(String query, Pageable pageable) {
         return usuarioDao.buscarUsuarios(query, pageable);
     }
 
     @Override
     @Transactional(readOnly = true)
-    public Page<Usuario> buscarUsuariosPorEstado(String query, boolean activo, int page, int size) {
-        Pageable pageable = PageRequest.of(page, size, Sort.by("nombre").ascending());
+    public Page<Usuario> buscarUsuariosPorEstado(String query, boolean activo, Pageable pageable) {
         return usuarioDao.buscarUsuariosPorEstado(query, activo, pageable);
     }
 
     @Override
     @Transactional(readOnly = true)
-    public Page<Usuario> getUsuariosPorEstado(boolean activo, int page, int size) {
-        Pageable pageable = PageRequest.of(page, size, Sort.by("nombre").ascending());
+    public Page<Usuario> getUsuariosPorEstado(boolean activo, Pageable pageable) {
         return usuarioDao.findByActivo(activo, pageable);
     }
 
     @Override
     @Transactional(readOnly = true)
-    public Page<Usuario> getUsuariosPorRol(String rol, int page, int size) {
-        Pageable pageable = PageRequest.of(page, size, Sort.by("nombre").ascending());
+    public Page<Usuario> getUsuariosPorRol(String rol, Pageable pageable) {
         return usuarioDao.findByRolesNombre(rol, pageable);
     }
 
     @Override
     @Transactional(readOnly = true)
-    public Page<Usuario> buscarUsuariosPorRol(String query, String rol, int page, int size) {
-        Pageable pageable = PageRequest.of(page, size, Sort.by("nombre").ascending());
+    public Page<Usuario> buscarUsuariosPorRol(String query, String rol, Pageable pageable) {
         return usuarioDao.buscarUsuariosPorRol(query, rol, pageable);
     }
 
     @Override
     @Transactional(readOnly = true)
-    public Page<Usuario> getUsuariosPorEstadoYRol(boolean activo, String rol, int page, int size) {
-        Pageable pageable = PageRequest.of(page, size, Sort.by("nombre").ascending());
+    public Page<Usuario> getUsuariosPorEstadoYRol(boolean activo, String rol, Pageable pageable) {
         return usuarioDao.findByActivoAndRolesNombre(activo, rol, pageable);
     }
 
     @Override
     @Transactional(readOnly = true)
-    public Page<Usuario> buscarUsuariosPorEstadoYRol(String query, boolean activo, String rol, int page, int size) {
-        Pageable pageable = PageRequest.of(page, size, Sort.by("nombre").ascending());
+    public Page<Usuario> buscarUsuariosPorEstadoYRol(String query, boolean activo, String rol, Pageable pageable) {
         return usuarioDao.buscarUsuariosPorEstadoYRol(query, activo, rol, pageable);
     }
 
     @Override
     @Transactional(readOnly = true)
-    public Page<Usuario> getUsuariosPaginadosOrdenadosPorId(int page, int size) {
-        Pageable pageable = PageRequest.of(page, size, Sort.by("idUsuario").ascending());
-        return usuarioDao.findAll(pageable);
+    public boolean existeOtroUsuarioConCorreo(String correo, Long idUsuario) {
+        return usuarioDao.existsByCorreoElectronicoAndIdUsuarioNot(correo, idUsuario);
     }
 }

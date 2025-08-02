@@ -1,16 +1,91 @@
 document.addEventListener("DOMContentLoaded", function () {
-    // 1. Configuración de la tabla y redimensionamiento de columnas
     const table = document.querySelector('.tickets-table');
     const tableContainer = document.querySelector('.table-container');
-    const sidebar = document.querySelector('.sidebar');
 
     const defaultColumnWidths = [40, 200, 400, 60, 80];
     let currentColumnWidths = [...defaultColumnWidths];
 
-    // Funciones para manejo del redimensionamiento de columnas
+    let tableState = {
+        page: 0,
+        size: 15,
+        sortColumn: 0,
+        sortDirection: 'asc',
+        search: ''
+    };
+
+    window.openModal = openModal;
+    window.closeModal = closeModal;
+    window.openNeonModal = openModal;
+
+    if (performance.navigation && performance.navigation.type === performance.navigation.TYPE_RELOAD) {
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.has('search') || urlParams.has('sortColumn') || urlParams.has('sortDirection')) {
+            window.location.href = `/categoria/listado?page=0&size=15`;
+        }
+    }
+
+    function initializeTableState() {
+        const urlParams = new URLSearchParams(window.location.search);
+        tableState = {
+            page: parseInt(urlParams.get('page')) || 0,
+            size: parseInt(urlParams.get('size')) || 15,
+            sortColumn: parseInt(urlParams.get('sortColumn')) || 0,
+            sortDirection: urlParams.get('sortDirection') || 'asc',
+            search: urlParams.get('search') || ''
+        };
+    }
+
+    function buildTableUrl() {
+        let url = `/categoria/listado?page=${tableState.page}&size=${tableState.size}`;
+        if (tableState.sortColumn !== undefined && tableState.sortDirection) {
+            url += `&sortColumn=${tableState.sortColumn}&sortDirection=${tableState.sortDirection}`;
+        }
+        if (tableState.search) {
+            url += `&search=${encodeURIComponent(tableState.search)}`;
+        }
+        return url;
+    }
+
+    async function refreshTable() {
+        showLoader(true);
+        try {
+            const response = await fetch(buildTableUrl(), {
+                headers: {'Accept': 'text/html'}
+            });
+            if (!response.ok) {
+                throw new Error('Error al cargar la tabla');
+            }
+            const html = await response.text();
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(html, 'text/html');
+
+            const newTableBody = doc.querySelector('.tickets-table tbody');
+            if (newTableBody) {
+                document.querySelector('.tickets-table tbody').innerHTML = newTableBody.innerHTML;
+            }
+
+            const newPagination = doc.querySelector('.pagination-controls');
+            const newPageInfo = doc.querySelector('#pageInfoCategorias');
+            if (newPagination) {
+                document.querySelector('.pagination-controls').innerHTML = newPagination.innerHTML;
+            }
+            if (newPageInfo) {
+                document.querySelector('#pageInfoCategorias').innerHTML = newPageInfo.innerHTML;
+            }
+
+            setupTableEvents();
+            setupPagination();
+            adjustTableWidth();
+            initSorting();
+        } catch (error) {
+            showToast('error', 'Error al actualizar la tabla');
+        } finally {
+            showLoader(false);
+        }
+    }
+
     function adjustTableWidth() {
-        if (!table || !tableContainer)
-            return;
+        if (!table || !tableContainer) return;
 
         requestAnimationFrame(() => {
             currentColumnWidths = [...defaultColumnWidths];
@@ -40,51 +115,45 @@ document.addEventListener("DOMContentLoaded", function () {
         });
     }
 
-    // 2. Funciones para el ordenamiento de la tabla
     function initSorting() {
         const headers = table?.querySelectorAll('thead th');
-        if (!headers)
-            return;
-
-        const sortState = {column: null, direction: 'asc'};
+        if (!headers) return;
 
         headers.forEach((header, index) => {
             const sortIcon = header.querySelector('.sort-icons i');
-            if (!sortIcon)
-                return;
+            if (!sortIcon) return;
 
             sortIcon.style.cursor = 'pointer';
-            sortIcon.addEventListener('click', () => {
-                sortState.column = sortState.column === index
-                        ? (sortState.direction === 'asc' ? index : null)
-                        : index;
-
-                sortState.direction = sortState.column === index
-                        ? (sortState.direction === 'asc' ? 'desc' : 'asc')
-                        : 'asc';
-
-                updateSortIcons(sortState.column, sortState.direction);
-                sortTable(index, sortState.direction);
-                adjustTableWidth();
+            
+            const newSortIcon = sortIcon.cloneNode(true);
+            sortIcon.parentNode.replaceChild(newSortIcon, sortIcon);
+            
+            newSortIcon.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                
+                if (tableState.sortColumn === index) {
+                    tableState.sortDirection = tableState.sortDirection === 'asc' ? 'desc' : 'asc';
+                } else {
+                    tableState.sortColumn = index;
+                    tableState.sortDirection = 'asc';
+                }
+                tableState.page = 0;
+                updateSortIcons(tableState.sortColumn, tableState.sortDirection);
+                applySortAndFilters();
             });
         });
 
-        // Orden inicial por ID ascendente
-        sortState.column = 0;
-        sortState.direction = 'asc';
-        updateSortIcons(sortState.column, sortState.direction);
-        sortTable(0, sortState.direction);
+        updateSortIcons(tableState.sortColumn, tableState.sortDirection);
     }
 
     function updateSortIcons(activeColumn, direction) {
         const headers = table?.querySelectorAll('thead th');
-        if (!headers)
-            return;
+        if (!headers) return;
 
         headers.forEach((header, index) => {
             const sortIcon = header.querySelector('.sort-icons i');
-            if (!sortIcon)
-                return;
+            if (!sortIcon) return;
 
             sortIcon.className = index === activeColumn
                     ? (direction === 'asc' ? 'fas fa-sort-up' : 'fas fa-sort-down')
@@ -92,301 +161,221 @@ document.addEventListener("DOMContentLoaded", function () {
         });
     }
 
-    function sortTable(columnIndex, direction) {
-        const tbody = table?.querySelector('tbody');
-        if (!tbody || tbody.querySelectorAll('tr').length <= 1)
-            return;
-
-        const rows = Array.from(tbody.querySelectorAll('tr:not([colspan])'));
-        if (rows.length === 0)
-            return;
-
-        const emptyRow = tbody.querySelector('tr[colspan]');
-
-        rows.sort((rowA, rowB) => {
-            const cellA = rowA.querySelector(`td:nth-child(${columnIndex + 1})`);
-            const cellB = rowB.querySelector(`td:nth-child(${columnIndex + 1})`);
-            if (!cellA || !cellB)
-                return 0;
-
-            let valueA = cellA.textContent.trim();
-            let valueB = cellB.textContent.trim();
-
-            // Para valores numéricos (ID)
-            if (columnIndex === 0) {
-                const numA = parseInt(valueA) || 0;
-                const numB = parseInt(valueB) || 0;
-                return direction === 'asc' ? numA - numB : numB - numA;
-            }
-
-            // Para estado (Activo/Inactivo)
-            if (columnIndex === 3) {
-                return direction === 'asc'
-                        ? valueA.localeCompare(valueB)
-                        : valueB.localeCompare(valueA);
-            }
-
-            // Ordenamiento alfanumérico
-            return direction === 'asc'
-                    ? valueA.localeCompare(valueB)
-                    : valueB.localeCompare(valueA);
-        });
-
-        tbody.innerHTML = '';
-        rows.forEach(row => tbody.appendChild(row));
-        if (emptyRow)
-            tbody.appendChild(emptyRow);
-    }
-
-    // 3. Funciones para los filtros y paginación
-    function handleSearch() {
-        const searchInput = document.getElementById('searchInputCategorias');
-        const searchQuery = searchInput.value.trim();
-
+    function applySortAndFilters() {
         showLoader(true);
-
-        // Obtener parámetros actuales de la URL
-        const urlParams = new URLSearchParams(window.location.search);
-        const currentPage = urlParams.get('page') || 0;
-        const currentSize = urlParams.get('size') || 15;
-
-        // Construir URL para la búsqueda
-        let url = `/categoria/listado?page=${currentPage}&size=${currentSize}`;
-        if (searchQuery) {
-            url += `&search=${encodeURIComponent(searchQuery)}`;
-        }
-
-        // Realizar la búsqueda asíncrona
-        fetch(url, {
-            headers: {
-                'Accept': 'text/html'
-            }
-        })
-                .then(response => {
-                    if (!response.ok) {
-                        throw new Error('Error en la búsqueda');
-                    }
-                    return response.text();
-                })
-                .then(html => {
-                    // Parsear el HTML de respuesta
-                    const parser = new DOMParser();
-                    const doc = parser.parseFromString(html, 'text/html');
-
-                    // Extraer solo la parte de la tabla y paginación
-                    const newTable = doc.querySelector('.table-container');
-                    const newPagination = doc.querySelector('.table-header');
-
-                    // Actualizar el DOM
-                    if (newTable) {
-                        document.querySelector('.table-container').innerHTML = newTable.innerHTML;
-                    }
-                    if (newPagination) {
-                        document.querySelector('.table-header').innerHTML = newPagination.innerHTML;
-                    }
-
-                    // Reconfigurar eventos después de actualizar el DOM
-                    setupTableEvents();
-                })
-                .catch(error => {
-                    console.error('Error en búsqueda:', error);
-                    showToast('error', 'Error al realizar la búsqueda');
-                })
-                .finally(() => {
-                    showLoader(false);
-                });
+        const newUrl = buildTableUrl();
+        history.pushState({}, '', newUrl);
+        refreshTable();
     }
 
-    // Función para configurar eventos después de actualizar la tabla
-    function setupTableEvents() {
-        // Reconfigurar eventos de los botones de acción
-        document.querySelectorAll('button[data-action="edit"]').forEach(btn => {
-            btn.addEventListener('click', function (e) {
-                e.preventDefault();
-                const categoriaId = this.getAttribute('data-id');
-                if (!categoriaId) {
-                    showToast('error', 'ID de categoría no válido');
-                    return;
-                }
-                loadCategoriaData(categoriaId);
-            });
-        });
-
-        document.querySelectorAll('button[data-action="delete"]').forEach(btn => {
-            btn.addEventListener('click', function (e) {
-                e.preventDefault();
-                const categoriaId = this.getAttribute('data-id');
-                const categoriaName = this.closest('tr').querySelector('td:nth-child(2)').textContent;
-                openDeleteModal(categoriaId, categoriaName);
-            });
-        });
-
-        document.querySelectorAll('button[data-action="toggle"]').forEach(btn => {
-            btn.addEventListener('click', function (e) {
-                e.preventDefault();
-                const categoriaId = this.getAttribute('data-id');
-                if (!categoriaId) {
-                    showToast('error', 'ID de categoría no válido');
-                    return;
-                }
-                toggleCategoriaEstado(categoriaId);
-            });
-        });
-    }
-
-    function setupFilters() {
+    async function handleSearch() {
         const searchInput = document.getElementById('searchInputCategorias');
-
-        if (searchInput) {
-            let searchTimeout;
-
-            searchInput.addEventListener('input', function () {
-                clearTimeout(searchTimeout);
-                searchTimeout = setTimeout(() => {
-                    handleSearch();
-                }, 500);
-            });
-
-            // Manejar la tecla Enter
-            searchInput.addEventListener('keyup', function (e) {
-                if (e.key === 'Enter') {
-                    clearTimeout(searchTimeout);
-                    handleSearch();
-                }
-            });
-        }
-    }
-    
-    // Asegurar que los botones Cancelar funcionen en todos los modals
-    function setupModalCancelButtons() {
-        document.querySelectorAll('.neon-modal .btn-secondary').forEach(btn => {
-            btn.addEventListener('click', function() {
-                const modal = this.closest('.neon-modal');
-                if (modal) {
-                    closeNeonModal(modal.id);
-                }
-            });
-        });
+        tableState.search = searchInput?.value.trim() || '';
+        tableState.page = 0;
+        applySortAndFilters();
     }
 
     function setupPagination() {
         const recordsPerPage = document.getElementById('recordsPerPageCategorias');
-        if (!recordsPerPage)
-            return;
+        const paginationButtons = document.querySelectorAll('.pagination-btn, .page-number');
 
-        recordsPerPage.addEventListener('change', function () {
-            const size = this.value;
-            const urlParams = new URLSearchParams(window.location.search);
-            const searchQuery = urlParams.get('search') || '';
+        if (recordsPerPage) {
+            recordsPerPage.value = tableState.size;
+            recordsPerPage.removeEventListener('change', handleRecordsPerPageChange);
+            recordsPerPage.addEventListener('change', handleRecordsPerPageChange);
+        }
 
-            let newUrl = `${window.location.pathname}?page=0&size=${size}`;
+        paginationButtons.forEach(btn => {
+            btn.removeEventListener('click', handlePaginationClick);
+            btn.addEventListener('click', handlePaginationClick);
+        });
+    }
 
-            if (searchQuery)
-                newUrl += `&search=${encodeURIComponent(searchQuery)}`;
+    function handleRecordsPerPageChange() {
+        tableState.size = parseInt(this.value);
+        tableState.page = 0;
+        applySortAndFilters();
+    }
 
-            window.location.href = newUrl;
+    function handlePaginationClick(e) {
+        e.preventDefault();
+        let page = 0;
+        if (this.classList.contains('page-number')) {
+            page = parseInt(this.textContent) - 1;
+        } else if (this.getAttribute('onclick')) {
+            const match = this.getAttribute('onclick').match(/page=(\d+)/);
+            if (match) page = parseInt(match[1]);
+        } else if (this.hasAttribute('data-page')) {
+            page = parseInt(this.getAttribute('data-page'));
+        }
+        tableState.page = page;
+        applySortAndFilters();
+    }
+
+    function setupTableEvents() {
+        document.querySelectorAll('button[data-action="edit"]').forEach(btn => {
+            btn.removeEventListener('click', handleEditClick);
+            btn.addEventListener('click', handleEditClick);
         });
 
-        // Establecer valor actual
-        const urlParams = new URLSearchParams(window.location.search);
-        recordsPerPage.value = urlParams.get('size') || '15';
+        document.querySelectorAll('button[data-action="delete"]').forEach(btn => {
+            btn.removeEventListener('click', handleDeleteClick);
+            btn.addEventListener('click', handleDeleteClick);
+        });
+
+        document.querySelectorAll('button[data-action="toggle"]').forEach(btn => {
+            btn.removeEventListener('click', handleToggleClick);
+            btn.addEventListener('click', handleToggleClick);
+        });
     }
 
-    // 4. Funciones para los modales
-    function openNeonModal(modalId) {
-        const modal = document.getElementById(modalId);
-        if (modal) {
-            modal.style.display = "block";
-            document.body.style.overflow = "hidden";
+    function handleEditClick(e) {
+        e.preventDefault();
+        const categoriaId = this.getAttribute('data-id');
+        if (!categoriaId) {
+            showToast('error', 'ID de categoría no válido');
+            return;
+        }
+        loadCategoriaData(categoriaId);
+    }
 
-            const firstInput = modal.querySelector('input:not([type="hidden"])');
-            if (firstInput)
-                firstInput.focus();
+    function handleDeleteClick(e) {
+        e.preventDefault();
+        const categoriaId = this.getAttribute('data-id');
+        const categoriaName = this.closest('tr').querySelector('td:nth-child(2)').textContent;
+        openDeleteModal(categoriaId, categoriaName);
+    }
+
+    function handleToggleClick(e) {
+        e.preventDefault();
+        const categoriaId = this.getAttribute('data-id');
+        if (!categoriaId) {
+            showToast('error', 'ID de categoría no válido');
+            return;
+        }
+        toggleCategoriaEstado(categoriaId);
+    }
+
+    function setupFilters() {
+        const searchInput = document.getElementById('searchInputCategorias');
+        if (searchInput) {
+            searchInput.value = tableState.search;
+            let searchTimeout;
+            
+            searchInput.removeEventListener('input', handleSearchInput);
+            searchInput.removeEventListener('keyup', handleSearchKeyup);
+            
+            searchInput.addEventListener('input', handleSearchInput);
+            searchInput.addEventListener('keyup', handleSearchKeyup);
         }
     }
 
-    function closeNeonModal(modalId) {
+    function handleSearchInput() {
+        clearTimeout(window.searchTimeout);
+        window.searchTimeout = setTimeout(() => {
+            handleSearch();
+        }, 500);
+    }
+
+    function handleSearchKeyup(e) {
+        if (e.key === 'Enter') {
+            clearTimeout(window.searchTimeout);
+            handleSearch();
+        }
+    }
+
+    function setupModalCancelButtons() {
+        document.querySelectorAll('.modal-overlay .btn-outline').forEach(btn => {
+            btn.removeEventListener('click', handleModalCancel);
+            btn.addEventListener('click', handleModalCancel);
+        });
+    }
+
+    function handleModalCancel() {
+        const modal = this.closest('.modal-overlay');
+        if (modal) {
+            closeModal(modal.id);
+        }
+    }
+
+    function openModal(modalId) {
         const modal = document.getElementById(modalId);
         if (modal) {
-            modal.style.display = "none";
-            document.body.style.overflow = "auto";
+            modal.classList.add('active');
+            document.body.style.overflow = 'hidden';
+            const firstInput = modal.querySelector('input:not([type="hidden"])');
+            if (firstInput) {
+                setTimeout(() => firstInput.focus(), 100);
+            }
+        }
+    }
+
+    function closeModal(modalId) {
+        const modal = document.getElementById(modalId);
+        if (modal) {
+            modal.classList.remove('active');
+            document.body.style.overflow = 'auto';
 
             const form = modal.querySelector('form');
-            if (form)
+            if (form) {
                 form.reset();
+            }
         }
     }
 
-    // 5. Funciones para carga de datos de categoría
     function loadCategoriaData(categoriaId) {
         showLoader(true);
-
         fetch(`/categoria/obtener/${categoriaId}`, {
             headers: {'Accept': 'application/json'}
         })
-                .then(response => {
-                    const contentType = response.headers.get('content-type');
-                    if (!contentType || !contentType.includes('application/json')) {
-                        return response.text().then(text => {
-                            throw new Error(`Respuesta no JSON: ${text.substring(0, 100)}...`);
-                        });
-                    }
-
-                    if (!response.ok) {
-                        return response.json().then(err => {
-                            throw new Error(err.error || `Error HTTP: ${response.status}`);
-                        });
-                    }
-                    return response.json();
-                })
-                .then(data => {
-                    if (!data.success)
-                        throw new Error(data.message || 'Datos de categoría no recibidos');
-
-                    // Llenar formulario
-                    document.getElementById('editCategoriaId').value = categoriaId;
-                    document.getElementById('editNombre').value = data.nombre || '';
-                    document.getElementById('editDescripcion').value = data.descripcion || '';
-                    document.getElementById('editActivo').checked = data.activo;
-
-                    // Actualizar acción del formulario
-                    document.getElementById('formEditCategoria').setAttribute('action', `/categoria/actualizar/${categoriaId}`);
-
-                    openNeonModal('neonEditCategoriaModal');
-                })
-                .catch(error => {
-                    console.error('Error al cargar categoría:', error);
-                    showToast('error', `Error al cargar datos: ${error.message}`);
-                })
-                .finally(() => {
-                    showLoader(false);
+        .then(response => {
+            if (!response.ok) {
+                return response.json().then(err => {
+                    throw new Error(err.message || `Error HTTP: ${response.status}`);
+                }).catch(() => {
+                    throw new Error(`Error HTTP: ${response.status}`);
                 });
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (!data.success) {
+                throw new Error(data.message || 'Datos de categoría no recibidos');
+            }
+            
+            document.getElementById('editCategoriaId').value = categoriaId;
+            document.getElementById('editNombre').value = data.nombre || '';
+            document.getElementById('editDescripcion').value = data.descripcion || '';
+            document.getElementById('editActivo').checked = data.activo;
+            document.getElementById('formEditCategoria').setAttribute('action', `/categoria/actualizar/${categoriaId}`);
+            openModal('editCategoriaModal');
+        })
+        .catch(error => {
+            showToast('error', `Error al cargar datos: ${error.message}`);
+        })
+        .finally(() => {
+            showLoader(false);
+        });
     }
 
-    // 6. Funciones para formularios
     function handleCreateFormSubmit(event) {
         event.preventDefault();
         const form = event.target;
         const formData = new FormData(form);
-
         const submitButton = form.querySelector('button[type="submit"]');
         const originalButtonText = submitButton.innerHTML;
 
-        // Validación de campos obligatorios
         if (!formData.get('nombre')?.trim()) {
             showToast('error', 'El campo Nombre es obligatorio');
             return;
         }
 
-        // Manejo especial del checkbox 'activo'
         const activoCheckbox = form.querySelector('input[name="activo"][type="checkbox"]');
         if (activoCheckbox) {
-            // Eliminar el input hidden de 'activo' para evitar duplicados
             const hiddenActivo = form.querySelector('input[name="activo"][type="hidden"]');
             if (hiddenActivo) {
                 formData.delete('activo');
             }
-            // Establecer el valor correcto basado en si está marcado o no
             formData.set('activo', activoCheckbox.checked ? 'true' : 'false');
         }
 
@@ -397,66 +386,54 @@ document.addEventListener("DOMContentLoaded", function () {
         fetch(form.action, {
             method: 'POST',
             body: formData,
-            headers: {
-                'Accept': 'application/json'
-            }
+            headers: {'Accept': 'application/json'}
         })
-                .then(response => {
-                    if (!response.ok) {
-                        return response.json().then(err => {
-                            throw new Error(err.message || 'Error al crear categoría');
-                        });
-                    }
-                    return response.json();
-                })
-                .then(data => {
-                    if (!data.success) {
-                        throw new Error(data.message || 'Error al crear categoría');
-                    }
-
-                    closeNeonModal('neonCreateCategoriaModal');
-                    
-                    // Guardar mensaje en sessionStorage antes de recargar
-                    sessionStorage.setItem('successMessage', data.message || 'Categoría creada exitosamente');
-                    sessionStorage.setItem('successType', 'create');
-                    
-                    // Recargar la página para mostrar cambios
-                    window.location.reload();
-                })
-                .catch(error => {
-                    console.error('Error al crear categoría:', error);
-                    showToast('error', error.message);
-                })
-                .finally(() => {
-                    submitButton.innerHTML = originalButtonText;
-                    submitButton.disabled = false;
-                    showLoader(false);
+        .then(response => {
+            if (!response.ok) {
+                return response.json().then(err => {
+                    throw new Error(err.message || 'Error al crear categoría');
+                }).catch(() => {
+                    throw new Error('Error al crear categoría');
                 });
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (!data.success) {
+                throw new Error(data.message || 'Error al crear categoría');
+            }
+            closeModal('createCategoriaModal');
+            showToast('success', data.message || 'Categoría creada exitosamente');
+            refreshTable();
+        })
+        .catch(error => {
+            showToast('error', error.message);
+        })
+        .finally(() => {
+            submitButton.innerHTML = originalButtonText;
+            submitButton.disabled = false;
+            showLoader(false);
+        });
     }
 
     function handleEditFormSubmit(event) {
         event.preventDefault();
         const form = event.target;
         const formData = new FormData(form);
-
         const submitButton = form.querySelector('button[type="submit"]');
         const originalButtonText = submitButton.innerHTML;
 
-        // Validación de campos obligatorios
         if (!formData.get('nombre')?.trim()) {
             showToast('error', 'El campo Nombre es obligatorio');
             return;
         }
 
-        // Manejo especial del checkbox 'activo'
         const activoCheckbox = form.querySelector('input[name="activo"][type="checkbox"]');
         if (activoCheckbox) {
-            // Eliminar el input hidden de 'activo' para evitar duplicados
             const hiddenActivo = form.querySelector('input[name="activo"][type="hidden"]');
             if (hiddenActivo) {
                 formData.delete('activo');
             }
-            // Establecer el valor correcto basado en si está marcado o no
             formData.set('activo', activoCheckbox.checked ? 'true' : 'false');
         }
 
@@ -467,46 +444,38 @@ document.addEventListener("DOMContentLoaded", function () {
         fetch(form.action, {
             method: 'POST',
             body: formData,
-            headers: {
-                'Accept': 'application/json'
-            }
+            headers: {'Accept': 'application/json'}
         })
-                .then(response => {
-                    if (!response.ok) {
-                        return response.json().then(err => {
-                            throw new Error(err.message || 'Error al actualizar categoría');
-                        });
-                    }
-                    return response.json();
-                })
-                .then(data => {
-                    if (!data.success) {
-                        throw new Error(data.message || 'Error al actualizar categoría');
-                    }
-
-                    closeNeonModal('neonEditCategoriaModal');
-                    
-                    // Guardar mensaje en sessionStorage antes de recargar
-                    sessionStorage.setItem('successMessage', data.message || 'Categoría actualizada exitosamente');
-                    sessionStorage.setItem('successType', 'update');
-                    
-                    // Recargar la página para mostrar cambios
-                    window.location.reload();
-                })
-                .catch(error => {
-                    console.error('Error al actualizar categoría:', error);
-                    showToast('error', error.message);
-                })
-                .finally(() => {
-                    submitButton.innerHTML = originalButtonText;
-                    submitButton.disabled = false;
-                    showLoader(false);
+        .then(response => {
+            if (!response.ok) {
+                return response.json().then(err => {
+                    throw new Error(err.message || 'Error al actualizar categoría');
+                }).catch(() => {
+                    throw new Error('Error al actualizar categoría');
                 });
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (!data.success) {
+                throw new Error(data.message || 'Error al actualizar categoría');
+            }
+            closeModal('editCategoriaModal');
+            showToast('success', data.message || 'Categoría actualizada exitosamente');
+            refreshTable();
+        })
+        .catch(error => {
+            showToast('error', error.message);
+        })
+        .finally(() => {
+            submitButton.innerHTML = originalButtonText;
+            submitButton.disabled = false;
+            showLoader(false);
+        });
     }
 
     function handleDeleteFormSubmit(event) {
         event.preventDefault();
-
         const form = event.target;
         const submitButton = form.querySelector('button[type="submit"]');
         const originalButtonText = submitButton.innerHTML;
@@ -515,133 +484,121 @@ document.addEventListener("DOMContentLoaded", function () {
         submitButton.disabled = true;
         showLoader(true);
 
+        const csrfToken = document.querySelector('input[name="_csrf"]')?.value || '';
+
         fetch(form.action, {
             method: 'POST',
             headers: {
                 'Accept': 'application/json',
                 'Content-Type': 'application/json',
-                'X-CSRF-TOKEN': document.querySelector('input[name="_csrf"]').value
+                'X-CSRF-TOKEN': csrfToken
             },
             body: JSON.stringify({})
         })
-                .then(response => {
-                    if (!response.ok) {
-                        return response.json().then(err => {
-                            throw new Error(err.error || 'Error al eliminar categoría');
-                        });
-                    }
-                    return response.json();
-                })
-                .then(data => {
-                    if (data.success) {
-                        // Cerrar modal primero
-                        closeNeonModal('neonDeleteCategoriaModal');
-                        
-                        // Guardar mensaje en sessionStorage antes de recargar
-                        sessionStorage.setItem('successMessage', data.message || 'Categoría eliminada exitosamente');
-                        sessionStorage.setItem('successType', 'delete');
-                        
-                        // Recargar la página para mostrar cambios
-                        window.location.reload();
-                    } else {
-                        throw new Error(data.message);
-                    }
-                })
-                .catch(error => {
-                    console.error('Error al eliminar categoría:', error);
-                    showToast('error', error.message);
-                    
-                    // Restaurar botón en caso de error
-                    submitButton.innerHTML = originalButtonText;
-                    submitButton.disabled = false;
-                    showLoader(false);
+        .then(response => {
+            if (!response.ok) {
+                return response.json().then(err => {
+                    throw new Error(err.message || 'Error al eliminar categoría');
+                }).catch(() => {
+                    throw new Error('Error al eliminar categoría');
                 });
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (!data.success) {
+                throw new Error(data.message || 'Error al eliminar categoría');
+            }
+            closeModal('deleteCategoriaModal');
+            showToast('success', data.message || 'Categoría eliminada exitosamente');
+            refreshTable();
+        })
+        .catch(error => {
+            showToast('error', error.message);
+        })
+        .finally(() => {
+            submitButton.innerHTML = originalButtonText;
+            submitButton.disabled = false;
+            showLoader(false);
+        });
     }
 
     function toggleCategoriaEstado(categoriaId) {
         showLoader(true);
+        const csrfToken = document.querySelector('input[name="_csrf"]')?.value || '';
 
         fetch(`/categoria/toggle-estado/${categoriaId}`, {
             method: 'POST',
             headers: {
                 'Accept': 'application/json',
                 'Content-Type': 'application/json',
-                'X-CSRF-TOKEN': document.querySelector('input[name="_csrf"]').value
+                'X-CSRF-TOKEN': csrfToken
             }
         })
-                .then(response => {
-                    if (!response.ok) {
-                        return response.json().then(err => {
-                            throw new Error(err.error || 'Error al cambiar estado');
-                        });
-                    }
-                    return response.json();
-                })
-                .then(data => {
-                    if (data.success) {
-                        // Guardar mensaje en sessionStorage antes de recargar
-                        sessionStorage.setItem('successMessage', data.message || 'Estado actualizado');
-                        sessionStorage.setItem('successType', 'toggle');
-                        
-                        // Recargar la página para mostrar cambios
-                        window.location.reload();
-                    } else {
-                        throw new Error(data.message);
-                    }
-                })
-                .catch(error => {
-                    console.error('Error al cambiar estado:', error);
-                    showToast('error', error.message);
-                })
-                .finally(() => {
-                    showLoader(false);
+        .then(response => {
+            if (!response.ok) {
+                return response.json().then(err => {
+                    throw new Error(err.message || 'Error al cambiar estado');
+                }).catch(() => {
+                    throw new Error('Error al cambiar estado');
                 });
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (!data.success) {
+                throw new Error(data.message || 'Error al cambiar estado');
+            }
+            showToast('success', data.message || 'Estado actualizado');
+            refreshTable();
+        })
+        .catch(error => {
+            showToast('error', error.message);
+        })
+        .finally(() => {
+            showLoader(false);
+        });
     }
 
     function openDeleteModal(categoriaId, categoriaName) {
         document.getElementById('deleteCategoriaId').value = categoriaId;
         document.getElementById('deleteCategoriaName').textContent = categoriaName;
         document.getElementById('formDeleteCategoria').setAttribute('action', `/categoria/eliminar/${categoriaId}`);
-        openNeonModal('neonDeleteCategoriaModal');
+        openModal('deleteCategoriaModal');
     }
 
-    // 7. Funciones auxiliares
     function showToast(type, message) {
         const toast = document.getElementById(`toast-${type}`);
-        if (!toast)
-            return;
+        if (!toast) return;
 
         const messageElement = toast.querySelector('.toast-message span');
-        if (messageElement)
+        if (messageElement) {
             messageElement.textContent = message;
+        }
 
         toast.style.display = 'block';
-        setTimeout(() => toast.style.display = 'none', 5000);
+        
+        setTimeout(() => {
+            toast.style.display = 'none';
+        }, 5000);
     }
 
     function showLoader(show) {
         const loader = document.getElementById('globalLoader');
-        if (loader)
+        if (loader) {
             loader.style.display = show ? 'flex' : 'none';
+        }
     }
 
-    // Función para mostrar mensajes después de recargar la página
     function checkForSuccessMessages() {
         const successMessage = sessionStorage.getItem('successMessage');
-        const successType = sessionStorage.getItem('successType');
-        
         if (successMessage) {
-            // Mostrar el toast con un pequeño delay para que la página termine de cargar
             setTimeout(() => {
                 showToast('success', successMessage);
             }, 100);
-            
-            // Limpiar los mensajes del sessionStorage
             sessionStorage.removeItem('successMessage');
-            sessionStorage.removeItem('successType');
         }
-        
-        // También verificar mensaje de eliminación (manteniendo compatibilidad)
+
         const deleteMessage = sessionStorage.getItem('deleteSuccessMessage');
         if (deleteMessage) {
             setTimeout(() => {
@@ -651,220 +608,180 @@ document.addEventListener("DOMContentLoaded", function () {
         }
     }
 
-    // 8. Configuración inicial
+    function setupTableResize() {
+        if (!table) return;
+
+        let isResizing = false;
+        let currentResizer = null;
+        let startX, startWidth;
+
+        function resize(e) {
+            if (!isResizing) return;
+            
+            const th = currentResizer.closest('th');
+            const delta = e.pageX - startX;
+            const columnIndex = Array.from(th.parentElement.children).indexOf(th);
+            const newWidth = Math.max(70, startWidth + delta);
+
+            currentColumnWidths[columnIndex] = newWidth;
+
+            const allThCells = table.querySelectorAll(`thead tr:first-child th:nth-child(${columnIndex + 1})`);
+            const allTdCells = table.querySelectorAll(`tbody tr td:nth-child(${columnIndex + 1})`);
+
+            allThCells.forEach(cell => cell.style.width = `${newWidth}px`);
+            allTdCells.forEach(cell => cell.style.width = `${newWidth}px`);
+        }
+
+        function stopResize() {
+            if (!isResizing) return;
+            
+            isResizing = false;
+            currentResizer?.classList.remove('active');
+            document.body.style.cursor = '';
+            document.body.style.userSelect = '';
+            document.removeEventListener('mousemove', resize);
+            document.removeEventListener('mouseup', stopResize);
+            table.classList.remove('resizing');
+        }
+
+        function initResize(e) {
+            isResizing = true;
+            currentResizer = e.target;
+            const th = currentResizer.closest('th');
+            startX = e.pageX;
+            startWidth = th.offsetWidth;
+            currentResizer.classList.add('active');
+            document.body.style.cursor = 'col-resize';
+            document.addEventListener('mousemove', resize);
+            document.addEventListener('mouseup', stopResize);
+            document.body.style.userSelect = 'none';
+            table?.classList.add('resizing');
+        }
+
+        function setupResizers() {
+            const resizers = table?.querySelectorAll('.resizer');
+            if (!resizers) return;
+            
+            resizers.forEach(resizer => {
+                resizer.removeEventListener('mousedown', initResize);
+                resizer.addEventListener('mousedown', initResize);
+            });
+        }
+
+        function createResizers() {
+            const headers = table?.querySelectorAll('thead tr:first-child th');
+            if (!headers) return;
+            
+            headers.forEach(header => {
+                if (!header.querySelector('.resizer')) {
+                    const resizer = document.createElement('div');
+                    resizer.className = 'resizer';
+                    header.appendChild(resizer);
+                }
+            });
+            setupResizers();
+        }
+
+        createResizers();
+    }
+
     function initialize() {
-        // Verificar mensajes de éxito al cargar la página
-        checkForSuccessMessages();
-        
-        // Configurar el botón de crear categoría
-        const btnCreateCategoria = document.getElementById('btnCreateCategoria');
-        if (btnCreateCategoria) {
-            btnCreateCategoria.addEventListener('click', function (e) {
-                e.preventDefault();
-                openNeonModal('neonCreateCategoriaModal');
+        try {
+            initializeTableState();
+            checkForSuccessMessages();
+
+            const btnCreateCategoria = document.getElementById('btnCreateCategoria');
+            if (btnCreateCategoria) {
+                btnCreateCategoria.removeEventListener('click', handleCreateButtonClick);
+                btnCreateCategoria.addEventListener('click', handleCreateButtonClick);
+            }
+
+            if (table) {
+                setupTableResize();
+                adjustTableWidth();
+                initSorting();
+            }
+
+            const createForm = document.getElementById('formCreateCategoria');
+            if (createForm) {
+                createForm.removeEventListener('submit', handleCreateFormSubmit);
+                createForm.addEventListener('submit', handleCreateFormSubmit);
+            }
+
+            const editForm = document.getElementById('formEditCategoria');
+            if (editForm) {
+                editForm.removeEventListener('submit', handleEditFormSubmit);
+                editForm.addEventListener('submit', handleEditFormSubmit);
+            }
+
+            const deleteForm = document.getElementById('formDeleteCategoria');
+            if (deleteForm) {
+                deleteForm.removeEventListener('submit', handleDeleteFormSubmit);
+                deleteForm.addEventListener('submit', handleDeleteFormSubmit);
+            }
+
+            document.querySelectorAll('.toast-close').forEach(closeBtn => {
+                closeBtn.removeEventListener('click', handleToastClose);
+                closeBtn.addEventListener('click', handleToastClose);
             });
+
+            setupFilters();
+            setupPagination();
+            setupModalCancelButtons();
+            setupTableEvents();
+            setupStickySearch();
+            setupWindowResize();
+
+        } catch (error) {
         }
+    }
 
-        // Verificar si hay parámetros de éxito en la URL
-        const urlParams = new URLSearchParams(window.location.search);
-        if (urlParams.has('updated')) {
-            showToast('success', 'Categoría actualizada correctamente');
-            // Limpiar el parámetro de la URL sin recargar
-            history.replaceState(null, '', window.location.pathname);
+    function handleCreateButtonClick(e) {
+        e.preventDefault();
+        openModal('createCategoriaModal');
+    }
+
+    function handleToastClose() {
+        const toast = this.closest('.toast-modal');
+        if (toast) {
+            toast.style.display = 'none';
         }
+    }
 
-        // Configuración de la tabla
-        if (table) {
-            // Redimensionamiento
-            let isResizing = false;
-            let currentResizer = null;
-            let startX, startWidth;
-
-            function resize(e) {
-                if (!isResizing)
-                    return;
-
-                const th = currentResizer.closest('th');
-                const delta = e.pageX - startX;
-                const columnIndex = Array.from(th.parentElement.children).indexOf(th);
-                const newWidth = Math.max(70, startWidth + delta);
-
-                currentColumnWidths[columnIndex] = newWidth;
-
-                const allThCells = table.querySelectorAll(`thead tr:first-child th:nth-child(${columnIndex + 1})`);
-                const allTdCells = table.querySelectorAll(`tbody tr td:nth-child(${columnIndex + 1})`);
-
-                allThCells.forEach(cell => cell.style.width = `${newWidth}px`);
-                allTdCells.forEach(cell => cell.style.width = `${newWidth}px`);
-            }
-
-            function stopResize() {
-                if (!isResizing)
-                    return;
-
-                isResizing = false;
-                currentResizer?.classList.remove('active');
-                document.body.style.cursor = '';
-                document.body.style.userSelect = '';
-                document.removeEventListener('mousemove', resize);
-                document.removeEventListener('mouseup', stopResize);
-                table.classList.remove('resizing');
-            }
-
-            function initResize(e) {
-                isResizing = true;
-                currentResizer = e.target;
-                const th = currentResizer.closest('th');
-
-                startX = e.pageX;
-                startWidth = th.offsetWidth;
-                currentResizer.classList.add('active');
-                document.body.style.cursor = 'col-resize';
-                document.addEventListener('mousemove', resize);
-                document.addEventListener('mouseup', stopResize);
-                document.body.style.userSelect = 'none';
-                table?.classList.add('resizing');
-            }
-
-            function setupResizers() {
-                const resizers = table?.querySelectorAll('.resizer');
-                if (!resizers)
-                    return;
-
-                resizers.forEach(resizer => {
-                    resizer.addEventListener('mousedown', initResize);
-                });
-            }
-
-            function createResizers() {
-                const headers = table?.querySelectorAll('thead tr:first-child th');
-                if (!headers)
-                    return;
-
-                headers.forEach(header => {
-                    if (!header.querySelector('.resizer')) {
-                        const resizer = document.createElement('div');
-                        resizer.className = 'resizer';
-                        header.appendChild(resizer);
-                    }
-                });
-
-                setupResizers();
-            }
-
-            createResizers();
-            adjustTableWidth();
-            initSorting();
-        }
-
-        // Configuración de eventos
-        const createForm = document.getElementById('formCreateCategoria');
-        if (createForm)
-            createForm.addEventListener('submit', handleCreateFormSubmit);
-
-        const editForm = document.getElementById('formEditCategoria');
-        if (editForm)
-            editForm.addEventListener('submit', handleEditFormSubmit);
-
-        const deleteForm = document.getElementById('formDeleteCategoria');
-        if (deleteForm)
-            deleteForm.addEventListener('submit', handleDeleteFormSubmit);
-
-        // Eventos delegados
-        document.addEventListener('click', function (e) {
-            // Botones de edición
-            if (e.target.closest('button[data-action="edit"]')) {
-                e.preventDefault();
-                const button = e.target.closest('button[data-action="edit"]');
-                const categoriaId = button.getAttribute('data-id');
-                if (!categoriaId) {
-                    showToast('error', 'ID de categoría no válido');
-                    return;
-                }
-                loadCategoriaData(categoriaId);
-            }
-
-            // Botones de eliminación
-            if (e.target.closest('button[data-action="delete"]')) {
-                e.preventDefault();
-                const button = e.target.closest('button[data-action="delete"]');
-                const categoriaId = button.getAttribute('data-id');
-                const categoriaName = button.closest('tr').querySelector('td:nth-child(2)').textContent;
-                openDeleteModal(categoriaId, categoriaName);
-            }
-
-            // Botones de toggle estado
-            if (e.target.closest('button[data-action="toggle"]')) {
-                e.preventDefault();
-                const button = e.target.closest('button[data-action="toggle"]');
-                const categoriaId = button.getAttribute('data-id');
-                if (!categoriaId) {
-                    showToast('error', 'ID de categoría no válido');
-                    return;
-                }
-                toggleCategoriaEstado(categoriaId);
-            }
-        });
-
-        // Cerrar modales
-        document.addEventListener('click', function (event) {
-            if (event.target.classList.contains('close-modal') ||
-                    event.target.closest('.close-modal')) {
-                const modal = event.target.closest('.neon-modal');
-                if (modal) {
-                    closeNeonModal(modal.id);
-                }
-            }
-        });
-
-        document.addEventListener('click', function (event) {
-            if (event.target.classList.contains('close-modal') ||
-                    event.target.closest('#close-modal')) {
-                const modal = event.target.closest('.neon-modal');
-                if (modal) {
-                    closeNeonModal(modal.id);
-                }
-            }
-        });
-
-        // Cerrar toasts
-        document.querySelectorAll('.toast-close').forEach(closeBtn => {
-            closeBtn.addEventListener('click', function () {
-                const toast = this.closest('.toast-modal');
-                if (toast)
-                    toast.style.display = 'none';
-            });
-        });
-
-        // Configurar filtros y paginación
-        setupFilters();
-        setupPagination();
-        setupModalCancelButtons();
-        setupTableEvents();
-
-        // Fixed header al hacer scroll
+    function setupStickySearch() {
         const searchSection = document.querySelector(".search-section");
-        if (searchSection) {
+        if (searchSection && tableContainer) {
             const offsetTop = searchSection.offsetTop;
-
-            window.addEventListener("scroll", function () {
+            
+            function handleScroll() {
                 const scrollTop = window.scrollY;
                 if (scrollTop >= offsetTop) {
                     searchSection.classList.add("fixed");
+                    tableContainer.style.marginTop = `${searchSection.offsetHeight}px`;
+                } else {
+                    searchSection.classList.remove("fixed");
                     tableContainer.style.marginTop = "0";
                 }
-            });
+            }
+            
+            window.removeEventListener('scroll', handleScroll);
+            window.addEventListener("scroll", handleScroll);
         }
-
-        // Resize optimizado
-        let resizeTimeout;
-        window.addEventListener('resize', () => {
-            if (resizeTimeout)
-                cancelAnimationFrame(resizeTimeout);
-            resizeTimeout = requestAnimationFrame(adjustTableWidth);
-        });
     }
 
-    // Iniciar todo
+    function setupWindowResize() {
+        let resizeTimeout;
+        
+        function handleResize() {
+            if (resizeTimeout) {
+                cancelAnimationFrame(resizeTimeout);
+            }
+            resizeTimeout = requestAnimationFrame(adjustTableWidth);
+        }
+        
+        window.removeEventListener('resize', handleResize);
+        window.addEventListener('resize', handleResize);
+    }
+
     initialize();
 });

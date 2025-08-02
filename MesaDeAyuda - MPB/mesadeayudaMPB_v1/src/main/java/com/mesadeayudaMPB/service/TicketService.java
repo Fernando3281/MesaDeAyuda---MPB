@@ -15,6 +15,8 @@ public interface TicketService {
 
     List<Ticket> getTickets();
 
+    List<Ticket> getTicketsPorAsignado(Usuario asignado);
+
     List<Ticket> getTicketsPorSolicitanteYEstado(Usuario solicitante, String estado);
 
     Ticket getTicket(Ticket ticket);
@@ -38,12 +40,28 @@ public interface TicketService {
     List<Ticket> getTicketsPorEstado(String estado);
 
     List<Ticket> buscarTicketsPorFiltros(Map<String, String> columnFilters, String searchTerm);
-    
+
     List<Ticket> buscarTicketsPorFiltrosAvanzados(
-            Map<String, String> columnFilters, 
+            Map<String, String> columnFilters,
             String searchTerm,
             String fechaAperturaFrom,
             String fechaAperturaTo,
             String fechaActualizacionFrom,
             String fechaActualizacionTo);
+
+    List<Ticket> buscarTicketsPorFiltrosAvanzadosEnLista(
+            List<Ticket> ticketsBase,
+            Map<String, String> columnFilters,
+            String searchTerm,
+            String fechaAperturaFrom,
+            String fechaAperturaTo,
+            String fechaActualizacionFrom,
+            String fechaActualizacionTo);
+
+    // Método para obtener tickets sin asignar
+    List<Ticket> getTicketsSinAsignar();
+
+    Long countTicketsAtendidosPorSoportista(Long idSoportista, Long idUsuarioLogueado);
+
+    void actualizarTicket(Ticket ticket);
 }

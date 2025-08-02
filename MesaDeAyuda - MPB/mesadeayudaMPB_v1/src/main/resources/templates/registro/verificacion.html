@@ -2,16 +2,16 @@
 <html xmlns="http://www.w3.org/1999/xhtml" 
       xmlns:th="http://www.thymeleaf.org">
     <head th:replace="~{layout/plantilla :: head}">
-        <title>Mesa de Ayuda</title>
+        <title>Centro de Soporte</title>
     </head>
     
-    <th:block th:replace="~{layout/plantilla :: scripts-login}"></th:block>
+    <script th:src="@{/js/login-funciones.js}" defer></script>
     
     <body class="body-unlogged">
         <div class="verification-container">
             <div class="verification-form">
                 <div class="back-button-container">
-                    <a th:href="@{/tickets/registro}" class="btn btn-outline-secondary back-button">
+                    <a th:href="@{/registro/nuevo}" class="btn btn-outline-secondary back-button">
                         <i class="fa-solid fa-arrow-left"></i>
                     </a>
                 </div>

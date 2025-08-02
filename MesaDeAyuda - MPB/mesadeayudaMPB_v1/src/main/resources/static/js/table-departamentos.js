@@ -1,13 +1,35 @@
 document.addEventListener("DOMContentLoaded", function () {
-    // 1. Configuración de la tabla y redimensionamiento de columnas
     const table = document.querySelector('.tickets-table');
     const tableContainer = document.querySelector('.table-container');
-    const sidebar = document.querySelector('.sidebar');
 
     const defaultColumnWidths = [40, 200, 400, 60, 60, 80];
     let currentColumnWidths = [...defaultColumnWidths];
 
-    // Funciones para manejo del redimensionamiento de columnas
+    if (performance.navigation.type === performance.navigation.TYPE_RELOAD) {
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.has('search') || urlParams.has('sortColumn') || urlParams.has('sortDirection')) {
+            window.location.href = `/departamento/listado?page=0&size=15`;
+        }
+    }
+
+    function getCurrentFilterUrl(overridePage = null) {
+        const urlParams = new URLSearchParams(window.location.search);
+        const searchInput = document.getElementById('searchInputDepartamentos');
+        const recordsPerPage = document.getElementById('recordsPerPageDepartamentos');
+
+        const page = overridePage !== null ? overridePage : (urlParams.get('page') || '0');
+        const size = recordsPerPage?.value || urlParams.get('size') || '15';
+        const sortColumn = urlParams.get('sortColumn') || '0';
+        const sortDirection = urlParams.get('sortDirection') || 'asc';
+        const searchQuery = searchInput?.value.trim() || urlParams.get('search') || '';
+
+        let url = `/departamento/listado?page=${page}&size=${size}&sortColumn=${sortColumn}&sortDirection=${sortDirection}`;
+        if (searchQuery)
+            url += `&search=${encodeURIComponent(searchQuery)}`;
+
+        return url;
+    }
+
     function adjustTableWidth() {
         if (!table || !tableContainer)
             return;
@@ -40,40 +62,35 @@ document.addEventListener("DOMContentLoaded", function () {
         });
     }
 
-    // 2. Funciones para el ordenamiento de la tabla
     function initSorting() {
         const headers = table?.querySelectorAll('thead th');
         if (!headers)
             return;
 
-        const sortState = {column: null, direction: 'asc'};
+        const urlParams = new URLSearchParams(window.location.search);
+        const sortState = {
+            column: parseInt(urlParams.get('sortColumn')) || 0,
+            direction: urlParams.get('sortDirection') || 'asc'
+        };
 
         headers.forEach((header, index) => {
             const sortIcon = header.querySelector('.sort-icons i');
-            if (!sortIcon)
+            if (!sortIcon || index === 5)
                 return;
 
             sortIcon.style.cursor = 'pointer';
             sortIcon.addEventListener('click', () => {
-                sortState.column = sortState.column === index
-                        ? (sortState.direction === 'asc' ? index : null)
-                        : index;
-
-                sortState.direction = sortState.column === index
-                        ? (sortState.direction === 'asc' ? 'desc' : 'asc')
-                        : 'asc';
+                const newDirection = sortState.column === index && sortState.direction === 'asc' ? 'desc' : 'asc';
+                sortState.column = index;
+                sortState.direction = newDirection;
 
                 updateSortIcons(sortState.column, sortState.direction);
-                sortTable(index, sortState.direction);
-                adjustTableWidth();
+                applySortAndFilters(index, newDirection);
             });
         });
 
-        // Orden inicial por ID ascendente
-        sortState.column = 0;
-        sortState.direction = 'asc';
         updateSortIcons(sortState.column, sortState.direction);
-        sortTable(0, sortState.direction);
+        sortTable(sortState.column, sortState.direction);
     }
 
     function updateSortIcons(activeColumn, direction) {
@@ -112,14 +129,20 @@ document.addEventListener("DOMContentLoaded", function () {
             let valueA = cellA.textContent.trim();
             let valueB = cellB.textContent.trim();
 
-            // Para valores numéricos (ID y Cantidad de Usuarios)
             if (columnIndex === 0 || columnIndex === 3) {
                 const numA = parseInt(valueA) || 0;
                 const numB = parseInt(valueB) || 0;
                 return direction === 'asc' ? numA - numB : numB - numA;
             }
 
-            // Ordenamiento alfanumérico
+            if (columnIndex === 4) {
+                valueA = valueA === 'Visible' ? '1' : '0';
+                valueB = valueB === 'Visible' ? '1' : '0';
+                return direction === 'asc'
+                        ? valueA.localeCompare(valueB)
+                        : valueB.localeCompare(valueA);
+            }
+
             return direction === 'asc'
                     ? valueA.localeCompare(valueB)
                     : valueB.localeCompare(valueA);
@@ -131,121 +154,153 @@ document.addEventListener("DOMContentLoaded", function () {
             tbody.appendChild(emptyRow);
     }
 
-    // 3. Funciones para los filtros y paginación
-    async function handleSearch() {
-    const searchInput = document.getElementById('searchInputDepartamentos');
-    const searchQuery = searchInput.value.trim();
-    const recordsPerPage = document.getElementById('recordsPerPageDepartamentos').value;
+    async function applySortAndFilters(columnIndex, direction) {
+        const searchInput = document.getElementById('searchInputDepartamentos');
+        const recordsPerPage = document.getElementById('recordsPerPageDepartamentos');
 
-    showLoader(true);
+        const searchQuery = searchInput?.value.trim() || '';
+        const size = recordsPerPage?.value || '15';
+        const urlParams = new URLSearchParams(window.location.search);
+        const currentPage = urlParams.get('page') || '0';
 
-    try {
-        // Construir URL para la búsqueda
-        let url = `/departamento/listado?page=0&size=${recordsPerPage}`;
-        if (searchQuery) {
-            url += `&search=${encodeURIComponent(searchQuery)}`;
-        }
+        showLoader(true);
 
-        // Realizar petición AJAX
-        const response = await fetch(url, {
-            headers: {
-                'Accept': 'text/html'
+        try {
+            let url = `/departamento/listado?page=${currentPage}&size=${size}&sortColumn=${columnIndex}&sortDirection=${direction}`;
+            if (searchQuery)
+                url += `&search=${encodeURIComponent(searchQuery)}`;
+
+            const response = await fetch(url, {
+                headers: {'Accept': 'text/html'}
+            });
+
+            if (!response.ok) {
+                throw new Error('Error al ordenar la tabla');
             }
-        });
 
-        if (!response.ok) {
-            throw new Error('Error en la búsqueda');
+            const html = await response.text();
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(html, 'text/html');
+            const newTable = doc.querySelector('.tickets-table');
+            const newPagination = doc.querySelector('.table-header');
+
+            if (newTable) {
+                const currentTable = document.querySelector('.tickets-table');
+                currentTable.innerHTML = newTable.innerHTML;
+            }
+
+            if (newPagination) {
+                const currentPagination = document.querySelector('.table-header');
+                currentPagination.innerHTML = newPagination.innerHTML;
+                setupPagination();
+            }
+
+            history.pushState({}, '', url);
+            setupTableEvents();
+            adjustTableWidth();
+            initSorting();
+        } catch (error) {
+            showToast('error', 'Error al ordenar la tabla');
+            sortTable(columnIndex, direction);
+        } finally {
+            showLoader(false);
         }
-
-        // Obtener el HTML de la respuesta
-        const html = await response.text();
-        
-        // Crear un documento temporal para extraer la tabla
-        const parser = new DOMParser();
-        const doc = parser.parseFromString(html, 'text/html');
-        const newTable = doc.querySelector('.tickets-table');
-        const newPagination = doc.querySelector('.table-header');
-
-        // Reemplazar solo la tabla y la paginación
-        if (newTable) {
-            const currentTable = document.querySelector('.tickets-table');
-            currentTable.innerHTML = newTable.innerHTML;
-        }
-
-        if (newPagination) {
-            const currentPagination = document.querySelector('.table-header');
-            currentPagination.innerHTML = newPagination.innerHTML;
-            // Reconfigurar eventos de paginación
-            setupPagination();
-        }
-
-        // Reconfigurar eventos de la tabla
-        setupTableEvents();
-        adjustTableWidth();
-        initSorting();
-
-    } catch (error) {
-        console.error('Error en búsqueda asíncrona:', error);
-        showToast('error', 'Error al realizar la búsqueda');
-    } finally {
-        showLoader(false);
     }
-}
 
-// Modificar los botones de paginación para mantener los filtros
+    async function handleSearch() {
+        const searchInput = document.getElementById('searchInputDepartamentos');
+        const recordsPerPage = document.getElementById('recordsPerPageDepartamentos');
+
+        const searchQuery = searchInput?.value.trim() || '';
+        const size = recordsPerPage?.value || '15';
+        const urlParams = new URLSearchParams(window.location.search);
+        const sortColumn = urlParams.get('sortColumn') || '0';
+        const sortDirection = urlParams.get('sortDirection') || 'asc';
+
+        showLoader(true);
+
+        try {
+            let url = `/departamento/listado?page=0&size=${size}&sortColumn=${sortColumn}&sortDirection=${sortDirection}`;
+            if (searchQuery)
+                url += `&search=${encodeURIComponent(searchQuery)}`;
+
+            const response = await fetch(url, {
+                headers: {'Accept': 'text/html'}
+            });
+
+            if (!response.ok) {
+                throw new Error('Error en la búsqueda');
+            }
+
+            const html = await response.text();
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(html, 'text/html');
+            const newTable = doc.querySelector('.tickets-table');
+            const newPagination = doc.querySelector('.table-header');
+
+            if (newTable) {
+                const currentTable = document.querySelector('.tickets-table');
+                currentTable.innerHTML = newTable.innerHTML;
+            }
+
+            if (newPagination) {
+                const currentPagination = document.querySelector('.table-header');
+                currentPagination.innerHTML = newPagination.innerHTML;
+                setupPagination();
+            }
+
+            history.pushState({}, '', url);
+            setupTableEvents();
+            adjustTableWidth();
+            initSorting();
+        } catch (error) {
+            showToast('error', 'Error al realizar la búsqueda');
+        } finally {
+            showLoader(false);
+        }
+    }
+
     function setupPagination() {
         const recordsPerPage = document.getElementById('recordsPerPageDepartamentos');
         if (!recordsPerPage)
             return;
 
+        const urlParams = new URLSearchParams(window.location.search);
+        const searchQuery = urlParams.get('search') || '';
+        const sortColumn = urlParams.get('sortColumn') || '0';
+        const sortDirection = urlParams.get('sortDirection') || 'asc';
+        const size = urlParams.get('size') || '15';
+
+        recordsPerPage.value = size;
         recordsPerPage.addEventListener('change', function () {
-            const size = this.value;
-            const urlParams = new URLSearchParams(window.location.search);
-            const searchQuery = urlParams.get('search') || '';
-
-            let newUrl = `${window.location.pathname}?page=0&size=${size}`;
-
+            let newUrl = `/departamento/listado?page=0&size=${this.value}&sortColumn=${sortColumn}&sortDirection=${sortDirection}`;
             if (searchQuery)
                 newUrl += `&search=${encodeURIComponent(searchQuery)}`;
-
             window.location.href = newUrl;
         });
 
-        // Configurar los botones de paginación para mantener los filtros
         document.querySelectorAll('.pagination-btn, .page-number').forEach(btn => {
             btn.addEventListener('click', function (e) {
                 e.preventDefault();
 
-                const urlParams = new URLSearchParams(window.location.search);
-                const searchQuery = urlParams.get('search') || '';
-                const size = urlParams.get('size') || '15';
-
                 let page = 0;
-                if (this.getAttribute('data-page')) {
-                    page = parseInt(this.getAttribute('data-page'));
-                } else if (this.getAttribute('href') && this.getAttribute('href').includes('page=')) {
+                if (this.classList.contains('page-number')) {
+                    page = parseInt(this.textContent) - 1;
+                } else if (this.getAttribute('href')) {
                     const match = this.getAttribute('href').match(/page=(\d+)/);
                     if (match)
                         page = parseInt(match[1]);
                 }
 
-                let newUrl = `${window.location.pathname}?page=${page}&size=${size}`;
-
+                let newUrl = `/departamento/listado?page=${page}&size=${size}&sortColumn=${sortColumn}&sortDirection=${sortDirection}`;
                 if (searchQuery)
                     newUrl += `&search=${encodeURIComponent(searchQuery)}`;
-
                 window.location.href = newUrl;
             });
         });
-
-        // Establecer valor actual
-        const urlParams = new URLSearchParams(window.location.search);
-        recordsPerPage.value = urlParams.get('size') || '15';
     }
 
-// Función para configurar eventos después de actualizar la tabla
     function setupTableEvents() {
-        // Reconfigurar eventos de los botones de acción
         document.querySelectorAll('button[data-action="edit"]').forEach(btn => {
             btn.addEventListener('click', function (e) {
                 e.preventDefault();
@@ -281,69 +336,41 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
     function setupFilters() {
-    const searchInput = document.getElementById('searchInputDepartamentos');
-
-    if (searchInput) {
-        let searchTimeout;
-
-        searchInput.addEventListener('input', function() {
-            clearTimeout(searchTimeout);
-            searchTimeout = setTimeout(() => {
-                handleSearch(); // Ahora es asíncrono
-            }, 500);
-        });
-
-        // Manejar la tecla Enter
-        searchInput.addEventListener('keyup', function(e) {
-            if (e.key === 'Enter') {
+        const searchInput = document.getElementById('searchInputDepartamentos');
+        if (searchInput) {
+            let searchTimeout;
+            searchInput.addEventListener('input', function () {
                 clearTimeout(searchTimeout);
-                handleSearch(); // Ahora es asíncrono
-            }
-        });
-    }
-}
+                searchTimeout = setTimeout(() => {
+                    handleSearch();
+                }, 500);
+            });
 
-    // Asegurar que los botones Cancelar funcionen en todos los modals
+            searchInput.addEventListener('keyup', function (e) {
+                if (e.key === 'Enter') {
+                    clearTimeout(searchTimeout);
+                    handleSearch();
+                }
+            });
+        }
+    }
+
     function setupModalCancelButtons() {
-        document.querySelectorAll('.neon-modal .btn-secondary').forEach(btn => {
+        document.querySelectorAll('.modal-overlay .btn-outline').forEach(btn => {
             btn.addEventListener('click', function () {
-                const modal = this.closest('.neon-modal');
+                const modal = this.closest('.modal-overlay');
                 if (modal) {
-                    closeNeonModal(modal.id);
+                    closeModal(modal.id);
                 }
             });
         });
     }
 
-    function setupPagination() {
-        const recordsPerPage = document.getElementById('recordsPerPageDepartamentos');
-        if (!recordsPerPage)
-            return;
-
-        recordsPerPage.addEventListener('change', function () {
-            const size = this.value;
-            const urlParams = new URLSearchParams(window.location.search);
-            const searchQuery = urlParams.get('search') || '';
-
-            let newUrl = `${window.location.pathname}?page=0&size=${size}`;
-
-            if (searchQuery)
-                newUrl += `&search=${encodeURIComponent(searchQuery)}`;
-
-            window.location.href = newUrl;
-        });
-
-        // Establecer valor actual
-        const urlParams = new URLSearchParams(window.location.search);
-        recordsPerPage.value = urlParams.get('size') || '15';
-    }
-
-    // 4. Funciones para los modales
-    function openNeonModal(modalId) {
+    function openModal(modalId) {
         const modal = document.getElementById(modalId);
         if (modal) {
-            modal.style.display = "block";
-            document.body.style.overflow = "hidden";
+            modal.classList.add('active');
+            document.body.style.overflow = 'hidden';
 
             const firstInput = modal.querySelector('input:not([type="hidden"])');
             if (firstInput)
@@ -351,11 +378,11 @@ document.addEventListener("DOMContentLoaded", function () {
         }
     }
 
-    function closeNeonModal(modalId) {
+    function closeModal(modalId) {
         const modal = document.getElementById(modalId);
         if (modal) {
-            modal.style.display = "none";
-            document.body.style.overflow = "auto";
+            modal.classList.remove('active');
+            document.body.style.overflow = 'auto';
 
             const form = modal.querySelector('form');
             if (form)
@@ -363,7 +390,6 @@ document.addEventListener("DOMContentLoaded", function () {
         }
     }
 
-    // 5. Funciones para carga de datos de departamento
     function loadDepartamentoData(departamentoId) {
         showLoader(true);
 
@@ -371,13 +397,6 @@ document.addEventListener("DOMContentLoaded", function () {
             headers: {'Accept': 'application/json'}
         })
                 .then(response => {
-                    const contentType = response.headers.get('content-type');
-                    if (!contentType || !contentType.includes('application/json')) {
-                        return response.text().then(text => {
-                            throw new Error(`Respuesta no JSON: ${text.substring(0, 100)}...`);
-                        });
-                    }
-
                     if (!response.ok) {
                         return response.json().then(err => {
                             throw new Error(err.error || `Error HTTP: ${response.status}`);
@@ -389,19 +408,15 @@ document.addEventListener("DOMContentLoaded", function () {
                     if (!data.success)
                         throw new Error(data.message || 'Datos de departamento no recibidos');
 
-                    // Llenar formulario
                     document.getElementById('editDepartamentoId').value = departamentoId;
                     document.getElementById('editNombre').value = data.nombre || '';
                     document.getElementById('editDescripcion').value = data.descripcion || '';
                     document.getElementById('editVisible').checked = data.visible;
 
-                    // Actualizar acción del formulario
                     document.getElementById('formEditDepartamento').setAttribute('action', `/departamento/actualizar/${departamentoId}`);
-
-                    openNeonModal('neonEditDepartamentoModal');
+                    openModal('editDepartamentoModal');
                 })
                 .catch(error => {
-                    console.error('Error al cargar departamento:', error);
                     showToast('error', `Error al cargar datos: ${error.message}`);
                 })
                 .finally(() => {
@@ -409,30 +424,23 @@ document.addEventListener("DOMContentLoaded", function () {
                 });
     }
 
-    // 6. Funciones para formularios
     function handleCreateFormSubmit(event) {
         event.preventDefault();
         const form = event.target;
         const formData = new FormData(form);
-
         const submitButton = form.querySelector('button[type="submit"]');
         const originalButtonText = submitButton.innerHTML;
 
-        // Validación de campos obligatorios
         if (!formData.get('nombre')?.trim()) {
             showToast('error', 'El campo Nombre es obligatorio');
             return;
         }
 
-        // Manejo especial del checkbox 'visible'
         const visibleCheckbox = form.querySelector('input[name="visible"][type="checkbox"]');
         if (visibleCheckbox) {
-            // Eliminar el input hidden de 'visible' para evitar duplicados
             const hiddenVisible = form.querySelector('input[name="visible"][type="hidden"]');
-            if (hiddenVisible) {
+            if (hiddenVisible)
                 formData.delete('visible');
-            }
-            // Establecer el valor correcto basado en si está marcado o no
             formData.set('visible', visibleCheckbox.checked ? 'true' : 'false');
         }
 
@@ -443,9 +451,7 @@ document.addEventListener("DOMContentLoaded", function () {
         fetch(form.action, {
             method: 'POST',
             body: formData,
-            headers: {
-                'Accept': 'application/json'
-            }
+            headers: {'Accept': 'application/json'}
         })
                 .then(response => {
                     if (!response.ok) {
@@ -460,17 +466,12 @@ document.addEventListener("DOMContentLoaded", function () {
                         throw new Error(data.message || 'Error al crear departamento');
                     }
 
-                    closeNeonModal('neonCreateDepartamentoModal');
-
-                    // Guardar mensaje en sessionStorage antes de recargar
+                    closeModal('createDepartamentoModal');
                     sessionStorage.setItem('successMessage', data.message || 'Departamento creado exitosamente');
                     sessionStorage.setItem('successType', 'create');
-
-                    // Recargar la página para mostrar cambios
-                    window.location.reload();
+                    window.location.href = getCurrentFilterUrl();
                 })
                 .catch(error => {
-                    console.error('Error al crear departamento:', error);
                     showToast('error', error.message);
                 })
                 .finally(() => {
@@ -484,25 +485,19 @@ document.addEventListener("DOMContentLoaded", function () {
         event.preventDefault();
         const form = event.target;
         const formData = new FormData(form);
-
         const submitButton = form.querySelector('button[type="submit"]');
         const originalButtonText = submitButton.innerHTML;
 
-        // Validación de campos obligatorios
         if (!formData.get('nombre')?.trim()) {
             showToast('error', 'El campo Nombre es obligatorio');
             return;
         }
 
-        // Manejo especial del checkbox 'visible'
         const visibleCheckbox = form.querySelector('input[name="visible"][type="checkbox"]');
         if (visibleCheckbox) {
-            // Eliminar el input hidden de 'visible' para evitar duplicados
             const hiddenVisible = form.querySelector('input[name="visible"][type="hidden"]');
-            if (hiddenVisible) {
+            if (hiddenVisible)
                 formData.delete('visible');
-            }
-            // Establecer el valor correcto basado en si está marcado o no
             formData.set('visible', visibleCheckbox.checked ? 'true' : 'false');
         }
 
@@ -513,9 +508,7 @@ document.addEventListener("DOMContentLoaded", function () {
         fetch(form.action, {
             method: 'POST',
             body: formData,
-            headers: {
-                'Accept': 'application/json'
-            }
+            headers: {'Accept': 'application/json'}
         })
                 .then(response => {
                     if (!response.ok) {
@@ -530,17 +523,12 @@ document.addEventListener("DOMContentLoaded", function () {
                         throw new Error(data.message || 'Error al actualizar departamento');
                     }
 
-                    closeNeonModal('neonEditDepartamentoModal');
-
-                    // Guardar mensaje en sessionStorage antes de recargar
+                    closeModal('editDepartamentoModal');
                     sessionStorage.setItem('successMessage', data.message || 'Departamento actualizado exitosamente');
                     sessionStorage.setItem('successType', 'update');
-
-                    // Recargar la página para mostrar cambios
-                    window.location.reload();
+                    window.location.href = getCurrentFilterUrl();
                 })
                 .catch(error => {
-                    console.error('Error al actualizar departamento:', error);
                     showToast('error', error.message);
                 })
                 .finally(() => {
@@ -552,7 +540,6 @@ document.addEventListener("DOMContentLoaded", function () {
 
     function handleDeleteFormSubmit(event) {
         event.preventDefault();
-
         const form = event.target;
         const submitButton = form.querySelector('button[type="submit"]');
         const originalButtonText = submitButton.innerHTML;
@@ -580,24 +567,49 @@ document.addEventListener("DOMContentLoaded", function () {
                 })
                 .then(data => {
                     if (data.success) {
-                        // Cerrar modal primero
-                        closeNeonModal('neonDeleteDepartamentoModal');
-
-                        // Guardar mensaje en sessionStorage antes de recargar
+                        closeModal('deleteDepartamentoModal');
                         sessionStorage.setItem('successMessage', data.message || 'Departamento eliminado exitosamente');
                         sessionStorage.setItem('successType', 'delete');
 
-                        // Recargar la página para mostrar cambios
-                        window.location.reload();
+                        const urlParams = new URLSearchParams(window.location.search);
+                        let currentPage = parseInt(urlParams.get('page') || '0');
+                        const size = parseInt(urlParams.get('size') || '15');
+                        const sortColumn = urlParams.get('sortColumn') || '0';
+                        const sortDirection = urlParams.get('sortDirection') || 'asc';
+                        const searchQuery = urlParams.get('search') || '';
+
+                        const pageInfoElement = document.getElementById('pageInfoDepartamentos');
+                        let totalItems = 0;
+                        let currentPageItems = 0;
+                        if (pageInfoElement) {
+                            const match = pageInfoElement.textContent.match(/Mostrando (\d+) a (\d+) de (\d+) registros/);
+                            if (match) {
+                                const start = parseInt(match[1]);
+                                const end = parseInt(match[2]);
+                                totalItems = parseInt(match[3]);
+                                currentPageItems = end - start + 1;
+                            }
+                        }
+
+                        const totalItemsAfterDeletion = totalItems - 1;
+                        const totalPagesAfterDeletion = Math.ceil(totalItemsAfterDeletion / size);
+                        if (currentPageItems === 1 && currentPage > 0 && totalItemsAfterDeletion > 0) {
+                            currentPage--;
+                        } else if (totalItemsAfterDeletion === 0) {
+                            currentPage = 0;
+                        }
+
+                        let url = `/departamento/listado?page=${currentPage}&size=${size}&sortColumn=${sortColumn}&sortDirection=${sortDirection}`;
+                        if (searchQuery)
+                            url += `&search=${encodeURIComponent(searchQuery)}`;
+
+                        window.location.href = url;
                     } else {
                         throw new Error(data.message);
                     }
                 })
                 .catch(error => {
-                    console.error('Error al eliminar departamento:', error);
                     showToast('error', error.message);
-
-                    // Restaurar botón en caso de error
                     submitButton.innerHTML = originalButtonText;
                     submitButton.disabled = false;
                     showLoader(false);
@@ -607,39 +619,67 @@ document.addEventListener("DOMContentLoaded", function () {
     function toggleDepartamentoVisibility(departamentoId) {
         showLoader(true);
 
+        const csrfToken = document.querySelector('input[name="_csrf"]')?.value;
+        if (!csrfToken) {
+            showLoader(false);
+            showToast('error', 'Error: Token CSRF no encontrado');
+            return;
+        }
+
+        const controller = new AbortController();
+        const signal = controller.signal;
+
+        const timeoutId = setTimeout(() => {
+            controller.abort();
+        }, 30000);
+
         fetch(`/departamento/toggle-visibilidad/${departamentoId}`, {
             method: 'POST',
             headers: {
                 'Accept': 'application/json',
                 'Content-Type': 'application/json',
-                'X-CSRF-TOKEN': document.querySelector('input[name="_csrf"]').value
-            }
+                'X-CSRF-TOKEN': csrfToken
+            },
+            body: JSON.stringify({}),
+            signal: signal
         })
                 .then(response => {
+                    clearTimeout(timeoutId);
+
                     if (!response.ok) {
-                        return response.json().then(err => {
-                            throw new Error(err.error || 'Error al cambiar visibilidad');
-                        });
+                        const contentType = response.headers.get('content-type');
+                        if (contentType && contentType.includes('application/json')) {
+                            return response.json().then(err => {
+                                throw new Error(err.error || err.message || `Error HTTP: ${response.status} ${response.statusText}`);
+                            });
+                        } else {
+                            throw new Error(`Error HTTP: ${response.status} ${response.statusText}`);
+                        }
                     }
                     return response.json();
                 })
                 .then(data => {
                     if (data.success) {
-                        // Guardar mensaje en sessionStorage antes de recargar
-                        sessionStorage.setItem('successMessage', data.message || 'Visibilidad actualizada');
+                        sessionStorage.setItem('successMessage', data.message || 'Visibilidad actualizada correctamente');
                         sessionStorage.setItem('successType', 'toggle');
-
-                        // Recargar la página para mostrar cambios
-                        window.location.reload();
+                        window.location.href = getCurrentFilterUrl();
                     } else {
-                        throw new Error(data.message);
+                        throw new Error(data.message || 'Error desconocido al cambiar visibilidad');
                     }
                 })
                 .catch(error => {
-                    console.error('Error al cambiar visibilidad:', error);
-                    showToast('error', error.message);
+                    if (error.name === 'AbortError') {
+                        showToast('error', 'La operación tardó demasiado tiempo. Por favor, intente nuevamente.');
+                    } else if (error.message.includes('NetworkError') || error.message.includes('Failed to fetch')) {
+                        showToast('error', 'Error de conexión. Verifique su conexión a internet.');
+                    } else if (error.message.includes('timeout')) {
+                        showToast('error', 'La operación tardó demasiado tiempo. Intente nuevamente.');
+                    } else {
+                        showToast('error', error.message || 'Error al cambiar visibilidad del departamento');
+                    }
                 })
                 .finally(() => {
+                    clearTimeout(timeoutId);
                     showLoader(false);
                 });
     }
@@ -648,10 +688,9 @@ document.addEventListener("DOMContentLoaded", function () {
         document.getElementById('deleteDepartamentoId').value = departamentoId;
         document.getElementById('deleteDepartamentoName').textContent = departamentoName;
         document.getElementById('formDeleteDepartamento').setAttribute('action', `/departamento/eliminar/${departamentoId}`);
-        openNeonModal('neonDeleteDepartamentoModal');
+        openModal('deleteDepartamentoModal');
     }
 
-    // 7. Funciones auxiliares
     function showToast(type, message) {
         const toast = document.getElementById(`toast-${type}`);
         if (!toast)
@@ -671,23 +710,18 @@ document.addEventListener("DOMContentLoaded", function () {
             loader.style.display = show ? 'flex' : 'none';
     }
 
-    // Función para mostrar mensajes después de recargar la página
     function checkForSuccessMessages() {
         const successMessage = sessionStorage.getItem('successMessage');
         const successType = sessionStorage.getItem('successType');
 
         if (successMessage) {
-            // Mostrar el toast con un pequeño delay para que la página termine de cargar
             setTimeout(() => {
                 showToast('success', successMessage);
             }, 100);
-
-            // Limpiar los mensajes del sessionStorage
             sessionStorage.removeItem('successMessage');
             sessionStorage.removeItem('successType');
         }
 
-        // También verificar mensaje de eliminación (manteniendo compatibilidad)
         const deleteMessage = sessionStorage.getItem('deleteSuccessMessage');
         if (deleteMessage) {
             setTimeout(() => {
@@ -697,31 +731,18 @@ document.addEventListener("DOMContentLoaded", function () {
         }
     }
 
-    // 8. Configuración inicial
     function initialize() {
-        // Verificar mensajes de éxito al cargar la página
         checkForSuccessMessages();
 
-        // Configurar el botón de crear departamento
         const btnCreateDepartamento = document.getElementById('btnCreateDepartamento');
         if (btnCreateDepartamento) {
             btnCreateDepartamento.addEventListener('click', function (e) {
                 e.preventDefault();
-                openNeonModal('neonCreateDepartamentoModal');
+                openModal('createDepartamentoModal');
             });
         }
 
-        // Verificar si hay parámetros de éxito en la URL
-        const urlParams = new URLSearchParams(window.location.search);
-        if (urlParams.has('updated')) {
-            showToast('success', 'Departamento actualizado correctamente');
-            // Limpiar el parámetro de la URL sin recargar
-            history.replaceState(null, '', window.location.pathname);
-        }
-
-        // Configuración de la tabla
         if (table) {
-            // Redimensionamiento
             let isResizing = false;
             let currentResizer = null;
             let startX, startWidth;
@@ -803,7 +824,6 @@ document.addEventListener("DOMContentLoaded", function () {
             initSorting();
         }
 
-        // Configuración de eventos
         const createForm = document.getElementById('formCreateDepartamento');
         if (createForm)
             createForm.addEventListener('submit', handleCreateFormSubmit);
@@ -816,9 +836,7 @@ document.addEventListener("DOMContentLoaded", function () {
         if (deleteForm)
             deleteForm.addEventListener('submit', handleDeleteFormSubmit);
 
-        // Eventos delegados
         document.addEventListener('click', function (e) {
-            // Botones de edición
             if (e.target.closest('button[data-action="edit"]')) {
                 e.preventDefault();
                 const button = e.target.closest('button[data-action="edit"]');
@@ -830,7 +848,6 @@ document.addEventListener("DOMContentLoaded", function () {
                 loadDepartamentoData(departamentoId);
             }
 
-            // Botones de eliminación
             if (e.target.closest('button[data-action="delete"]')) {
                 e.preventDefault();
                 const button = e.target.closest('button[data-action="delete"]');
@@ -839,7 +856,6 @@ document.addEventListener("DOMContentLoaded", function () {
                 openDeleteModal(departamentoId, departamentoName);
             }
 
-            // Botones de toggle visibilidad
             if (e.target.closest('button[data-action="toggle"]')) {
                 e.preventDefault();
                 const button = e.target.closest('button[data-action="toggle"]');
@@ -850,30 +866,15 @@ document.addEventListener("DOMContentLoaded", function () {
                 }
                 toggleDepartamentoVisibility(departamentoId);
             }
-        });
 
-        // Cerrar modales
-        document.addEventListener('click', function (event) {
-            if (event.target.classList.contains('close-modal') ||
-                    event.target.closest('.close-modal')) {
-                const modal = event.target.closest('.neon-modal');
+            if (e.target.classList.contains('close-modal') || e.target.closest('.close-modal')) {
+                const modal = e.target.closest('.modal-overlay');
                 if (modal) {
-                    closeNeonModal(modal.id);
+                    closeModal(modal.id);
                 }
             }
         });
 
-        document.addEventListener('click', function (event) {
-            if (event.target.classList.contains('close-modal') ||
-                    event.target.closest('#close-modal')) {
-                const modal = event.target.closest('.neon-modal');
-                if (modal) {
-                    closeNeonModal(modal.id);
-                }
-            }
-        });
-
-        // Cerrar toasts
         document.querySelectorAll('.toast-close').forEach(closeBtn => {
             closeBtn.addEventListener('click', function () {
                 const toast = this.closest('.toast-modal');
@@ -882,27 +883,26 @@ document.addEventListener("DOMContentLoaded", function () {
             });
         });
 
-        // Configurar filtros y paginación
         setupFilters();
         setupPagination();
         setupModalCancelButtons();
         setupTableEvents();
 
-        // Fixed header al hacer scroll
         const searchSection = document.querySelector(".search-section");
         if (searchSection) {
             const offsetTop = searchSection.offsetTop;
-
             window.addEventListener("scroll", function () {
                 const scrollTop = window.scrollY;
                 if (scrollTop >= offsetTop) {
                     searchSection.classList.add("fixed");
+                    tableContainer.style.marginTop = `${searchSection.offsetHeight}px`;
+                } else {
+                    searchSection.classList.remove("fixed");
                     tableContainer.style.marginTop = "0";
                 }
             });
         }
 
-        // Resize optimizado
         let resizeTimeout;
         window.addEventListener('resize', () => {
             if (resizeTimeout)
@@ -911,6 +911,5 @@ document.addEventListener("DOMContentLoaded", function () {
         });
     }
 
-    // Iniciar todo
     initialize();
 });

@@ -1,15 +1,11 @@
-/* 
-    Created on : Oct 4, 2024, 1:25:37 PM
-    Author     : ferva
-*/
-
 .body-unlogged {
     background-image: url("../img/loginBackground.webp");
     background-size: cover;
+    background-repeat: no-repeat;
     background-position: center;
-    margin: 0;
-    padding: 0;
+    background-attachment: fixed;
     min-height: 100vh;
+    width: 100%;
     display: flex;
     flex-direction: column;
     color: #18181b;
@@ -20,9 +16,6 @@
     font-size: 30px;
     color: #3a3a3a;
 }
-
-
-/* //////////////////// Panel Login //////////////////// */
 
 .login-container {
     flex: 1;
@@ -163,16 +156,12 @@
     }
 }
 
-
-
-/* //////////////////// Panel Registro //////////////////// */
-
 .registro-container {
     flex: 1;
     display: flex;
     justify-content: center;
     align-items: center;
-    padding: 40px 12px;
+    padding: 60px 12px;
     box-sizing: border-box;
     margin-bottom: 25px;
 }
@@ -298,7 +287,7 @@ select.form-control, #confirm-password {
 
 @media (max-width: 768px) {
     .registro-container {
-        padding: 20px 15px;
+        padding: 40px 15px;
     }
 
     .registro-form {
@@ -316,9 +305,6 @@ select.form-control, #confirm-password {
         margin-top: 0px;
     }
 }
-
-
-/* //////////////////// Panel de Verificacion de Registro //////////////////// */
 
 .verification-container {
     flex: 1;
@@ -435,10 +421,6 @@ select.form-control, #confirm-password {
     }
 }
 
-
-
-/* Estilos del panel de "recordar.html" para recuperar la contraseña */
-
 .recovery-container {
     flex: 1;
     display: flex;
@@ -459,8 +441,6 @@ select.form-control, #confirm-password {
     text-align: center;
     position: relative;
 }
-
-
 
 .municipalidad-logo-recordar {
     background-image: url('../img/escudo-barva.webp');
@@ -576,3 +556,131 @@ select.form-control, #confirm-password {
     opacity: 0.7;
 }
 
+.info-icon {
+    display: inline-flex;
+    position: relative;
+    cursor: pointer;
+}
+
+.info-icon:hover i {
+    color: #42484d;
+}
+
+.popover-password-container {
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-10%);
+    margin-bottom: 10px;
+    z-index: 1000;
+    width: 400px;
+}
+
+.popover-password {
+    position: relative;
+    max-width: 400px;
+    background: rgba(17, 17, 17, 0.80);
+    border: 1px solid #1d1d1d;
+    border-radius: 8px;
+    padding: 15px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    font-size: 12px;
+    color: #f0f0f0;
+    backdrop-filter: blur(2px);
+    pointer-events: none;
+    white-space: nowrap;
+}
+
+.popover-password::after {
+    content: '';
+    position: absolute;
+    top: 100%;
+    left: 10%;
+    transform: translateX(-50%);
+    border-width: 8px;
+    border-style: solid;
+    border-color: #1d1d1d transparent transparent transparent;
+    pointer-events: none;
+}
+
+.popover-password-title {
+    margin-bottom: 10px;
+    font-weight: bolder;
+}
+
+.popover-password-content li {
+    margin-bottom: 4px;
+}
+
+.popover-password-content {
+    line-height: 1.5;
+    white-space: normal;
+}
+
+.popover-password-content ul {
+    padding-left: 20px;
+    margin: 0;
+}
+
+.password-container-register {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+#password, #confirm-password {
+    border-top-right-radius: 0;
+    border-bottom-right-radius: 0;
+    border-right: none;
+}
+
+#statusValidationPassword, #statusValidationConfirm {
+    border: 1px solid #ced4da;
+    padding: 0.45rem 0.7rem;
+    border-top-left-radius: 0;
+    border-bottom-left-radius: 0;
+    border-top-right-radius: 5px;
+    border-bottom-right-radius: 5px;
+    font-size: 1.2rem;
+    margin-right: 15px;
+    transition: all 0.3s ease;
+    color: #6c757d;
+    min-width: 45px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.btn-outline-secondary {
+    background-color: #f8f9fa;
+}
+
+.btn-success {
+    background-color: #d4edda;
+}
+
+.btn-danger {
+    background-color: #f8d7da;
+}
+
+#statusValidationPassword i, #statusValidationConfirm i {
+    transition: all 0.2s ease;
+}
+
+.fa-minus {
+    opacity: 0.5;
+}
+
+.circle-check-solid {
+    color: #28a745;
+    opacity: 1;
+}
+
+.fa-circle-xmark {
+    color: #dc3545;
+    opacity: 1;
+}
+
+.input-group-registro .password-container-register input {
+    flex: 1;
+}

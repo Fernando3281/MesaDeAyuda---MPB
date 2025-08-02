@@ -1,19 +1,28 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html xmlns="http://www.w3.org/1999/xhtml" 
+      xmlns:th="http://www.thymeleaf.org">
     <head th:replace="~{layout/plantilla :: head}">
-        <title>Mesa de Ayuda</title>
+        <title>Centro de Soporte</title>
+        <meta charset="UTF-8"/>
     </head>
+
+    <th:block th:append="head">
+        <link rel="stylesheet" th:href="@{/css/reportes_layout.css}">
+    </th:block>
+
+    <script th:src="@{/js/reportes-funciones.js}" defer></script>
 
     <body>
         <div class="wrapper">
             <!-- Incluye el sidebar -->
-            <div th:replace="~{layout/plantilla :: sidebar}"></div>
+            <aside th:replace="~{layout/plantilla :: sidebar}"></aside>
 
             <div class="main-content">
-                <div th:replace="~{layout/plantilla :: header}"></div>
+                <!-- Incluye el header -->
+                <header th:replace="~{layout/plantilla :: header}"></header>
 
                 <!-- Incluye el navbar -->
-                <div th:replace="~{layout/plantilla :: navbar}"></div>
+                <nav th:replace="~{layout/plantilla :: navbar}"></nav>
 
                 <!-- Contenido principal -->
                 <main class="home-section">
