@@ -1,15 +1,15 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html xmlns="http://www.w3.org/1999/xhtml" 
+      xmlns:th="http://www.thymeleaf.org">
     <head th:replace="~{layout/plantilla :: head}">
-        <title>Mesa de Ayuda</title>
+        <title>Centro de Soporte</title>
     </head>
 
     <th:block th:append="head">
         <link rel="stylesheet" th:href="@{/css/table_layout_principal.css}">
-        <link rel="stylesheet" th:href="@{/css/table_layout_usuarios.css}">
     </th:block>
 
-    <th:block th:replace="~{layout/plantilla :: scripts-table-usuarios}"></th:block>
+    <script th:src="@{/js/table-usuarios.js}" defer></script>
 
     <body>
         <div class="wrapper">

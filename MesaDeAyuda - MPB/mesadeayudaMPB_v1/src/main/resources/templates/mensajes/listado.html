@@ -2,13 +2,15 @@
 <html xmlns="http://www.w3.org/1999/xhtml" 
       xmlns:th="http://www.thymeleaf.org">
     <head th:replace="~{layout/plantilla :: head}">
-        <title>Mesa de Ayuda</title>
+        <title>Centro de Soporte</title>
         <meta charset="UTF-8"/>
     </head>
     
     <th:block th:append="head">
         <link rel="stylesheet" th:href="@{/css/mensajes_layout_principal.css}">
     </th:block>
+    
+    <script th:src="@{/js/mensajes-funciones.js}" defer></script>
     
     <body>
         <div class="wrapper">

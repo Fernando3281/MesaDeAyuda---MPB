@@ -2,10 +2,10 @@
 <html xmlns="http://www.w3.org/1999/xhtml" 
       xmlns:th="http://www.thymeleaf.org">
     <head th:replace="~{layout/plantilla :: head}">
-        <title>Mesa de Ayuda</title>
+        <title>Centro de Soporte</title>
         <meta charset="UTF-8"/>
     </head>
-    
+
     <th:block th:append="head">
         <link rel="stylesheet" th:href="@{/css/table_layout_principal.css}">
     </th:block>
@@ -27,9 +27,9 @@
                 <!-- Contenido principal -->
                 <main class="home-section">
                     <div class="content-wrapper">
-                        
+
                         <section th:replace="~{departamento/segmentos-departamento :: listado-departamentos}"></section>
-                        
+
                     </div>
                 </main>
             </div>

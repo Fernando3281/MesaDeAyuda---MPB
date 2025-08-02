@@ -1,39 +1,19 @@
-/* 
-    Created on : Oct 4, 2024, 1:25:37 PM
-    Author     : ferva
-*/
-
-/* //////////////////// Panel Histoial //////////////////// */
-
-/* Estilos para el header y contador */
-.header-left {
+.header-title {
     display: flex;
     align-items: center;
     gap: 16px;
+    flex-wrap: wrap;
 }
 
-.header-left h2 {
-    font-size: 22px;
+.header-title h2 {
+    font-size: 30px;
+    color: #3a3a3a;
     font-weight: 700;
-    color: #111827;
-    margin: 0;
     letter-spacing: -0.01em;
     position: relative;
+    margin: 0;
 }
 
-/* Efecto decorativo debajo del título */
-.header-left h2::after {
-    content: '';
-    position: absolute;
-    left: 0;
-    bottom: -8px;
-    width: 40px;
-    height: 3px;
-    background: linear-gradient(to right, #4f46e5, #7c3aed);
-    border-radius: 2px;
-}
-
-/* Contador de tickets */
 .ticket-counter {
     display: flex;
     align-items: center;
@@ -44,6 +24,7 @@
     font-size: 14px;
     transition: all 0.2s ease;
     border: 1px solid rgba(79, 70, 229, 0.1);
+    white-space: nowrap;
 }
 
 .ticket-counter:hover {
@@ -65,28 +46,24 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 8px;
+    gap: 16px;
+    flex-wrap: wrap;
 }
 
-.ticket-list-header h2 {
-    font-size: 24px;
-    font-weight: 600;
-    color: #111827;
-}
-
-/* Lado derecho con búsqueda */
 .search-filter {
     flex-shrink: 0;
+    width: 100%;
+    max-width: 320px;
 }
 
 .search-box {
     position: relative;
-    width: 320px;
+    width: 100%;
     transition: width 0.3s ease;
 }
 
 .search-box:focus-within {
-    width: 350px;
+    width: 100%;
 }
 
 .search-icon {
@@ -131,26 +108,23 @@
     font-weight: 400;
 }
 
-
-
-
-
-/* Barra de filtros */
 .filter-bar {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 4px;
     gap: 16px;
     padding: 8px 0;
     position: relative;
+    width: 100%;
 }
 
-/* Chips de filtro */
 .filter-chips {
     display: flex;
     flex-wrap: wrap;
     gap: 10px;
+    overflow-x: auto;
+    padding: 8px 0px;
+    width: 100%;
 }
 
 .filter-chip {
@@ -167,6 +141,7 @@
     color: #4b5563;
     transition: all 0.2s ease;
     box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+    white-space: nowrap;
 }
 
 .filter-chip:hover {
@@ -194,7 +169,6 @@
     transform: rotate(180deg);
 }
 
-/* Filtros activos */
 .active-filters {
     display: flex;
     flex-wrap: wrap;
@@ -202,6 +176,7 @@
     min-height: 32px;
     transition: all 0.2s ease;
     margin-bottom: 20px;
+    width: 100%;
 }
 
 .active-filter-tag {
@@ -217,6 +192,7 @@
     transition: all 0.2s ease;
     border: 1px solid #dbeafe;
     cursor: default;
+    white-space: nowrap;
 }
 
 .active-filter-tag:hover {
@@ -233,40 +209,31 @@
     color: #ef4444;
 }
 
-/* Botón para limpiar filtros */
 .button.clear-filters {
     background-color: #f3f4f6;
-    border: 1px solid #e5e7eb;
+    border: 1px solid #D8D8D8;
     border-radius: 8px;
-    color: #6b7280;
     cursor: pointer;
     padding: 10px 16px;
     text-align: center;
-    transition: all 0.2s ease;
-    font-size: 14px;
-    font-weight: 500;
+    color: #6F7480;
+    font-size: 0.875rem;
     display: flex;
     align-items: center;
-    gap: 8px;
-}
-
-.button.clear-filters::before {
-    content: '\f00d'; /* Font Awesome icon: fa-times */
-    font-family: "Font Awesome 5 Free";
-    font-weight: 900;
-    font-size: 12px;
+    gap: 0.5rem;
+    transition: all 0.3s ease;
+    white-space: nowrap;
 }
 
 .button.clear-filters:hover {
-    background-color: #e5e7eb;
-    color: #4b5563;
+    border-color: #EF4444;
+    color: #EF4444;
 }
 
 .button.clear-filters:active {
     transform: translateY(1px);
 }
 
-/* Menús desplegables de filtros */
 .filter-dropdown {
     display: none;
     position: absolute;
@@ -295,6 +262,7 @@
 .dropdown-content {
     padding: 8px;
     overflow-y: auto;
+    max-height: 300px;
 }
 
 .dropdown-content::-webkit-scrollbar {
@@ -315,23 +283,18 @@
     background: #9ca3af;
 }
 
-/* Estilos para las opciones de filtros con checkbox */
 .dropdown-content label {
     display: flex;
     align-items: center;
     gap: 10px;
-    padding: 4px 12px;
-    cursor: pointer;
     transition: all 0.2s ease;
     border-radius: 6px;
-    margin-bottom: 2px;
-    font-size: 14px;
-    color: #4b5563;
+    padding: 8px;
+    cursor: pointer;
 }
 
 .dropdown-content label:hover {
-    background: #f9fafb;
-    color: #111827;
+    background-color: #f9fafb;
 }
 
 .dropdown-content input[type="checkbox"] {
@@ -373,7 +336,6 @@
     transform: scale(1);
 }
 
-/* Estilos para el filtro de fechas */
 .date-range {
     display: flex;
     flex-direction: column;
@@ -394,7 +356,7 @@
     padding: 0;
 }
 
-.date-input-group input[type="date"] {
+.date-input-group input[type="text"] {
     padding: 10px 12px;
     border: 1px solid #e5e7eb;
     border-radius: 8px;
@@ -404,15 +366,35 @@
     transition: all 0.2s ease;
 }
 
-.date-input-group input[type="date"]:hover {
+.date-input-group input[type="text"]:hover {
     border-color: #d1d5db;
+    background: #f2f2f2;
 }
 
-.date-input-group input[type="date"]:focus {
+.date-input-group input[type="text"]:focus {
     outline: none;
     border-color: #4f46e5;
     box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
     background-color: #fff;
+}
+
+.flatpickr-calendar {
+    font-family: 'Poppins', sans-serif;
+    border-radius: 10px;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+}
+
+.flatpickr-day.selected,
+.flatpickr-day.startRange,
+.flatpickr-day.endRange {
+    background-color: #4f46e5;
+    border-color: #4f46e5;
+}
+
+.flatpickr-day.selected:hover,
+.flatpickr-day.startRange:hover,
+.flatpickr-day.endRange:hover {
+    background-color: #4338ca;
 }
 
 .button.apply-date {
@@ -425,8 +407,8 @@
     font-weight: 500;
     cursor: pointer;
     transition: all 0.2s ease;
-    margin-top: 8px;
     text-align: center;
+    width: 100%;
 }
 
 .button.apply-date:hover {
@@ -438,14 +420,13 @@
     transform: translateY(1px);
 }
 
-/* Mejoras para la lista de tickets y tarjetas individuales */
 .ticket-list {
     display: grid;
     gap: 20px;
-    grid-template-columns: repeat(auto-fill, minmax(350px, 1fr))
+    grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+    width: 100%;
 }
 
-/* Hover refinado y profesional para tarjetas de tickets */
 .ticket-card {
     display: flex;
     flex-direction: column;
@@ -459,7 +440,6 @@
     transition: all 0.3s ease;
 }
 
-/* Efecto hover refinado */
 .ticket-card::before {
     content: '';
     position: absolute;
@@ -483,7 +463,6 @@
     opacity: 1;
 }
 
-/* Borde lateral para indicar interacción */
 .ticket-card::after {
     content: '';
     position: absolute;
@@ -500,51 +479,45 @@
     width: 4px;
 }
 
-/* Sutil animación para etiquetas de estado y prioridad */
 .ticket-card:hover .status,
 .ticket-card:hover .priority {
     transform: translateY(-1px);
     box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
 }
 
-/* Mejora de color en el título al hover */
 .ticket-card:hover .ticket-content h3 {
     color: #4f46e5;
     transition: color 0.2s ease;
 }
 
-
-/* Aumentar la intensidad de color de iconos durante hover */
 .ticket-card:hover .category-tag i,
+.ticket-card:hover .archive-tag,
 .ticket-card:hover .ticket-id i {
     opacity: 1;
 }
 
 .category-tag i,
+.archive-tag,
 .ticket-id i {
     opacity: 0.8;
 }
 
-/* Mejora visual para la categoría al hover */
-.ticket-card:hover .category-tag {
+.ticket-card:hover .category-tag .archive-tag {
     background: #f5f3ff;
     border-color: #ede9fe;
     transition: all 0.2s ease;
 }
 
-/* Transición para header con sutileza */
 .ticket-card:hover .ticket-meta {
     border-bottom-color: rgba(79, 70, 229, 0.15);
     transition: border-bottom-color 0.3s ease;
 }
 
-/* Mejoras para accesibilidad - focus visible */
 .ticket-card:focus-within {
     outline: 2px solid rgba(79, 70, 229, 0.2);
     outline-offset: 2px;
 }
 
-/* Cabecera del ticket con diseño más limpio */
 .ticket-meta {
     padding: 16px 20px;
     border-bottom: 1px solid #f0f0f0;
@@ -556,6 +529,8 @@
     justify-content: space-between;
     align-items: center;
     margin-bottom: 10px;
+    flex-wrap: wrap;
+    gap: 8px;
 }
 
 .ticket-id {
@@ -570,21 +545,19 @@
     color: #4f46e5;
 }
 
-/* Fecha con mejor visualización */
 .date {
     display: block;
     font-size: 13px;
     color: #6b7280;
     font-weight: 500;
+    width: 100%;
 }
 
-/* Estilos para el icono de prioridad (bandera) */
 .priority i.fa-flag {
     margin-right: 4px;
     font-size: 11px;
 }
 
-/* Estilos para las prioridades */
 .priority-sin-asignar {
     background-color: #f3f4f6;
     color: #4b5563;
@@ -614,7 +587,7 @@
     color: #fdf1f1;
     border: 1px solid #7f1d1d;
 }
-/* Colores para los iconos de bandera según prioridad */
+
 .priority-sin-asignar i.fa-flag {
     color: #4b5563;
 }
@@ -635,7 +608,6 @@
     color: #fdf1f1;
 }
 
-/* Etiquetas de estado y prioridad */
 .ticket-tags {
     display: flex;
     gap: 8px;
@@ -653,7 +625,6 @@
     white-space: nowrap;
 }
 
-/* Mejoras en los estados */
 .status-abierto {
     background-color: #e0f2fe;
     color: #0369a1;
@@ -690,7 +661,24 @@
     border: 1px solid #e5e7eb;
 }
 
-/* Mejoras en las prioridades */
+.status-en-revisión {
+    background-color: #e0f2fe;
+    color: #0369a1;
+    border: 1px solid #bae6fd;
+}
+
+.status-en-progreso {
+    background-color: #fff8e6;
+    color: #984607;
+    border: 1px solid #fde68a;
+}
+
+.status-solucionado {
+    background-color: #ecfdf5;
+    color: #047857;
+    border: 1px solid #a7f3d0;
+}
+
 .priority-alta {
     background-color: #fee2e2;
     color: #b91c1c;
@@ -709,7 +697,6 @@
     border: 1px solid #e5e7eb;
 }
 
-/* Contenido del ticket */
 .ticket-content {
     padding: 16px;
     flex-grow: 1;
@@ -729,7 +716,7 @@
     display: -webkit-box;
     -webkit-line-clamp: 2;
     -webkit-box-orient: vertical;
-    min-height: 14.8px; /* 16px * 1.4 * 2 */
+    min-height: 14.8px;
     max-height: 44.8px;
     word-break: break-word;
 }
@@ -744,12 +731,11 @@
     display: -webkit-box;
     -webkit-line-clamp: 2;
     -webkit-box-orient: vertical;
-    min-height: 42px; /* 14px * 1.5 * 2 */
+    min-height: 42px;
     max-height: 42px;
     word-break: break-word;
 }
 
-/* Pie de la tarjeta */
 .ticket-footer {
     display: flex;
     justify-content: space-between;
@@ -760,23 +746,30 @@
     margin-top: auto;
 }
 
-/* Categoría con iconos específicos */
-.category-tag {
+.footer-left {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.category-tag, .archive-tag {
     display: flex;
     align-items: center;
     gap: 6px;
     padding: 5px 12px;
     background: #f3f4f6;
-    border-radius: 20px;
+    border-radius: 10px;
     font-size: 12px;
     font-weight: 500;
     color: #4b5563;
+    white-space: nowrap;
 }
 
-/* Botones en el footer */
 .footer-buttons {
     display: flex;
     gap: 8px;
+    flex-wrap: wrap;
 }
 
 .button-32 {
@@ -791,6 +784,7 @@
     font-size: 13px;
     font-weight: 500;
     font-family: 'Poppins', sans-serif;
+    white-space: nowrap;
 }
 
 .button-32:not(:disabled):hover,
@@ -815,187 +809,6 @@
     box-shadow: 0 2px 5px rgba(239, 68, 68, 0.3);
 }
 
-/* Media Queries para diferentes tamaños */
-@media (max-width: 1200px) {
-    .ticket-list {
-        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-    }
-
-    .ticket-content h3 {
-        font-size: 15px;
-    }
-
-    .ticket-content p {
-        font-size: 13px;
-    }
-}
-
-@media (max-width: 992px) {
-    .ticket-card {
-        height: 260px;
-    }
-
-    .ticket-content {
-        height: 120px;
-        padding: 14px;
-    }
-
-    .ticket-footer {
-        padding: 12px 14px;
-    }
-}
-
-@media (max-width: 576px) {
-    .ticket-list {
-        grid-template-columns: 1fr;
-    }
-
-    .ticket-card {
-        min-height: 220px;
-    }
-
-    .ticket-content h3 {
-        -webkit-line-clamp: 2;
-        min-height: 42px;
-    }
-
-    .ticket-content p {
-        -webkit-line-clamp: 2;
-        min-height: 40px;
-    }
-
-    .footer-buttons {
-        flex-direction: column;
-        gap: 8px;
-    }
-
-    .button-32 {
-        width: 100%;
-    }
-}
-
-/* Asegurar que el texto no se desborde en móviles pequeños */
-@media (max-width: 400px) {
-    .ticket-content h3,
-    .ticket-content p {
-        word-break: break-word;
-        overflow-wrap: break-word;
-    }
-
-    .ticket-id span {
-        font-size: 13px;
-    }
-
-    .status, .priority, .category-tag {
-        font-size: 11px;
-        padding: 4px 8px;
-    }
-}
-
-/* Mejoras responsive */
-@media (max-width: 768px) {
-    .ticket-list {
-        grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-    }
-
-    .ticket-card {
-        height: auto;
-        min-height: 240px;
-    }
-
-    .ticket-content {
-        height: auto;
-        min-height: 110px;
-    }
-
-    .ticket-footer {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 10px;
-    }
-
-    .footer-buttons {
-        width: 100%;
-        justify-content: space-between;
-    }
-
-    .button-32 {
-        width: 100%;
-        margin-left: 0;
-    }
-
-    .ticket-footer {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 12px;
-    }
-
-    .category-tag {
-        align-self: flex-start;
-    }
-
-    .search-box {
-        width: 100%;
-    }
-
-    .search-box:focus-within {
-        width: 100%;
-    }
-
-    .filter-bar {
-        flex-direction: column;
-        align-items: flex-start;
-    }
-
-    .filter-chips {
-        width: 100%;
-        overflow-x: auto;
-        padding-bottom: 8px;
-        flex-wrap: nowrap;
-    }
-
-    .button.clear-filters {
-        align-self: flex-end;
-    }
-
-    .filter-chip {
-        white-space: nowrap;
-    }
-
-    .filter-dropdown {
-        position: fixed;
-        left: 50%;
-        top: 50%;
-        transform: translate(-50%, -50%);
-        width: 90%;
-        max-width: 320px;
-        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
-        border-radius: 12px;
-        animation: modal-appear 0.2s ease-out forwards;
-    }
-
-    @keyframes modal-appear {
-        from {
-            opacity: 0;
-            transform: translate(-50%, -45%);
-        }
-        to {
-            opacity: 1;
-            transform: translate(-50%, -50%);
-        }
-    }
-}
-
-/* Transiciones y efectos para mejor experiencia de usuario */
-.ticket-card .status,
-.ticket-card .priority,
-.ticket-card .category-tag,
-.ticket-card .button-32 {
-    transition: all 0.2s ease;
-}
-
-
-
 .no-tickets-message {
     grid-column: 1 / -1;
     display: flex;
@@ -1009,6 +822,7 @@
     border: 2px dashed #d2d7f6;
     border-radius: 12px;
     box-sizing: border-box;
+    width: 100%;
 }
 
 .no-tickets-content {
@@ -1019,6 +833,7 @@
     align-items: center;
     text-align: center;
     gap: 24px;
+    width: 100%;
 }
 
 .no-tickets-icon {
@@ -1072,9 +887,78 @@
     display: flex;
     gap: 16px;
     margin: 0px 0 16px;
+    width: 100%;
+    justify-content: center;
 }
 
-.create-ticket-btn {
+.no-matches-message {
+    grid-column: 1 / -1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 0;
+    position: relative;
+    overflow: hidden;
+    min-height: calc(100vh - 300px);
+    max-height: 600px;
+    border: 2px dashed #d2d7f6;
+    border-radius: 12px;
+    box-sizing: border-box;
+    width: 100%;
+}
+
+.no-matches-content {
+    max-width: 600px;
+    padding: 38px 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 24px;
+    width: 100%;
+}
+
+.no-matches-icon {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 80px;
+    height: 80px;
+    background-color: rgba(79, 70, 229, 0.1);
+    border-radius: 50%;
+    margin-bottom: 8px;
+}
+
+.no-matches-icon i {
+    font-size: 32px;
+    color: #4f46e5;
+    animation: pulse 2s infinite ease-in-out;
+}
+
+.no-matches-info h3 {
+    font-size: 24px;
+    color: #111827;
+    margin-bottom: 16px;
+    font-weight: 600;
+}
+
+.no-matches-info p {
+    color: #6b7280;
+    line-height: 1.6;
+    font-size: 16px;
+    max-width: 450px;
+    margin: 0 auto;
+}
+
+.no-matches-actions {
+    display: flex;
+    gap: 16px;
+    margin: 0px 0 16px;
+    width: 100%;
+    justify-content: center;
+}
+
+.create-ticket-btn, .clean-filter-btn {
     display: flex;
     align-items: center;
     gap: 8px;
@@ -1086,9 +970,23 @@
     font-weight: 500;
     transition: all 0.2s ease;
     box-shadow: 0 2px 4px rgba(79, 70, 229, 0.2);
+    border: none;
+    cursor: pointer;
+    justify-content: center;
+    width: 100%;
+    max-width: 250px;
 }
 
-/* Estilos para el modal de cancelación */
+.no-matches-actions .create-ticket-btn:hover {
+    background-color: #4338ca;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(79, 70, 229, 0.3);
+}
+
+.no-matches-actions .create-ticket-btn i {
+    font-size: 16px;
+}
+
 .file-modal {
     position: fixed;
     top: 0;
@@ -1134,7 +1032,6 @@
     text-align: center;
 }
 
-
 .modal-container p {
     font-size: 14px;
     color: #6c757d;
@@ -1163,7 +1060,6 @@
     padding: 10px;
 }
 
-/* Botones del modal */
 .modal-container .btn {
     padding: 10px 20px;
     border-radius: 6px;
@@ -1197,12 +1093,12 @@
     border-color: #adb5bd;
 }
 
-/* Contenedor de botones */
 .modal-container div[style*="margin-top"] {
     display: flex;
     justify-content: center;
     gap: 12px;
     margin-top: 20px !important;
+    flex-wrap: wrap;
 }
 
 .create-ticket-btn:hover {
@@ -1215,8 +1111,165 @@
     font-size: 16px;
 }
 
-/* Mejoras responsive para el mensaje sin tickets */
+@media (max-width: 1200px) {
+    .ticket-list {
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    }
+
+    .ticket-content h3 {
+        font-size: 15px;
+    }
+
+    .ticket-content p {
+        font-size: 13px;
+    }
+}
+
+@media (max-width: 992px) {
+    .ticket-card {
+        height: 260px;
+    }
+
+    .ticket-content {
+        height: 120px;
+        padding: 14px;
+    }
+
+    .ticket-footer {
+        padding: 12px 14px;
+    }
+}
+
 @media (max-width: 768px) {
+    .ticket-list {
+        grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    }
+
+    .ticket-card {
+        height: auto;
+        min-height: 240px;
+    }
+
+    .ticket-content {
+        height: auto;
+        min-height: 110px;
+    }
+
+    .ticket-footer {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+    }
+
+    .footer-buttons {
+        width: 100%;
+        justify-content: space-between;
+    }
+
+    .button-32 {
+        width: 100%;
+    }
+
+    .ticket-footer {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
+    }
+
+    .category-tag {
+        align-self: flex-start;
+    }
+
+    .search-box {
+        width: 100%;
+    }
+
+    .search-box:focus-within {
+        width: 100%;
+    }
+
+    .filter-bar {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .filter-chips {
+        width: 100%;
+        overflow-x: auto;
+        padding: 8px 0px;
+        flex-wrap: nowrap;
+    }
+
+    .button.clear-filters {
+        align-self: flex-end;
+    }
+
+    .filter-chip {
+        white-space: nowrap;
+    }
+
+    .filter-dropdown {
+        position: fixed;
+        left: 50%;
+        top: 50%;
+        transform: translate(-50%, -50%);
+        width: 90%;
+        max-width: 320px;
+        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        border-radius: 12px;
+        animation: modal-appear 0.2s ease-out forwards;
+    }
+
+    @keyframes modal-appear {
+        from {
+            opacity: 0;
+            transform: translate(-50%, -45%);
+        }
+        to {
+            opacity: 1;
+            transform: translate(-50%, -50%);
+        }
+    }
+}
+
+@media (max-width: 576px) {
+    .ticket-list {
+        grid-template-columns: 1fr;
+    }
+
+    .ticket-card {
+        min-height: 220px;
+    }
+
+    .ticket-content h3 {
+        -webkit-line-clamp: 2;
+        min-height: 42px;
+    }
+
+    .ticket-content p {
+        -webkit-line-clamp: 2;
+        min-height: 40px;
+    }
+
+    .footer-buttons {
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .button-32 {
+        width: 100%;
+    }
+
+    .header-title {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+    }
+
+    .search-filter {
+        max-width: 100%;
+    }
+
     .no-tickets-content {
         padding: 32px 24px;
     }
@@ -1234,4 +1287,40 @@
     .no-tickets-message {
         min-height: auto;
     }
+
+    .no-matches-actions {
+        flex-direction: column;
+    }
+
+    .clean-filter-btn {
+        width: 100%;
+    }
+}
+
+@media (max-width: 400px) {
+    .ticket-content h3,
+    .ticket-content p {
+        word-break: break-word;
+        overflow-wrap: break-word;
+    }
+
+    .ticket-id span {
+        font-size: 13px;
+    }
+
+    .status, .priority, .category-tag {
+        font-size: 11px;
+        padding: 4px 8px;
+    }
+
+    .modal-container .btn {
+        width: 100%;
+    }
+}
+
+.ticket-card .status,
+.ticket-card .priority,
+.ticket-card .category-tag,
+.ticket-card .button-32 {
+    transition: all 0.2s ease;
 }

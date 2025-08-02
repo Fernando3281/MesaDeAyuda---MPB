@@ -3,7 +3,9 @@ package com.mesadeayudaMPB.controller;
 import com.mesadeayudaMPB.domain.Categoria;
 import com.mesadeayudaMPB.service.CategoriaService;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -199,7 +201,6 @@ public class CategoriaController {
             }
 
             // Aquí podrías agregar validaciones adicionales, como verificar si hay tickets asociados
-
             categoriaService.delete(categoria);
             response.put("success", true);
             response.put("message", "Categoría eliminada correctamente");
@@ -239,6 +240,23 @@ public class CategoriaController {
             response.put("success", false);
             response.put("message", "Error al cambiar estado: " + e.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+        }
+    }
+
+    @GetMapping("/activas")
+    @ResponseBody
+    public ResponseEntity<List<Map<String, Object>>> obtenerCategoriasActivas() {
+        try {
+            List<Categoria> categorias = categoriaService.obtenerCategoriasActivas();
+            List<Map<String, Object>> response = categorias.stream().map(categoria -> {
+                Map<String, Object> categoriaMap = new HashMap<>();
+                categoriaMap.put("idCategoria", categoria.getIdCategoria());
+                categoriaMap.put("nombre", categoria.getNombre());
+                return categoriaMap;
+            }).collect(Collectors.toList());
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }
 }

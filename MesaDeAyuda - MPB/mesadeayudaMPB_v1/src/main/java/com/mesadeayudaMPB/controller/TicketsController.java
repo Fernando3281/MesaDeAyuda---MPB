@@ -37,8 +37,10 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import com.mesadeayudaMPB.service.ArchivoTicketService;
 import com.mesadeayudaMPB.service.AuditoriaService;
 import com.mesadeayudaMPB.service.CategoriaService;
+import com.mesadeayudaMPB.service.EmailService;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.concurrent.TimeUnit;
@@ -71,28 +73,31 @@ public class TicketsController {
     @Autowired
     private AuditoriaService auditoriaService;
 
+    @Autowired
+    private EmailService emailService;
+
     private static final Logger logger = LoggerFactory.getLogger(TicketsController.class);
 
     @GetMapping("/listado")
-public String listado(Model model,
-        Authentication authentication,
-        @RequestParam(defaultValue = "0") int page,
-        @RequestParam(defaultValue = "15") int size,
-        @RequestParam(defaultValue = "fechaApertura") String sortField,
-        @RequestParam(defaultValue = "desc") String sortDirection,
-        @RequestParam(required = false) String search,
-        @RequestParam(required = false) String filter_fechaAperturaFrom,
-        @RequestParam(required = false) String filter_fechaAperturaTo,
-        @RequestParam(required = false) String filter_fechaActualizacionFrom,
-        @RequestParam(required = false) String filter_fechaActualizacionTo,
-        @RequestParam Map<String, String> allParams) {
+    public String listado(Model model,
+            Authentication authentication,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "15") int size,
+            @RequestParam(defaultValue = "fechaApertura") String sortField,
+            @RequestParam(defaultValue = "desc") String sortDirection,
+            @RequestParam(required = false) String search,
+            @RequestParam(required = false) String filter_fechaAperturaFrom,
+            @RequestParam(required = false) String filter_fechaAperturaTo,
+            @RequestParam(required = false) String filter_fechaActualizacionFrom,
+            @RequestParam(required = false) String filter_fechaActualizacionTo,
+            @RequestParam Map<String, String> allParams) {
 
-    if (authentication != null) {
-        // Validar el tamaño de página
-        List<Integer> allowedPageSizes = Arrays.asList(15, 30, 50, 100, 200, 500, 1000);
-        if (!allowedPageSizes.contains(size)) {
-            size = 15;
-        }
+        if (authentication != null) {
+            // Validar el tamaño de página
+            List<Integer> allowedPageSizes = Arrays.asList(15, 30, 50, 100, 200, 500, 1000);
+            if (!allowedPageSizes.contains(size)) {
+                size = 15;
+            }
 
             // Configurar el ordenamiento
             Sort sort = Sort.by(sortField);
@@ -163,6 +168,198 @@ public String listado(Model model,
             model.addAttribute("sortField", sortField);
             model.addAttribute("sortDirection", sortDirection);
             model.addAttribute("search", search);
+            model.addAttribute("currentSection", "todos"); // Indicador de sección actual
+
+            int startItem = currentPage * size + 1;
+            int endItem = Math.min((currentPage + 1) * size, (int) ticketPage.getTotalElements());
+            model.addAttribute("start", startItem);
+            model.addAttribute("end", endItem);
+
+            return "/tickets/listado";
+        }
+        return "redirect:/login";
+    }
+
+    @GetMapping("/sin-asignar")
+    public String ticketsSinAsignar(Model model, Authentication authentication,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "15") int size,
+            @RequestParam(defaultValue = "fechaApertura") String sortField,
+            @RequestParam(defaultValue = "desc") String sortDirection,
+            @RequestParam(required = false) String search,
+            @RequestParam(required = false) String filter_fechaAperturaFrom,
+            @RequestParam(required = false) String filter_fechaAperturaTo,
+            @RequestParam(required = false) String filter_fechaActualizacionFrom,
+            @RequestParam(required = false) String filter_fechaActualizacionTo,
+            @RequestParam Map<String, String> allParams) {
+
+        if (authentication != null) {
+            // Configuración básica igual que en listado()
+            List<Integer> allowedPageSizes = Arrays.asList(15, 30, 50, 100, 200, 500, 1000);
+            if (!allowedPageSizes.contains(size)) {
+                size = 15;
+            }
+
+            Sort sort = Sort.by(sortField);
+            sort = sortDirection.equalsIgnoreCase("asc") ? sort.ascending() : sort.descending();
+            Pageable pageable = PageRequest.of(page, size, sort);
+
+            // OBTENER SOLO LOS TICKETS SIN ASIGNAR COMO BASE
+            List<Ticket> ticketsSinAsignar = ticketService.getTicketsSinAsignar();
+
+            // Aplicar filtros adicionales del usuario
+            Map<String, String> columnFilters = new HashMap<>();
+            allParams.forEach((key, value) -> {
+                if (key.startsWith("filter_") && !value.isEmpty()
+                        && !key.equals("filter_fechaAperturaFrom")
+                        && !key.equals("filter_fechaAperturaTo")
+                        && !key.equals("filter_fechaActualizacionFrom")
+                        && !key.equals("filter_fechaActualizacionTo")) {
+                    columnFilters.put(key.replace("filter_", ""), value);
+                }
+            });
+
+            // Aplicar filtros sobre la lista de tickets sin asignar
+            List<Ticket> filteredTickets = ticketService.buscarTicketsPorFiltrosAvanzadosEnLista(
+                    ticketsSinAsignar, // Usar la lista base correcta
+                    columnFilters, search,
+                    filter_fechaAperturaFrom, filter_fechaAperturaTo,
+                    filter_fechaActualizacionFrom, filter_fechaActualizacionTo);
+
+            // Ordenar manualmente
+            Comparator<Ticket> comparator = getComparator(sortField);
+            filteredTickets.sort(sortDirection.equalsIgnoreCase("asc") ? comparator : comparator.reversed());
+
+            // Paginación manual
+            int start = (int) pageable.getOffset();
+            int end = Math.min((start + pageable.getPageSize()), filteredTickets.size());
+            List<Ticket> pageContent = filteredTickets.subList(start, end);
+
+            Page<Ticket> ticketPage = new PageImpl<>(pageContent, pageable, filteredTickets.size());
+
+            // Configurar modelo igual que en listado()
+            int totalPages = ticketPage.getTotalPages();
+            int currentPage = ticketPage.getNumber();
+            int startPage = Math.max(0, currentPage - 2);
+            int endPage = Math.min(totalPages - 1, currentPage + 2);
+
+            if (endPage - startPage < 4) {
+                startPage = Math.max(0, endPage - 4);
+            }
+            if (endPage - startPage < 4) {
+                endPage = Math.min(totalPages - 1, startPage + 4);
+            }
+
+            model.addAttribute("tickets", ticketPage.getContent());
+            model.addAttribute("currentPage", currentPage);
+            model.addAttribute("totalPages", totalPages);
+            model.addAttribute("totalItems", ticketPage.getTotalElements());
+            model.addAttribute("pageSize", size);
+            model.addAttribute("startPage", startPage);
+            model.addAttribute("endPage", endPage);
+            model.addAttribute("sortField", sortField);
+            model.addAttribute("sortDirection", sortDirection);
+            model.addAttribute("search", search);
+            model.addAttribute("currentSection", "sin-asignar");
+
+            int startItem = currentPage * size + 1;
+            int endItem = Math.min((currentPage + 1) * size, (int) ticketPage.getTotalElements());
+            model.addAttribute("start", startItem);
+            model.addAttribute("end", endItem);
+
+            return "/tickets/listado";
+        }
+        return "redirect:/login";
+    }
+
+    @GetMapping("/mis-tickets")
+    public String misTickets(Model model, Authentication authentication,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "15") int size,
+            @RequestParam(defaultValue = "fechaApertura") String sortField,
+            @RequestParam(defaultValue = "desc") String sortDirection,
+            @RequestParam(required = false) String search,
+            @RequestParam(required = false) String filter_fechaAperturaFrom,
+            @RequestParam(required = false) String filter_fechaAperturaTo,
+            @RequestParam(required = false) String filter_fechaActualizacionFrom,
+            @RequestParam(required = false) String filter_fechaActualizacionTo,
+            @RequestParam Map<String, String> allParams) {
+
+        if (authentication != null) {
+            String correoElectronico = authentication.getName();
+            Usuario usuario = usuarioService.getUsuarioPorCorreo(correoElectronico);
+
+            if (usuario == null) {
+                return "redirect:/login";
+            }
+
+            // Configuración básica igual que en listado()
+            List<Integer> allowedPageSizes = Arrays.asList(15, 30, 50, 100, 200, 500, 1000);
+            if (!allowedPageSizes.contains(size)) {
+                size = 15;
+            }
+
+            Sort sort = Sort.by(sortField);
+            sort = sortDirection.equalsIgnoreCase("asc") ? sort.ascending() : sort.descending();
+            Pageable pageable = PageRequest.of(page, size, sort);
+
+            // OBTENER SOLO LOS TICKETS ASIGNADOS AL USUARIO COMO BASE
+            List<Ticket> ticketsAsignados = ticketService.getTicketsPorAsignado(usuario);
+
+            // Aplicar filtros adicionales del usuario
+            Map<String, String> columnFilters = new HashMap<>();
+            allParams.forEach((key, value) -> {
+                if (key.startsWith("filter_") && !value.isEmpty()
+                        && !key.equals("filter_fechaAperturaFrom")
+                        && !key.equals("filter_fechaAperturaTo")
+                        && !key.equals("filter_fechaActualizacionFrom")
+                        && !key.equals("filter_fechaActualizacionTo")) {
+                    columnFilters.put(key.replace("filter_", ""), value);
+                }
+            });
+
+            // Aplicar filtros sobre la lista de tickets asignados al usuario
+            List<Ticket> filteredTickets = ticketService.buscarTicketsPorFiltrosAvanzadosEnLista(
+                    ticketsAsignados, // Usar la lista base correcta
+                    columnFilters, search,
+                    filter_fechaAperturaFrom, filter_fechaAperturaTo,
+                    filter_fechaActualizacionFrom, filter_fechaActualizacionTo);
+
+            // Ordenar manualmente
+            Comparator<Ticket> comparator = getComparator(sortField);
+            filteredTickets.sort(sortDirection.equalsIgnoreCase("asc") ? comparator : comparator.reversed());
+
+            // Paginación manual
+            int start = (int) pageable.getOffset();
+            int end = Math.min((start + pageable.getPageSize()), filteredTickets.size());
+            List<Ticket> pageContent = filteredTickets.subList(start, end);
+
+            Page<Ticket> ticketPage = new PageImpl<>(pageContent, pageable, filteredTickets.size());
+
+            // Configurar modelo igual que en listado()
+            int totalPages = ticketPage.getTotalPages();
+            int currentPage = ticketPage.getNumber();
+            int startPage = Math.max(0, currentPage - 2);
+            int endPage = Math.min(totalPages - 1, currentPage + 2);
+
+            if (endPage - startPage < 4) {
+                startPage = Math.max(0, endPage - 4);
+            }
+            if (endPage - startPage < 4) {
+                endPage = Math.min(totalPages - 1, startPage + 4);
+            }
+
+            model.addAttribute("tickets", ticketPage.getContent());
+            model.addAttribute("currentPage", currentPage);
+            model.addAttribute("totalPages", totalPages);
+            model.addAttribute("totalItems", ticketPage.getTotalElements());
+            model.addAttribute("pageSize", size);
+            model.addAttribute("startPage", startPage);
+            model.addAttribute("endPage", endPage);
+            model.addAttribute("sortField", sortField);
+            model.addAttribute("sortDirection", sortDirection);
+            model.addAttribute("search", search);
+            model.addAttribute("currentSection", "mis-tickets");
 
             int startItem = currentPage * size + 1;
             int endItem = Math.min((currentPage + 1) * size, (int) ticketPage.getTotalElements());
@@ -319,9 +516,11 @@ public String listado(Model model,
                         .anyMatch(rol -> "ROL_ADMINISTRADOR".equals(rol.getNombre()));
                 boolean esSoportista = usuario.getRoles().stream()
                         .anyMatch(rol -> "ROL_SOPORTISTA".equals(rol.getNombre()));
+                boolean esUsuario = !esAdmin && !esSoportista;
 
                 model.addAttribute("esAdmin", esAdmin);
                 model.addAttribute("esSoportista", esSoportista);
+                model.addAttribute("esUsuario", esUsuario);
 
                 if (esAdmin || esSoportista) {
                     List<Usuario> usuariosAsignables = new ArrayList<>();
@@ -507,16 +706,20 @@ public String listado(Model model,
                 return ResponseEntity.status(HttpStatus.FORBIDDEN).body(response);
             }
 
-            // Crear mapa para registrar cambios
-            Map<String, String> cambios = new LinkedHashMap<>(); // Usamos LinkedHashMap para mantener orden
+            // Obtener el estado anterior
+            String estadoAnterior = ticket.getEstado();
+            String nuevoEstado = ticketData.get("estado");
 
-            // Registrar cambios en descripción (sin resumir)
+            // Crear mapa para registrar cambios
+            Map<String, String> cambios = new LinkedHashMap<>();
+
+            // Registrar cambios en descripción
             String nuevaDescripcion = ticketData.get("descripcion");
             if (!ticket.getDescripcion().equals(nuevaDescripcion)) {
                 cambios.put("Descripción", ticket.getDescripcion() + " → " + nuevaDescripcion);
             }
 
-            // Resto de campos (mantener el formato existente)
+            // Resto de campos
             if (!ticket.getCodigo().equals(ticketData.get("codigo"))) {
                 cambios.put("Código", ticket.getCodigo() + " → " + ticketData.get("codigo"));
             }
@@ -529,8 +732,8 @@ public String listado(Model model,
             if (!ticket.getPrioridad().equals(ticketData.get("prioridad"))) {
                 cambios.put("Prioridad", ticket.getPrioridad() + " → " + ticketData.get("prioridad"));
             }
-            if (!ticket.getEstado().equals(ticketData.get("estado"))) {
-                cambios.put("Estado", ticket.getEstado() + " → " + ticketData.get("estado"));
+            if (!ticket.getEstado().equals(nuevoEstado)) {
+                cambios.put("Estado", ticket.getEstado() + " → " + nuevoEstado);
             }
             if (!ticket.getTitulo().equals(ticketData.get("titulo"))) {
                 cambios.put("Título", ticket.getTitulo() + " → " + ticketData.get("titulo"));
@@ -541,7 +744,7 @@ public String listado(Model model,
             ticket.setImpacto(ticketData.get("impacto"));
             ticket.setCategoria(ticketData.get("categoria"));
             ticket.setPrioridad(ticketData.get("prioridad"));
-            ticket.setEstado(ticketData.get("estado"));
+            ticket.setEstado(nuevoEstado);
             ticket.setTitulo(ticketData.get("titulo"));
             ticket.setDescripcion(nuevaDescripcion);
             ticket.setFechaActualizacion(new Date());
@@ -566,6 +769,22 @@ public String listado(Model model,
                         cambiosNuevos,
                         usuario
                 );
+            }
+
+            // Enviar notificación por correo si el estado cambió
+            if (!estadoAnterior.equals(nuevoEstado)) {
+                try {
+                    String nombreActualizador = usuario.getNombre() + " " + usuario.getApellido();
+                    emailService.sendTicketStatusNotification(
+                            ticket.getSolicitante().getCorreoElectronico(),
+                            ticket.getCodigo(),
+                            nuevoEstado,
+                            ticket.getTitulo(),
+                            nombreActualizador
+                    );
+                } catch (Exception e) {
+                    logger.error("Error al enviar notificación de cambio de estado", e);
+                }
             }
 
             response.put("success", true);
@@ -621,11 +840,16 @@ public String listado(Model model,
                         mensajeAuditoria = "Ticket asignado a " + usuario.getNombre() + " " + usuario.getApellido();
                     }
 
+                    // Guardar el estado anterior para la notificación
+                    String estadoAnterior = ticket.getEstado();
+
+                    // Actualizar el ticket
                     ticket.setAsignadoPara(usuario);
                     ticket.setEstado("Pendiente");
                     ticket.setFechaActualizacion(new Date());
                     ticketService.save(ticket);
 
+                    // Registrar en auditoría
                     auditoriaService.registrarAccion(
                             ticket,
                             accion,
@@ -634,6 +858,22 @@ public String listado(Model model,
                             usuario.getNombre() + " " + usuario.getApellido(),
                             usuario
                     );
+
+                    // Enviar notificación por correo si el estado cambió de "Sin Asignar" a "Pendiente"
+                    if (!estadoAnterior.equals("Pendiente")) {
+                        try {
+                            String nombreActualizador = usuario.getNombre() + " " + usuario.getApellido();
+                            emailService.sendTicketStatusNotification(
+                                    ticket.getSolicitante().getCorreoElectronico(),
+                                    ticket.getCodigo(),
+                                    "Pendiente",
+                                    ticket.getTitulo(),
+                                    nombreActualizador
+                            );
+                        } catch (Exception e) {
+                            logger.error("Error al enviar notificación de cambio de estado al atender ticket", e);
+                        }
+                    }
 
                     response.put("success", true);
                     response.put("asignadoParaNombre", usuario.getNombre() + " " + usuario.getApellido());
@@ -705,16 +945,12 @@ public String listado(Model model,
                 .anyMatch(rol -> "ROL_SOPORTISTA".equals(rol.getNombre()));
 
         // Permitir respuesta si:
-        // 1. Es admin o soportista
-        // 2. Es el solicitante del ticket
-        // 3. Es el usuario asignado al ticket (si está asignado)
-        // 4. Es el creador del ticket (soportista) y el ticket está cerrado
+        // 1. Es admin o soportista (incluso si el ticket está cerrado)
+        // 2. Es el solicitante del ticket y el ticket no está cerrado/desactivado
+        // 3. Es el usuario asignado al ticket (si está asignado) y el ticket no está cerrado/desactivado
         boolean puedeResponder = esAdmin || esSoportista
-                || usuario.equals(ticket.getSolicitante())
-                || (ticket.getAsignadoPara() != null && usuario.equals(ticket.getAsignadoPara()))
-                || (ticket.getEstado().equals("Cerrado")
-                && usuario.equals(ticket.getSolicitante())
-                && esSoportista);
+                || (usuario.equals(ticket.getSolicitante()) && !"Cerrado".equals(ticket.getEstado()) && !"Desactivado".equals(ticket.getEstado()))
+                || (ticket.getAsignadoPara() != null && usuario.equals(ticket.getAsignadoPara()) && !"Cerrado".equals(ticket.getEstado()) && !"Desactivado".equals(ticket.getEstado()));
 
         if (!puedeResponder) {
             response.put("success", false);
@@ -987,6 +1223,20 @@ public String listado(Model model,
 
                 ticketService.save(ticketExistente);
 
+                // Enviar notificación por correo
+                try {
+                    String nombreActualizador = usuario.getNombre() + " " + usuario.getApellido();
+                    emailService.sendTicketStatusNotification(
+                            ticketExistente.getSolicitante().getCorreoElectronico(),
+                            ticketExistente.getCodigo(),
+                            "Resuelto",
+                            ticketExistente.getTitulo(),
+                            nombreActualizador
+                    );
+                } catch (Exception e) {
+                    logger.error("Error al enviar notificación de cierre de ticket", e);
+                }
+
                 redirectAttributes.addFlashAttribute("success", "Ticket cerrado exitosamente");
                 return "redirect:/tickets/manager/" + idTicket;
             } else {
@@ -1033,6 +1283,13 @@ public String listado(Model model,
         String correoElectronico = authentication.getName();
         Usuario usuario = usuarioService.getUsuarioPorCorreo(correoElectronico);
 
+        // Check authentication
+        if (usuario == null) {
+            response.put("success", false);
+            response.put("error", "Usuario no autenticado.");
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
+        }
+
         // Check permissions
         boolean tienePermisos = usuario.getRoles().stream()
                 .anyMatch(rol -> "ROL_ADMINISTRADOR".equals(rol.getNombre())
@@ -1043,22 +1300,40 @@ public String listado(Model model,
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body(response);
         }
 
+        // Validate request body
         String soportistaId = (String) requestBody.get("soportistaId");
         List<String> ticketIds = (List<String>) requestBody.get("ticketIds");
 
-        if (soportistaId == null || ticketIds == null || ticketIds.isEmpty()) {
+        if (soportistaId == null || soportistaId.trim().isEmpty()) {
             response.put("success", false);
-            response.put("error", "Datos de entrada inválidos.");
+            response.put("error", "El ID del soportista es requerido.");
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
         }
 
-        Usuario soportista = usuarioService.getUsuarioPorId(Long.valueOf(soportistaId));
+        if (ticketIds == null || ticketIds.isEmpty()) {
+            response.put("success", false);
+            response.put("error", "Se requiere al menos un ID de ticket.");
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+        }
+
+        // Validate soportistaId format
+        Long parsedSoportistaId;
+        try {
+            parsedSoportistaId = Long.valueOf(soportistaId);
+        } catch (NumberFormatException e) {
+            response.put("success", false);
+            response.put("error", "El ID del soportista no es válido.");
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+        }
+
+        Usuario soportista = usuarioService.getUsuarioPorId(parsedSoportistaId);
         if (soportista == null) {
             response.put("success", false);
             response.put("error", "Colaborador no encontrado.");
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
         }
 
+        // Validate role permissions
         boolean esSoportista = usuario.getRoles().stream()
                 .anyMatch(rol -> "ROL_SOPORTISTA".equals(rol.getNombre()));
         if (esSoportista) {
@@ -1072,10 +1347,22 @@ public String listado(Model model,
         }
 
         try {
-            for (String ticketId : ticketIds) {
-                Ticket ticket = ticketService.getTicketPorId(Long.valueOf(ticketId));
+            int assignedCount = 0;
+            List<String> failedTickets = new ArrayList<>();
+
+            for (String ticketIdStr : ticketIds) {
+                Long ticketId;
+                try {
+                    ticketId = Long.valueOf(ticketIdStr);
+                } catch (NumberFormatException e) {
+                    failedTickets.add(ticketIdStr + ": ID de ticket no válido");
+                    continue;
+                }
+
+                Ticket ticket = ticketService.getTicketPorId(ticketId);
                 if (ticket == null) {
-                    continue; // Skip invalid ticket IDs
+                    failedTickets.add(ticketIdStr + ": Ticket no encontrado");
+                    continue;
                 }
 
                 String asignadoAnterior = ticket.getAsignadoPara() != null
@@ -1086,8 +1373,12 @@ public String listado(Model model,
                         ? "Ticket autoasignado por " + usuario.getNombre() + " " + usuario.getApellido()
                         : "Ticket asignado por " + usuario.getNombre() + " " + usuario.getApellido();
 
+                // Solo actualizar el estado a "Pendiente" si el ticket está "Abierto"
+                if ("Abierto".equals(ticket.getEstado())) {
+                    ticket.setEstado("Pendiente");
+                }
+
                 ticket.setAsignadoPara(soportista);
-                ticket.setEstado("Pendiente");
                 ticket.setFechaActualizacion(new Date());
                 ticketService.save(ticket);
 
@@ -1099,11 +1390,151 @@ public String listado(Model model,
                         soportista.getNombre() + " " + soportista.getApellido(),
                         usuario
                 );
+
+                assignedCount++;
             }
 
             response.put("success", true);
-            response.put("message", "Tickets asignados correctamente.");
+            response.put("message", assignedCount + " tickets asignados correctamente.");
             response.put("fueAutoAsignacion", usuario.equals(soportista));
+            if (!failedTickets.isEmpty()) {
+                response.put("warnings", failedTickets);
+            }
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            response.put("success", false);
+            response.put("error", "Error al asignar tickets: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+        }
+    }
+
+    @PostMapping("/asignar-multiples")
+    @ResponseBody
+    public ResponseEntity<Map<String, Object>> asignarMultiplesTickets(
+            @RequestBody Map<String, Object> requestBody,
+            Authentication authentication) {
+
+        Map<String, Object> response = new HashMap<>();
+        String correoElectronico = authentication.getName();
+        Usuario usuario = usuarioService.getUsuarioPorCorreo(correoElectronico);
+
+        // Check authentication
+        if (usuario == null) {
+            response.put("success", false);
+            response.put("error", "Usuario no autenticado.");
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
+        }
+
+        // Check permissions
+        boolean tienePermisos = usuario.getRoles().stream()
+                .anyMatch(rol -> "ROL_ADMINISTRADOR".equals(rol.getNombre())
+                || "ROL_SOPORTISTA".equals(rol.getNombre()));
+        if (!tienePermisos) {
+            response.put("success", false);
+            response.put("error", "No tiene permisos para asignar tickets.");
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(response);
+        }
+
+        // Validate request body
+        String soportistaId = (String) requestBody.get("soportistaId");
+        List<String> ticketIds = (List<String>) requestBody.get("ticketIds");
+
+        if (soportistaId == null || soportistaId.trim().isEmpty()) {
+            response.put("success", false);
+            response.put("error", "El ID del soportista es requerido.");
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+        }
+
+        if (ticketIds == null || ticketIds.isEmpty()) {
+            response.put("success", false);
+            response.put("error", "Se requiere al menos un ID de ticket.");
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+        }
+
+        // Validate soportistaId format
+        Long parsedSoportistaId;
+        try {
+            parsedSoportistaId = Long.valueOf(soportistaId);
+        } catch (NumberFormatException e) {
+            response.put("success", false);
+            response.put("error", "El ID del soportista no es válido.");
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+        }
+
+        Usuario soportista = usuarioService.getUsuarioPorId(parsedSoportistaId);
+        if (soportista == null) {
+            response.put("success", false);
+            response.put("error", "Colaborador no encontrado.");
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
+        }
+
+        // Validate role permissions
+        boolean esSoportista = usuario.getRoles().stream()
+                .anyMatch(rol -> "ROL_SOPORTISTA".equals(rol.getNombre()));
+        if (esSoportista) {
+            boolean asignandoASoportista = soportista.getRoles().stream()
+                    .anyMatch(rol -> "ROL_SOPORTISTA".equals(rol.getNombre()));
+            if (!asignandoASoportista) {
+                response.put("success", false);
+                response.put("error", "Los soportistas solo pueden asignar tickets a otros soportistas.");
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).body(response);
+            }
+        }
+
+        try {
+            int assignedCount = 0;
+            List<String> failedTickets = new ArrayList<>();
+
+            for (String ticketIdStr : ticketIds) {
+                Long ticketId;
+                try {
+                    ticketId = Long.valueOf(ticketIdStr);
+                } catch (NumberFormatException e) {
+                    failedTickets.add(ticketIdStr + ": ID de ticket no válido");
+                    continue;
+                }
+
+                Ticket ticket = ticketService.getTicketPorId(ticketId);
+                if (ticket == null) {
+                    failedTickets.add(ticketIdStr + ": Ticket no encontrado");
+                    continue;
+                }
+
+                String asignadoAnterior = ticket.getAsignadoPara() != null
+                        ? ticket.getAsignadoPara().getNombre() + " " + ticket.getAsignadoPara().getApellido()
+                        : "Sin asignar";
+
+                String detalle = usuario.equals(soportista)
+                        ? "Ticket autoasignado por " + usuario.getNombre() + " " + usuario.getApellido()
+                        : "Ticket asignado por " + usuario.getNombre() + " " + usuario.getApellido();
+
+                // Solo actualizar el estado a "Pendiente" si el ticket está "Abierto"
+                if ("Abierto".equals(ticket.getEstado())) {
+                    ticket.setEstado("Pendiente");
+                }
+
+                ticket.setAsignadoPara(soportista);
+                ticket.setFechaActualizacion(new Date());
+                ticketService.save(ticket);
+
+                auditoriaService.registrarAccion(
+                        ticket,
+                        "ASIGNACION_MULTIPLE",
+                        detalle,
+                        asignadoAnterior,
+                        soportista.getNombre() + " " + soportista.getApellido(),
+                        usuario
+                );
+
+                assignedCount++;
+            }
+
+            response.put("success", true);
+            response.put("message", assignedCount + " tickets asignados correctamente.");
+            response.put("fueAutoAsignacion", usuario.equals(soportista));
+            if (!failedTickets.isEmpty()) {
+                response.put("warnings", failedTickets);
+            }
             return ResponseEntity.ok(response);
         } catch (Exception e) {
             response.put("success", false);
@@ -1143,6 +1574,20 @@ public String listado(Model model,
             ticket.setFechaActualizacion(new Date());
             ticketService.save(ticket);
 
+            // Enviar notificación por correo
+            try {
+                String nombreActualizador = usuario.getNombre() + " " + usuario.getApellido();
+                emailService.sendTicketStatusNotification(
+                        ticket.getSolicitante().getCorreoElectronico(),
+                        ticket.getCodigo(),
+                        "Desactivado",
+                        ticket.getTitulo(),
+                        nombreActualizador
+                );
+            } catch (Exception e) {
+                logger.error("Error al enviar notificación de desactivación de ticket", e);
+            }
+
             response.put("success", true);
             response.put("nuevoEstado", ticket.getEstado());
             return ResponseEntity.ok(response);
@@ -1162,22 +1607,38 @@ public String listado(Model model,
 
         if (authentication != null) {
             Ticket ticket = ticketService.getTicketPorId(idTicket);
-            if (ticket != null && "Resuelto".equals(ticket.getEstado())) {
+            if (ticket != null && ("Resuelto".equals(ticket.getEstado()) || "Cerrado".equals(ticket.getEstado()))) {
                 String correoElectronico = authentication.getName();
                 Usuario usuario = usuarioService.getUsuarioPorCorreo(correoElectronico);
 
+                // Registrar cambio de estado en auditoría
                 auditoriaService.registrarAccion(
                         ticket,
-                        "CAMBIO_ESTADO",
-                        "Ticket reabierto después de estar resuelto",
-                        "Resuelto",
+                        "REAPERTURA",
+                        "Ticket reabierto manualmente",
+                        ticket.getEstado(),
                         "Pendiente",
                         usuario
                 );
 
+                // Actualizar el ticket
                 ticket.setEstado("Pendiente");
                 ticket.setFechaActualizacion(new Date());
                 ticketService.save(ticket);
+
+                // Enviar notificación por correo
+                try {
+                    String nombreActualizador = usuario.getNombre() + " " + usuario.getApellido();
+                    emailService.sendTicketStatusNotification(
+                            ticket.getSolicitante().getCorreoElectronico(),
+                            ticket.getCodigo(),
+                            "Pendiente",
+                            ticket.getTitulo(),
+                            nombreActualizador
+                    );
+                } catch (Exception e) {
+                    logger.error("Error al enviar notificación de reapertura de ticket", e);
+                }
 
                 redirectAttributes.addFlashAttribute("success", "Ticket reabierto correctamente");
                 return "redirect:/tickets/manager/" + idTicket;
@@ -1291,6 +1752,20 @@ public String listado(Model model,
             ticket.setEstado("Cancelado");
             ticket.setFechaActualizacion(new Date());
             ticketService.save(ticket);
+
+            // Enviar notificación por correo al solicitante (que es el mismo usuario)
+            try {
+                String nombreActualizador = usuario.getNombre() + " " + usuario.getApellido();
+                emailService.sendTicketStatusNotification(
+                        ticket.getSolicitante().getCorreoElectronico(),
+                        ticket.getCodigo(),
+                        "Cancelado",
+                        ticket.getTitulo(),
+                        nombreActualizador
+                );
+            } catch (Exception e) {
+                logger.error("Error al enviar notificación de cancelación de ticket", e);
+            }
 
             response.put("success", true);
             return ResponseEntity.ok(response);

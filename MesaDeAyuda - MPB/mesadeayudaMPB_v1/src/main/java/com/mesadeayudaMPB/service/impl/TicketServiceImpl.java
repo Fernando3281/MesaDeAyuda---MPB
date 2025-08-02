@@ -4,6 +4,7 @@ import com.mesadeayudaMPB.dao.TicketDao;
 import com.mesadeayudaMPB.domain.Ticket;
 import com.mesadeayudaMPB.domain.Usuario;
 import com.mesadeayudaMPB.service.TicketService;
+import com.mesadeayudaMPB.service.UsuarioService;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -15,6 +16,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
@@ -28,6 +30,9 @@ public class TicketServiceImpl implements TicketService {
 
     @Autowired
     private TicketDao ticketDao;
+
+    @Autowired
+    private UsuarioService usuarioService;
 
     @Override
     @Transactional
@@ -45,6 +50,12 @@ public class TicketServiceImpl implements TicketService {
     @Transactional(readOnly = true)
     public List<Ticket> getTickets() {
         return ticketDao.findAll(Sort.by(Sort.Direction.DESC, "fechaApertura"));
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<Ticket> getTicketsPorAsignado(Usuario asignado) {
+        return ticketDao.findByAsignadoPara(asignado);
     }
 
     @Override
@@ -105,21 +116,26 @@ public class TicketServiceImpl implements TicketService {
     }
 
     @Override
-    @Transactional(readOnly = true)
-    public List<Ticket> getTicketsConMensajes(Usuario usuario) {
-        boolean esAdmin = usuario.getRoles().stream()
-                .anyMatch(rol -> "ROL_ADMINISTRADOR".equals(rol.getNombre()));
-        boolean esSoportista = usuario.getRoles().stream()
-                .anyMatch(rol -> "ROL_SOPORTISTA".equals(rol.getNombre()));
+@Transactional(readOnly = true)
+public List<Ticket> getTicketsConMensajes(Usuario usuario) {
+    boolean esAdmin = usuario.getRoles().stream()
+            .anyMatch(rol -> "ROL_ADMINISTRADOR".equals(rol.getNombre()));
+    boolean esSoportista = usuario.getRoles().stream()
+            .anyMatch(rol -> "ROL_SOPORTISTA".equals(rol.getNombre()));
 
-        if (esAdmin) {
-            return ticketDao.findTicketsWithMessages();
-        } else if (esSoportista) {
-            return ticketDao.findTicketsWithMessagesBySupport(usuario.getIdUsuario());
-        } else {
-            return ticketDao.findTicketsWithMessagesByClient(usuario.getIdUsuario());
-        }
+    if (esAdmin) {
+        return ticketDao.findTicketsWithMessages();
+    } else if (esSoportista) {
+        // Soportistas ven tickets asignados a ellos o donde son solicitantes
+        List<Ticket> asignados = ticketDao.findTicketsWithMessagesBySupport(usuario.getIdUsuario());
+        List<Ticket> comoSolicitante = ticketDao.findTicketsWithMessagesByClient(usuario.getIdUsuario());
+        return Stream.concat(asignados.stream(), comoSolicitante.stream())
+            .distinct()
+            .collect(Collectors.toList());
+    } else {
+        return ticketDao.findTicketsWithMessagesByClient(usuario.getIdUsuario());
     }
+}
 
     @Override
     @Transactional
@@ -143,36 +159,73 @@ public class TicketServiceImpl implements TicketService {
     @Override
     @Transactional(readOnly = true)
     public List<Ticket> buscarTicketsPorFiltrosAvanzados(
-            Map<String, String> columnFilters, 
+            Map<String, String> columnFilters,
             String searchTerm,
             String fechaAperturaFrom,
             String fechaAperturaTo,
             String fechaActualizacionFrom,
             String fechaActualizacionTo) {
-        
+
         List<Ticket> allTickets = ticketDao.findAll(Sort.by(Sort.Direction.DESC, "fechaApertura"));
-        
-        return allTickets.stream()
+        return aplicarFiltrosATickets(allTickets, columnFilters, searchTerm,
+                fechaAperturaFrom, fechaAperturaTo, fechaActualizacionFrom, fechaActualizacionTo);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<Ticket> buscarTicketsPorFiltrosAvanzadosEnLista(
+            List<Ticket> ticketsBase,
+            Map<String, String> columnFilters,
+            String searchTerm,
+            String fechaAperturaFrom,
+            String fechaAperturaTo,
+            String fechaActualizacionFrom,
+            String fechaActualizacionTo) {
+
+        return aplicarFiltrosATickets(ticketsBase, columnFilters, searchTerm,
+                fechaAperturaFrom, fechaAperturaTo, fechaActualizacionFrom, fechaActualizacionTo);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<Ticket> getTicketsSinAsignar() {
+        return ticketDao.findAll(Sort.by(Sort.Direction.DESC, "fechaApertura"))
+                .stream()
+                .filter(ticket -> ticket.getAsignadoPara() == null && "Abierto".equals(ticket.getEstado()))
+                .collect(Collectors.toList());
+    }
+
+    // Método privado para aplicar filtros a una lista de tickets
+    private List<Ticket> aplicarFiltrosATickets(
+            List<Ticket> tickets,
+            Map<String, String> columnFilters,
+            String searchTerm,
+            String fechaAperturaFrom,
+            String fechaAperturaTo,
+            String fechaActualizacionFrom,
+            String fechaActualizacionTo) {
+
+        return tickets.stream()
                 .filter(ticket -> {
                     boolean matches = true;
-                    
+
                     // Aplicar búsqueda global si existe
                     if (searchTerm != null && !searchTerm.isEmpty()) {
                         String searchLower = searchTerm.toLowerCase();
-                        matches = ticket.getCodigo().toLowerCase().contains(searchLower) ||
-                                  ticket.getTitulo().toLowerCase().contains(searchLower) ||
-                                  ticket.getDescripcion().toLowerCase().contains(searchLower) ||
-                                  ticket.getCategoria().toLowerCase().contains(searchLower) ||
-                                  (ticket.getSolicitante().getNombre() + " " + ticket.getSolicitante().getApellido()).toLowerCase().contains(searchLower) ||
-                                  (ticket.getAsignadoPara() != null && 
-                                   (ticket.getAsignadoPara().getNombre() + " " + ticket.getAsignadoPara().getApellido()).toLowerCase().contains(searchLower));
+                        matches = ticket.getCodigo().toLowerCase().contains(searchLower)
+                                || ticket.getTitulo().toLowerCase().contains(searchLower)
+                                || ticket.getDescripcion().toLowerCase().contains(searchLower)
+                                || ticket.getCategoria().toLowerCase().contains(searchLower)
+                                || (ticket.getSolicitante().getNombre() + " " + ticket.getSolicitante().getApellido()).toLowerCase().contains(searchLower)
+                                || (ticket.getAsignadoPara() != null
+                                && (ticket.getAsignadoPara().getNombre() + " " + ticket.getAsignadoPara().getApellido()).toLowerCase().contains(searchLower));
                     }
-                    
+
                     // Aplicar filtros de columnas
                     if (matches && columnFilters != null && !columnFilters.isEmpty()) {
                         for (Map.Entry<String, String> entry : columnFilters.entrySet()) {
                             String filterValue = entry.getValue().toLowerCase();
-                            
+
                             switch (entry.getKey()) {
                                 case "codigo":
                                     matches = matches && ticket.getCodigo().toLowerCase().contains(filterValue);
@@ -185,9 +238,12 @@ public class TicketServiceImpl implements TicketService {
                                     matches = matches && ticket.getTitulo().toLowerCase().contains(filterValue);
                                     break;
                                 case "solicitante":
-                                    String solicitante = ticket.getSolicitante().getNombre() + " " + ticket.getSolicitante().getApellido();
-                                    matches = matches && solicitante.toLowerCase().contains(filterValue);
-                                    break;
+    String solicitante = ticket.getSolicitante().getNombre() + " " + ticket.getSolicitante().getApellido();
+    String codigoSolicitante = ticket.getSolicitante().getCodigo();
+    matches = matches && (solicitante.toLowerCase().contains(filterValue) || 
+              codigoSolicitante.toLowerCase().contains(filterValue.replace("#", "")) ||
+              codigoSolicitante.toLowerCase().equals(filterValue.replace("#", "")));
+    break;
                                 case "prioridad":
                                     matches = matches && ticket.getPrioridad().toLowerCase().contains(filterValue);
                                     break;
@@ -198,32 +254,40 @@ public class TicketServiceImpl implements TicketService {
                                     matches = matches && ticket.getCategoria().toLowerCase().contains(filterValue);
                                     break;
                                 case "asignadoPara":
-                                    String asignadoPara = ticket.getAsignadoPara() != null ? 
-                                            ticket.getAsignadoPara().getNombre() + " " + ticket.getAsignadoPara().getApellido() : 
-                                            "sin asignar";
-                                    matches = matches && asignadoPara.toLowerCase().contains(filterValue);
-                                    break;
+    String asignadoPara = ticket.getAsignadoPara() != null
+            ? ticket.getAsignadoPara().getNombre() + " " + ticket.getAsignadoPara().getApellido()
+            : "sin asignar";
+    String codigoAsignado = ticket.getAsignadoPara() != null 
+            ? ticket.getAsignadoPara().getCodigo() 
+            : "";
+    matches = matches && (asignadoPara.toLowerCase().contains(filterValue) || 
+              (ticket.getAsignadoPara() != null && 
+              (codigoAsignado.toLowerCase().contains(filterValue.replace("#", "")) ||
+              codigoAsignado.toLowerCase().equals(filterValue.replace("#", "")))));
+    break;
                                 case "fechaActualizacion":
                                     String fechaActualizacion = new SimpleDateFormat("dd/MM/yyyy").format(ticket.getFechaActualizacion());
                                     matches = matches && fechaActualizacion.toLowerCase().contains(filterValue);
                                     break;
                             }
-                            
-                            if (!matches) break;
+
+                            if (!matches) {
+                                break;
+                            }
                         }
                     }
-                    
+
                     // Aplicar filtros de fecha para Apertura
                     if (matches && (fechaAperturaFrom != null || fechaAperturaTo != null)) {
                         try {
                             SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
                             Date fechaApertura = ticket.getFechaApertura();
-                            
+
                             if (fechaAperturaFrom != null && !fechaAperturaFrom.isEmpty()) {
                                 Date fromDate = sdf.parse(fechaAperturaFrom);
                                 matches = matches && !fechaApertura.before(fromDate);
                             }
-                            
+
                             if (fechaAperturaTo != null && !fechaAperturaTo.isEmpty()) {
                                 Date toDate = sdf.parse(fechaAperturaTo);
                                 // Añadir 1 día para incluir el día completo
@@ -231,25 +295,25 @@ public class TicketServiceImpl implements TicketService {
                                 cal.setTime(toDate);
                                 cal.add(Calendar.DATE, 1);
                                 toDate = cal.getTime();
-                                
+
                                 matches = matches && !fechaApertura.after(toDate);
                             }
                         } catch (ParseException e) {
                             matches = false;
                         }
                     }
-                    
+
                     // Aplicar filtros de fecha para Actualización
                     if (matches && (fechaActualizacionFrom != null || fechaActualizacionTo != null)) {
                         try {
                             SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
                             Date fechaActualizacion = ticket.getFechaActualizacion();
-                            
+
                             if (fechaActualizacionFrom != null && !fechaActualizacionFrom.isEmpty()) {
                                 Date fromDate = sdf.parse(fechaActualizacionFrom);
                                 matches = matches && !fechaActualizacion.before(fromDate);
                             }
-                            
+
                             if (fechaActualizacionTo != null && !fechaActualizacionTo.isEmpty()) {
                                 Date toDate = sdf.parse(fechaActualizacionTo);
                                 // Añadir 1 día para incluir el día completo
@@ -257,16 +321,41 @@ public class TicketServiceImpl implements TicketService {
                                 cal.setTime(toDate);
                                 cal.add(Calendar.DATE, 1);
                                 toDate = cal.getTime();
-                                
+
                                 matches = matches && !fechaActualizacion.after(toDate);
                             }
                         } catch (ParseException e) {
                             matches = false;
                         }
                     }
-                    
+
                     return matches;
                 })
                 .collect(Collectors.toList());
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Long countTicketsAtendidosPorSoportista(Long idSoportista, Long idUsuarioLogueado) {
+        // Si el soportista es el mismo usuario logueado, contar todos sus tickets atendidos
+        if (idSoportista.equals(idUsuarioLogueado)) {
+            return ticketDao.countByAsignadoParaAndEstadoIn(
+                    usuarioService.getUsuarioPorId(idSoportista),
+                    Arrays.asList("Resuelto", "Cerrado")
+            );
+        }
+
+        // Si no, contar solo los tickets que ha atendido para el usuario logueado
+        return ticketDao.countByAsignadoParaAndSolicitanteAndEstadoIn(
+                usuarioService.getUsuarioPorId(idSoportista),
+                usuarioService.getUsuarioPorId(idUsuarioLogueado),
+                Arrays.asList("Resuelto", "Cerrado")
+        );
+    }
+    
+    @Override
+    @Transactional
+    public void actualizarTicket(Ticket ticket) {
+        ticketDao.save(ticket);
     }
 }

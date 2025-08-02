@@ -203,7 +203,7 @@ public class RegistroController {
     }
 
     // Método para mostrar el formulario de cambio de contraseña
-    @GetMapping("/cambiar-contrasena")
+    @GetMapping("/recuperar-contrasena")
     public String mostrarCambiarContrasena(@RequestParam String token, Model model, RedirectAttributes redirectAttrs) {
         // Verificar si el token existe y es válido
         if (!passwordResetTokens.containsKey(token)) {
@@ -224,7 +224,7 @@ public class RegistroController {
     }
 
     // Método para procesar el cambio de contraseña
-    @PostMapping("/cambiar-contrasena")
+    @PostMapping("/recuperar-contrasena")
     public String procesarCambiarContrasena(@RequestParam String token,
             @RequestParam String password,
             @RequestParam String confirmPassword,
@@ -247,7 +247,7 @@ public class RegistroController {
 
         // Verificar que las contraseñas coincidan
         if (!password.equals(confirmPassword)) {
-            return "redirect:/registro/cambiar-contrasena?token=" + token + "&error=password_mismatch";
+            return "redirect:/registro/recuperar-contrasena?token=" + token + "&error=password_mismatch";
         }
 
         try {
@@ -260,7 +260,7 @@ public class RegistroController {
             return "redirect:/login?contrasenaActualizada=true";
 
         } catch (Exception e) {
-            return "redirect:/registro/cambiar-contrasena?token=" + token + "&error=update_failed";
+            return "redirect:/registro/recuperar-contrasena?token=" + token + "&error=update_failed";
         }
     }
 }

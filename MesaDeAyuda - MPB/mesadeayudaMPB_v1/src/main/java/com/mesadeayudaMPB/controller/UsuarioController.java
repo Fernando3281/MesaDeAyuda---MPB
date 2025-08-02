@@ -2,9 +2,11 @@ package com.mesadeayudaMPB.controller;
 
 import static com.mesadeayudaMPB.ProjectConfig.passwordEncoder;
 import com.mesadeayudaMPB.dao.MensajeDao;
+import com.mesadeayudaMPB.dao.RolDao;
 import com.mesadeayudaMPB.dao.UsuarioDao;
 import com.mesadeayudaMPB.domain.Departamento;
 import com.mesadeayudaMPB.domain.ArchivoTicket;
+import com.mesadeayudaMPB.domain.Categoria;
 import com.mesadeayudaMPB.domain.Rol;
 import com.mesadeayudaMPB.domain.Ticket;
 import com.mesadeayudaMPB.domain.Usuario;
@@ -35,12 +37,18 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import com.mesadeayudaMPB.service.ArchivoTicketService;
+import com.mesadeayudaMPB.service.CategoriaService;
 import com.mesadeayudaMPB.service.EmailService;
 import com.mesadeayudaMPB.service.MensajeService;
 import jakarta.servlet.http.HttpServletRequest;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.UUID;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.security.core.GrantedAuthority;
 
 @Controller
 @RequestMapping("/usuario")
@@ -51,6 +59,12 @@ public class UsuarioController {
 
     @Autowired
     private UsuarioService usuarioService;
+
+    @Autowired
+    private CategoriaService categoriaService;
+
+    @Autowired
+    private RolDao rolDao;
 
     @Autowired
     private ArchivoTicketService archivoTicketService;
@@ -91,25 +105,25 @@ public class UsuarioController {
             if (usuario != null) {
                 // Obtener los últimos 10 tickets ordenados por fecha descendente
                 List<Ticket> ticketsRecientes = ticketService.getTicketsPorSolicitante(usuario)
-                    .stream()
-                    .sorted(Comparator.comparing(Ticket::getFechaApertura).reversed())
-                    .limit(10)
-                    .collect(Collectors.toList());
+                        .stream()
+                        .sorted(Comparator.comparing(Ticket::getFechaApertura).reversed())
+                        .limit(10)
+                        .collect(Collectors.toList());
 
                 // Crear lista de tickets con información de archivos adjuntos
                 List<Map<String, Object>> ticketsConAdjuntos = ticketsRecientes.stream()
-                    .map(ticket -> {
-                        Map<String, Object> ticketMap = new HashMap<>();
-                        ticketMap.put("ticket", ticket);
-                        ticketMap.put("tieneArchivos", !archivoTicketService.obtenerArchivosPorTicket(ticket.getIdTicket()).isEmpty());
-                        return ticketMap;
-                    })
-                    .collect(Collectors.toList());
+                        .map(ticket -> {
+                            Map<String, Object> ticketMap = new HashMap<>();
+                            ticketMap.put("ticket", ticket);
+                            ticketMap.put("tieneArchivos", !archivoTicketService.obtenerArchivosPorTicket(ticket.getIdTicket()).isEmpty());
+                            return ticketMap;
+                        })
+                        .collect(Collectors.toList());
 
                 model.addAttribute("ticketsConAdjuntos", ticketsConAdjuntos);
                 model.addAttribute("usuario", usuario);
                 model.addAttribute("ultimaConexion", LocalDateTime.now());
-                
+
                 return "usuario/perfil";
             }
         }
@@ -201,7 +215,7 @@ public class UsuarioController {
         Usuario usuario = usuarioService.getUsuarioPorId(id);
         if (usuario != null && usuario.getImagen() != null) {
             return ResponseEntity.ok()
-                    .contentType(MediaType.IMAGE_JPEG) // Ajusta según el tipo de imagen (JPEG, PNG, etc.)
+                    .contentType(MediaType.IMAGE_JPEG)
                     .body(usuario.getImagen());
         }
         return ResponseEntity.notFound().build();
@@ -214,8 +228,33 @@ public class UsuarioController {
             Usuario usuario = usuarioService.getUsuarioPorCorreo(correoElectronico);
 
             if (usuario != null) {
+                // Obtener los tickets del usuario
                 List<Ticket> tickets = ticketService.getTicketsPorSolicitante(usuario);
-                model.addAttribute("tickets", tickets);
+
+                // Obtener los roles del usuario
+                List<Rol> roles = rolService.obtenerRolesPorUsuario(usuario.getIdUsuario());
+                usuario.setRoles(roles);
+
+                // Verificar si el usuario es soportista o administrador
+                boolean esSoportistaOAdmin = roles.stream()
+                        .anyMatch(rol -> "ROL_SOPORTISTA".equals(rol.getNombre())
+                        || "ROL_ADMINISTRADOR".equals(rol.getNombre()));
+
+                // Mapear estados personalizados y agregar información de archivos
+                List<Map<String, Object>> ticketsConEstados = tickets.stream().map(ticket -> {
+                    Map<String, Object> ticketMap = new HashMap<>();
+                    ticketMap.put("ticket", ticket);
+                    String estadoMostrado = esSoportistaOAdmin ? ticket.getEstado() : mapearEstadoPersonalizado(ticket.getEstado());
+                    ticketMap.put("estadoMostrado", estadoMostrado);
+                    // Check for attachments
+                    ticketMap.put("tieneArchivos", !archivoTicketService.obtenerArchivosPorTicket(ticket.getIdTicket()).isEmpty());
+                    return ticketMap;
+                }).collect(Collectors.toList());
+
+                // Obtener categorías activas
+                List<Categoria> categoriasActivas = categoriaService.obtenerCategoriasActivas();
+
+                model.addAttribute("ticketsConEstados", ticketsConEstados);
                 model.addAttribute("usuario", usuario);
                 return "usuario/historial";
             }
@@ -223,14 +262,39 @@ public class UsuarioController {
         return "redirect:/login";
     }
 
+// Método auxiliar para mapear estados personalizados
+    private String mapearEstadoPersonalizado(String estadoOriginal) {
+        switch (estadoOriginal) {
+            case "Abierto":
+                return "En Revisión";
+            case "Pendiente":
+                return "En Progreso";
+            case "Resuelto":
+                return "Solucionado";
+            default:
+                return estadoOriginal; // Retorna el estado original si no hay mapeo
+        }
+    }
+
     @GetMapping("/detalles/{id}")
     public String detalle(@PathVariable Long id, Model model, Authentication authentication) {
         if (authentication != null) {
             Ticket ticket = ticketService.getTicketPorId(id);
             if (ticket != null) {
-                // Obtener las imágenes asociadas al ticket
+                // Get the logged-in user
+                String correoElectronico = authentication.getName();
+                Usuario usuario = usuarioService.getUsuarioPorCorreo(correoElectronico);
+
+                // Get ticket attachments
                 List<ArchivoTicket> archivos = archivoTicketService.obtenerArchivosPorTicket(id);
 
+                // Contar tickets atendidos por el soportista asignado (si existe)
+                Long ticketsAtendidos = 0L;
+                if (ticket.getAsignadoPara() != null) {
+                    ticketsAtendidos = ticketService.countTicketsAtendidosPorSoportista(ticket.getAsignadoPara().getIdUsuario(), usuario.getIdUsuario());
+                }
+
+                // Add attributes to the model
                 model.addAttribute("ticket", ticket);
                 model.addAttribute("imagenes", archivos);
                 return "usuario/detalles";
@@ -252,92 +316,147 @@ public class UsuarioController {
             @RequestParam(required = false) String search,
             @RequestParam(required = false) String estado,
             @RequestParam(required = false) String rol,
+            @RequestParam(defaultValue = "0") String sortColumn,
+            @RequestParam(defaultValue = "asc") String sortDirection,
             Authentication authentication) {
 
-        if (authentication != null) {
-            // Obtener el usuario logueado
-            String correoElectronico = authentication.getName();
-            Usuario usuarioLogueado = usuarioService.getUsuarioPorCorreo(correoElectronico);
-            model.addAttribute("usuarioLogueado", usuarioLogueado);
+        if (authentication == null) {
+            return "redirect:/login";
+        }
 
-            // Obtener todos los departamentos
-            List<String> departamentos = departamentoService.obtenerTodosLosDepartamentos()
-                    .stream()
-                    .map(Departamento::getNombre)
-                    .collect(Collectors.toList());
+        String correoElectronico = authentication.getName();
+        Usuario usuarioLogueado = usuarioService.getUsuarioPorCorreo(correoElectronico);
+        model.addAttribute("usuarioLogueado", usuarioLogueado);
 
-            model.addAttribute("departamentos", departamentos);
+        List<String> departamentos = departamentoService.obtenerTodosLosDepartamentos()
+                .stream()
+                .map(Departamento::getNombre)
+                .collect(Collectors.toList());
+        model.addAttribute("departamentos", departamentos);
 
-            // Obtener usuarios con los filtros aplicados
-            Page<Usuario> usuarioPage;
+        // Map sortColumn to database field
+        String sortField;
+        switch (sortColumn) {
+            case "0":
+                sortField = "idUsuario";
+                break;
+            case "3":
+                sortField = "nombre";
+                break;
+            case "4":
+                sortField = "correoElectronico";
+                break;
+            case "5":
+                sortField = "departamento";
+                break;
+            case "6":
+                sortField = "numeroTelefono";
+                break;
+            case "8":
+                sortField = "activo";
+                break;
+            case "9":
+                sortField = "ultimaConexion";
+                break;
+            default:
+                sortField = "idUsuario";
+                sortColumn = "0"; // Ensure valid sortColumn for model
+        }
 
-            // Convertir parámetros de filtro
-            Boolean activo = (estado != null && !estado.isEmpty()) ? estado.equals("activo") : null;
+        // Create Sort object
+        Sort sort = Sort.by(sortDirection.equalsIgnoreCase("asc") ? Sort.Direction.ASC : Sort.Direction.DESC, sortField);
+        Pageable pageable = PageRequest.of(page, size, sort);
 
-            // Aplicar filtros combinados
+        Page<Usuario> usuarioPage;
+        Boolean activo = (estado != null && !estado.isEmpty()) ? estado.equals("activo") : null;
+
+        // Fetch data based on filters
+        if (search != null && !search.isEmpty()) {
+            if (activo != null && rol != null && !rol.isEmpty()) {
+                usuarioPage = usuarioService.buscarUsuariosPorEstadoYRol(search, activo, rol, pageable);
+            } else if (activo != null) {
+                usuarioPage = usuarioService.buscarUsuariosPorEstado(search, activo, pageable);
+            } else if (rol != null && !rol.isEmpty()) {
+                usuarioPage = usuarioService.buscarUsuariosPorRol(search, rol, pageable);
+            } else {
+                usuarioPage = usuarioService.buscarUsuarios(search, pageable);
+            }
+        } else {
+            if (activo != null && rol != null && !rol.isEmpty()) {
+                usuarioPage = usuarioService.getUsuariosPorEstadoYRol(activo, rol, pageable);
+            } else if (activo != null) {
+                usuarioPage = usuarioService.getUsuariosPorEstado(activo, pageable);
+            } else if (rol != null && !rol.isEmpty()) {
+                usuarioPage = usuarioService.getUsuariosPorRol(rol, pageable);
+            } else {
+                usuarioPage = usuarioService.getUsuariosPaginados(pageable);
+            }
+        }
+
+        // Adjust page if it exceeds total pages
+        if (page >= usuarioPage.getTotalPages() && usuarioPage.getTotalPages() > 0) {
+            page = usuarioPage.getTotalPages() - 1;
+            pageable = PageRequest.of(page, size, sort);
             if (search != null && !search.isEmpty()) {
                 if (activo != null && rol != null && !rol.isEmpty()) {
-                    usuarioPage = usuarioService.buscarUsuariosPorEstadoYRol(search, activo, rol, page, size);
+                    usuarioPage = usuarioService.buscarUsuariosPorEstadoYRol(search, activo, rol, pageable);
                 } else if (activo != null) {
-                    usuarioPage = usuarioService.buscarUsuariosPorEstado(search, activo, page, size);
+                    usuarioPage = usuarioService.buscarUsuariosPorEstado(search, activo, pageable);
                 } else if (rol != null && !rol.isEmpty()) {
-                    usuarioPage = usuarioService.buscarUsuariosPorRol(search, rol, page, size);
+                    usuarioPage = usuarioService.buscarUsuariosPorRol(search, rol, pageable);
                 } else {
-                    usuarioPage = usuarioService.buscarUsuarios(search, page, size);
+                    usuarioPage = usuarioService.buscarUsuarios(search, pageable);
                 }
             } else {
                 if (activo != null && rol != null && !rol.isEmpty()) {
-                    usuarioPage = usuarioService.getUsuariosPorEstadoYRol(activo, rol, page, size);
+                    usuarioPage = usuarioService.getUsuariosPorEstadoYRol(activo, rol, pageable);
                 } else if (activo != null) {
-                    usuarioPage = usuarioService.getUsuariosPorEstado(activo, page, size);
+                    usuarioPage = usuarioService.getUsuariosPorEstado(activo, pageable);
                 } else if (rol != null && !rol.isEmpty()) {
-                    usuarioPage = usuarioService.getUsuariosPorRol(rol, page, size);
+                    usuarioPage = usuarioService.getUsuariosPorRol(rol, pageable);
                 } else {
-                    // Ordenar por ID ascendente por defecto
-                    usuarioPage = usuarioService.getUsuariosPaginadosOrdenadosPorId(page, size);
+                    usuarioPage = usuarioService.getUsuariosPaginados(pageable);
                 }
             }
-
-            // Cargar roles para cada usuario
-            for (Usuario usuario : usuarioPage.getContent()) {
-                List<Rol> roles = rolService.obtenerRolesPorUsuario(usuario.getIdUsuario());
-                usuario.setRoles(roles);
-            }
-
-            // Calcular el rango de páginas a mostrar (máximo 5 páginas)
-            int totalPages = usuarioPage.getTotalPages();
-            int startPage = Math.max(0, page - 2);
-            int endPage = Math.min(totalPages - 1, page + 2);
-
-            // Ajustar el rango si estamos cerca del inicio o del final
-            if (endPage - startPage < 4) {
-                startPage = Math.max(0, endPage - 4);
-            }
-            if (endPage - startPage < 4) {
-                endPage = Math.min(totalPages - 1, startPage + 4);
-            }
-
-            // Agregar los datos al modelo
-            model.addAttribute("usuarios", usuarioPage.getContent());
-            model.addAttribute("currentPage", page);
-            model.addAttribute("totalPages", totalPages);
-            model.addAttribute("totalItems", usuarioPage.getTotalElements());
-            model.addAttribute("pageSize", size);
-            model.addAttribute("startPage", startPage);
-            model.addAttribute("endPage", endPage);
-            model.addAttribute("searchQuery", search);
-            model.addAttribute("estadoFiltro", estado);
-            model.addAttribute("rolFiltro", rol);
-
-            // Calcular información de paginación
-            int start = page * size + 1;
-            int end = Math.min((page + 1) * size, (int) usuarioPage.getTotalElements());
-            model.addAttribute("start", start);
-            model.addAttribute("end", end);
-
-            return "/usuario/listado";
+        } else if (page >= usuarioPage.getTotalPages() && usuarioPage.getTotalPages() == 0) {
+            page = 0;
         }
-        return "redirect:/login";
+
+        for (Usuario usuario : usuarioPage.getContent()) {
+            List<Rol> roles = rolService.obtenerRolesPorUsuario(usuario.getIdUsuario());
+            usuario.setRoles(roles);
+        }
+
+        int totalPages = usuarioPage.getTotalPages();
+        int startPage = Math.max(0, page - 2);
+        int endPage = Math.min(totalPages - 1, page + 2);
+
+        if (endPage - startPage < 4) {
+            startPage = Math.max(0, endPage - 4);
+        }
+        if (endPage - startPage < 4) {
+            endPage = Math.min(totalPages - 1, startPage + 4);
+        }
+
+        model.addAttribute("usuarios", usuarioPage.getContent());
+        model.addAttribute("currentPage", page);
+        model.addAttribute("totalPages", totalPages);
+        model.addAttribute("totalItems", usuarioPage.getTotalElements());
+        model.addAttribute("pageSize", size);
+        model.addAttribute("startPage", startPage);
+        model.addAttribute("endPage", endPage);
+        model.addAttribute("searchQuery", search);
+        model.addAttribute("estadoFiltro", estado);
+        model.addAttribute("rolFiltro", rol);
+        model.addAttribute("sortColumn", sortColumn);
+        model.addAttribute("sortDirection", sortDirection);
+
+        int start = page * size + 1;
+        int end = Math.min((page + 1) * size, (int) usuarioPage.getTotalElements());
+        model.addAttribute("start", start);
+        model.addAttribute("end", end);
+
+        return "/usuario/listado";
     }
 
     @GetMapping("/crear")
@@ -351,43 +470,67 @@ public class UsuarioController {
     // Métodos para manejar las acciones CRUD a través de modales
     @PostMapping("/crear")
     public ResponseEntity<Map<String, Object>> crearUsuario(
-            @ModelAttribute Usuario usuario,
-            @RequestParam("imagenFile") MultipartFile imagenFile) {
+            @RequestParam("nombre") String nombre,
+            @RequestParam("correoElectronico") String correoElectronico,
+            @RequestParam("departamento") String departamento,
+            @RequestParam("contrasena") String contrasena,
+            @RequestParam(value = "apellido", required = false) String apellido,
+            @RequestParam(value = "numeroTelefono", required = false) Integer numeroTelefono,
+            @RequestParam("rol") String rol,
+            @RequestParam(value = "activo", required = false) String activoParam,
+            @RequestParam(value = "imagenFile", required = false) MultipartFile imagenFile) {
 
         Map<String, Object> response = new HashMap<>();
 
         try {
             // Validar campos obligatorios
-            if (usuario.getNombre() == null || usuario.getNombre().isEmpty()) {
+            if (nombre == null || nombre.trim().isEmpty()) {
                 response.put("success", false);
                 response.put("error", "El nombre es obligatorio");
                 return ResponseEntity.badRequest().body(response);
             }
 
-            if (usuario.getCorreoElectronico() == null || usuario.getCorreoElectronico().isEmpty()) {
+            if (correoElectronico == null || correoElectronico.trim().isEmpty()) {
                 response.put("success", false);
                 response.put("error", "El correo electrónico es obligatorio");
                 return ResponseEntity.badRequest().body(response);
             }
 
-            if (usuario.getDepartamento() == null || usuario.getDepartamento().isEmpty()) {
+            if (departamento == null || departamento.trim().isEmpty()) {
                 response.put("success", false);
                 response.put("error", "El departamento es obligatorio");
                 return ResponseEntity.badRequest().body(response);
             }
 
-            if (usuario.getContrasena() == null || usuario.getContrasena().isEmpty()) {
+            if (contrasena == null || contrasena.trim().isEmpty()) {
                 response.put("success", false);
                 response.put("error", "La contraseña es obligatoria");
                 return ResponseEntity.badRequest().body(response);
             }
 
+            // Validar rol
+            if (rol == null || rol.trim().isEmpty()
+                    || !List.of("ROL_USUARIO", "ROL_ADMINISTRADOR", "ROL_SOPORTISTA").contains(rol)) {
+                response.put("success", false);
+                response.put("error", "Debe seleccionar un rol válido");
+                return ResponseEntity.badRequest().body(response);
+            }
+
             // Validar correo único
-            if (usuarioService.existeUsuarioPorCorreoElectronico(usuario.getCorreoElectronico())) {
+            if (usuarioService.existeUsuarioPorCorreoElectronico(correoElectronico)) {
                 response.put("success", false);
                 response.put("error", "El correo electrónico ya está registrado");
                 return ResponseEntity.badRequest().body(response);
             }
+
+            // Crear nuevo usuario
+            Usuario usuario = new Usuario();
+            usuario.setNombre(nombre);
+            usuario.setApellido(apellido != null && !apellido.trim().isEmpty() ? apellido : null);
+            usuario.setCorreoElectronico(correoElectronico);
+            usuario.setDepartamento(departamento);
+            usuario.setNumeroTelefono(numeroTelefono);
+            usuario.setContrasena(passwordEncoder.encode(contrasena));
 
             // Generar código único
             String codigoUnico = ((RegistroServiceImpl) registroService).generarCodigoUnico();
@@ -397,7 +540,7 @@ public class UsuarioController {
             usuario.setCodigo(codigoUnico);
 
             // Procesar imagen
-            if (!imagenFile.isEmpty()) {
+            if (imagenFile != null && !imagenFile.isEmpty()) {
                 byte[] imagenBytes = usuarioService.actualizarImagen(imagenFile);
                 usuario.setImagen(imagenBytes);
             } else {
@@ -405,24 +548,24 @@ public class UsuarioController {
                 usuario.setImagen(imagenDefault);
             }
 
-            // Hashear la contraseña
-            usuario.setContrasena(passwordEncoder.encode(usuario.getContrasena()));
+            // Manejar estado activo
+            boolean activo = "true".equals(activoParam) || "on".equals(activoParam);
+            usuario.setActivo(activo);
 
-            // Manejar campos opcionales
-            if (usuario.getApellido() == null || usuario.getApellido().isEmpty()) {
-                usuario.setApellido(null); // O puedes usar "" si prefieres cadena vacía
-            }
-
-            if (usuario.getNumeroTelefono() == null) {
-                usuario.setNumeroTelefono(null);
-            }
-
-            // Configurar valores por defecto
-            usuario.setActivo(true);
+            // Configurar última conexión
             usuario.setUltimaConexion(new Date());
 
             // Guardar usuario
             usuarioService.save(usuario, true);
+
+            // Eliminar cualquier rol existente (por seguridad, aunque es un usuario nuevo)
+            rolService.eliminarRolesPorUsuario(usuario.getIdUsuario());
+
+            // Asignar un solo rol
+            Rol nuevoRol = new Rol();
+            nuevoRol.setNombre(rol);
+            nuevoRol.setUsuario(usuario);
+            rolDao.save(nuevoRol);
 
             response.put("success", true);
             response.put("message", "Usuario creado exitosamente");
@@ -516,6 +659,14 @@ public class UsuarioController {
             if (imagenFile != null && !imagenFile.isEmpty()) {
                 byte[] imagenBytes = usuarioService.actualizarImagen(imagenFile);
                 usuarioExistente.setImagen(imagenBytes);
+            }
+
+            if (!usuarioExistente.getCorreoElectronico().equalsIgnoreCase(correoElectronico)) {
+                if (usuarioService.existeUsuarioPorCorreoElectronico(correoElectronico)) {
+                    response.put("success", false);
+                    response.put("error", "El correo electrónico ya está registrado");
+                    return ResponseEntity.badRequest().body(response);
+                }
             }
 
             // Manejo de contraseña
@@ -791,6 +942,46 @@ public class UsuarioController {
         // Eliminar los tokens encontrados
         for (String token : tokensParaEliminar) {
             passwordResetTokens.remove(token);
+        }
+    }
+
+    @GetMapping("/api/user/roles")
+    @ResponseBody
+    public List<String> getUserRoles(Authentication authentication) {
+        if (authentication == null) {
+            return Collections.emptyList();
+        }
+
+        return authentication.getAuthorities().stream()
+                .map(GrantedAuthority::getAuthority)
+                .collect(Collectors.toList());
+    }
+
+    @GetMapping("/validar-correo")
+    @ResponseBody
+    public ResponseEntity<Map<String, Object>> validarCorreo(
+            @RequestParam String correo,
+            @RequestParam(required = false) Long excluir) {
+
+        Map<String, Object> response = new HashMap<>();
+
+        try {
+            boolean existe;
+
+            if (excluir != null) {
+                // Validar si el correo existe excluyendo un usuario específico
+                existe = usuarioService.existeOtroUsuarioConCorreo(correo, excluir);
+            } else {
+                // Validar si el correo existe en general
+                existe = usuarioService.existeUsuarioPorCorreoElectronico(correo);
+            }
+
+            response.put("existe", existe);
+            return ResponseEntity.ok(response);
+
+        } catch (Exception e) {
+            response.put("error", "Error al validar el correo electrónico");
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
         }
     }
 }

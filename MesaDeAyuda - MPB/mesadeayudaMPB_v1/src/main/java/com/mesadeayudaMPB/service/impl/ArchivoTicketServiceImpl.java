@@ -24,17 +24,11 @@ public class ArchivoTicketServiceImpl implements ArchivoTicketService {
     @Transactional
     public void guardarArchivo(Long idTicket, byte[] archivo, String nombreArchivo, String tipoArchivo) {
         if (archivo == null || archivo.length == 0) {
-            System.out.println("DEBUG: Archivo is null or empty");
             return;
         }
 
         Ticket ticket = ticketDao.findById(idTicket)
                 .orElseThrow(() -> new RuntimeException("Ticket no encontrado"));
-
-        System.out.println("DEBUG: Saving archivo for ticket ID: " + idTicket);
-        System.out.println("DEBUG: Archivo filename: " + nombreArchivo);
-        System.out.println("DEBUG: Archivo type: " + tipoArchivo);
-        System.out.println("DEBUG: Archivo size: " + archivo.length + " bytes");
 
         ArchivoTicket archivoTicket = new ArchivoTicket();
         archivoTicket.setTicket(ticket);
@@ -43,7 +37,6 @@ public class ArchivoTicketServiceImpl implements ArchivoTicketService {
         archivoTicket.setTipoArchivo(tipoArchivo);
 
         archivoTicketDao.save(archivoTicket);
-        System.out.println("DEBUG: archivo saved successfully");
     }
 
     @Override

@@ -2,7 +2,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml" 
       xmlns:th="http://www.thymeleaf.org">
     <head th:replace="~{layout/plantilla :: head}">
-        <title>Mesa de Ayuda</title>
+        <title>Centro de Soporte</title>
     </head>
 
     <script th:src="@{/js/registro.js}" defer></script>
@@ -31,14 +31,31 @@
                 </div>
 
                 <!-- Formulario -->
-                <form th:action="@{/registro/cambiar-contrasena}" method="post" class="form-elements-recovery">
+                <form th:action="@{/registro/recuperar-contrasena}" method="post" class="form-elements-recovery">
                     <input type="hidden" name="token" th:value="${token}">
 
                         <div class="input-group-recovery">
-                            <label for="password">Nueva Contraseña</label>
+                            <label for="password">Nueva Contraseña
+                                <span class="info-icon">
+                                    <i class="fas fa-info-circle"></i>
+                                    <div class="popover-password-container">
+                                        <div class="popover-password" style="display: none;">
+                                            <div class="popover-password-title">Requisitos de la contraseña</div>
+                                            <div class="popover-password-content">
+                                                <ul>
+                                                    <li>Debe contener al menos 8 caracteres para ser valida</li>
+                                                    <li>Debe incluir al menos una letra en mayúscula (A–Z)</li>
+                                                    <li>Debe incluir al menos una letra en minúscula (a–z)</li>
+                                                    <li>Debe incluir al menos un símbolo especial, como: <code>@</code>, <code>$</code>, <code>!</code>, <code>%</code>, <code>*</code>, <code>?</code>, <code>&</code>, etc...</li>
+                                                </ul>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </span>
+                            </label>
                             <div class="password-container">
                                 <input type="password" 
-                                       id="password" 
+                                       id="password-recovery" 
                                        name="password" 
                                        placeholder="Ingrese su nueva contraseña..." 
                                        required
@@ -53,7 +70,7 @@
                             <label for="confirmPassword">Confirmar Nueva Contraseña</label>
                             <div class="password-container">
                                 <input type="password" 
-                                       id="confirmPassword" 
+                                       id="confirmPassword-password-recovery" 
                                        name="confirmPassword" 
                                        placeholder="Confirme su nueva contraseña..." 
                                        required
@@ -75,6 +92,18 @@
                         <a th:href="@{/login}" class="recovery-link">Volver al Inicio de Sesión</a>
                     </div>
                 </div>
+            </div>
+        </div>
+
+        <div id="toast-error" class="toast-modal toast-error">
+            <div class="toast-content">
+                <p class="toast-message">
+                    <i class="toast-icon fa-solid fa-triangle-exclamation"></i>
+                    <span>La contraseña no cumple con los requisitos mínimos.</span>
+                </p>
+                <span class="toast-close" onclick="closeToast('error')">
+                    <i class="fa-solid fa-xmark"></i>
+                </span>
             </div>
         </div>
 

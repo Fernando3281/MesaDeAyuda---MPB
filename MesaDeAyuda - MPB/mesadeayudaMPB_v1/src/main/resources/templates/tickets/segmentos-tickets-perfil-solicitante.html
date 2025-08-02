@@ -2,10 +2,9 @@
 <html xmlns="http://www.w3.org/1999/xhtml" 
       xmlns:th="http://www.thymeleaf.org">
     <head th:replace="~{layout/plantilla :: head}">
-        <title>Mesa de Ayuda</title>
+        <title>Centro de Soporte</title>
         <meta charset="UTF-8"/>
     </head>
-
     <body>
         <!-- Sección de Perfil -->
         <section th:fragment="perfil-section">
@@ -141,14 +140,11 @@
                                                        (${ticketMap.ticket.estado == 'Resuelto'} ? 'fas fa-check-circle' :
                                                        (${ticketMap.ticket.estado == 'Cerrado'} ? 'fas fa-lock' :
                                                        (${ticketMap.ticket.estado == 'Abierto'} ? 'fas fa-folder-open' :
-                                                       (${ticketMap.ticket.estado == 'Cancelado'} ? 'fas fa-times-circle' : 'far fa-question-circle'))))))"></i>
+                                                       (${ticketMap.ticket.estado == 'Cancelado'} ? 'fas fa-times-circle' :
+                                                       (${ticketMap.ticket.estado == 'Desactivado'} ? 'fas fa-ban' : 'far fa-question-circle')))))))"></i>
 
-                                                    <!-- Mapeo de estados -->
-                                                    <span th:text="${ticketMap.ticket.estado == 'Abierto'} ? 'En Revisión' : 
-                                                          (${ticketMap.ticket.estado == 'Pendiente'} ? 'En Progreso' : 
-                                                          (${ticketMap.ticket.estado == 'Resuelto'} ? 'Solucionado' : ${ticketMap.ticket.estado}))">
-                                                        Estado
-                                                    </span>
+                                                    <!-- Mostrar estado original sin transformación -->
+                                                    <span th:text="${ticketMap.ticket.estado}">Estado</span>
                                                 </div>
                                             </div>
 

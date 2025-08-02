@@ -27,4 +27,6 @@ public interface CategoriaService {
     Page<Categoria> obtenerCategoriasPaginados(int page, int size);
 
     Page<Categoria> buscarCategoriasPaginados(String search, int page, int size);
+    
+    List<Categoria> obtenerCategoriasActivas();
 }

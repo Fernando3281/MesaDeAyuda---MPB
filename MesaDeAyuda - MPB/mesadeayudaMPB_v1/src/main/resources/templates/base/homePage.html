@@ -1,14 +1,71 @@
+<!-- Ejemplo de estructura de los fragmentos utlizando thymelyft, adicionalmente de los toast de cada caso. -->
 <!DOCTYPE html>
-<!--
-ELIMINAR HTML SI ES POSIBLE
--->
-
 <html xmlns="http://www.w3.org/1999/xhtml" 
       xmlns:th="http://www.thymeleaf.org">
     <head th:replace="~{layout/plantilla :: head}">
         <title>Mesa de Ayuda</title>
     </head>
     <body>
-       
+        <section th:fragment="ejemplo">
+            <!-- Contenedor para los botones de prueba -->
+            <div style="text-align: center; margin-top: 50px;">
+                <button onclick="showToast('success')">Mostrar modal verde</button>
+                <button onclick="showToast('info')">Mostrar modal azul</button>
+                <button onclick="showToast('warning')">Mostrar modal amarillo</button>
+                <button onclick="showToast('error')">Mostrar modal rojo</button>
+            </div>
+
+            <!-- Toast de Confirmacion (Verde) -->
+            <div id="toast-success" class="toast-modal toast-success">
+                <div class="toast-content">
+                    <p class="toast-message">
+                        <i class="toast-icon fa-solid fa-circle-check"></i>
+                        <span>"Mensaje generico..."</span>
+                    </p>
+                    <span class="toast-close" onclick="closeToast('success')">
+                        <i class="fa-solid fa-xmark"></i>
+                    </span>
+                </div>
+            </div>
+
+            <!-- Toast de Informacion (Azul) -->
+            <div id="toast-info" class="toast-modal toast-info">
+                <div class="toast-content">
+                    <p class="toast-message">
+                        <i class="toast-icon fa-solid fa-user"></i>
+                        <span>"Mensaje generico..."</span>
+                    </p>
+                    <span class="toast-close" onclick="closeToast('info')">
+                        <i class="fa-solid fa-xmark"></i>
+                    </span>
+                </div>
+            </div>
+
+            <!-- Toast de Alerta (Amarillo) -->
+            <div id="toast-warning" class="toast-modal toast-warning">
+                <div class="toast-content">
+                    <p class="toast-message">
+                        <i class="toast-icon fa-solid fa-triangle-exclamation"></i>
+                        <span>"Mensaje generico..."</span>
+                    </p>
+                    <span class="toast-close" onclick="closeToast('warning')">
+                        <i class="fa-solid fa-xmark"></i>
+                    </span>
+                </div>
+            </div>
+
+            <!-- Toast de Error (Rojo) -->
+            <div id="toast-error" class="toast-modal toast-error">
+                <div class="toast-content">
+                    <p class="toast-message">
+                        <i class="toast-icon fa-solid fa-server"></i>
+                        <span>"Mensaje generico..."</span>
+                    </p>
+                    <span class="toast-close" onclick="closeToast('error')">
+                        <i class="fa-solid fa-xmark"></i>
+                    </span>
+                </div>
+            </div>
+        </section>
     </body>
 </html>
