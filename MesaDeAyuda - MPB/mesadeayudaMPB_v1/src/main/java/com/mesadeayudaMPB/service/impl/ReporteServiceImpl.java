@@ -12,19 +12,13 @@ import net.sf.jasperreports.engine.export.ooxml.JRXlsxExporter;
 import net.sf.jasperreports.export.SimpleExporterInput;
 import net.sf.jasperreports.export.SimpleOutputStreamExporterOutput;
 import net.sf.jasperreports.export.SimpleWriterExporterOutput;
-import net.sf.jasperreports.export.SimpleXlsxReportConfiguration;
-import net.sf.jasperreports.export.SimpleCsvExporterConfiguration;
-import net.sf.jasperreports.export.SimpleRtfExporterConfiguration;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.ClassPathResource;
-import org.springframework.core.io.InputStreamResource;
 import org.springframework.core.io.Resource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
-
-import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -39,10 +33,10 @@ import org.springframework.core.io.ByteArrayResource;
 
 @Service
 public class ReporteServiceImpl implements ReporteService {
-    
+
     @Autowired
     private javax.sql.DataSource dataSource;
-    
+
     @Override
     public ResponseEntity<Resource> generaReporte(String reporte, Map<String, Object> parametros, String tipo) throws IOException {
         try {
@@ -52,12 +46,21 @@ public class ReporteServiceImpl implements ReporteService {
                 throw new IllegalArgumentException("Tipo de exportación no soportado: " + tipo);
             }
 
-            // Cargar el reporte desde classpath
-            String reportePath = "reportes/" + reporte + ".jasper";
-            InputStream reportStream = getClass().getClassLoader().getResourceAsStream(reportePath);
-            
-            if (reportStream == null) {
-                throw new FileNotFoundException("No se encontró el reporte: " + reportePath);
+            // Cargar el reporte desde classpath - Opción mejorada
+            String reportePath = "/reports/" + reporte + ".jasper"; // Cambiado a /reports/
+            InputStream reportStream;
+
+            try {
+                // Primero intenta cargar como recurso de clase
+                reportStream = getClass().getResourceAsStream(reportePath);
+                if (reportStream == null) {
+                    // Si no se encuentra, intenta con ClassPathResource
+                    Resource resource = new ClassPathResource("reports/" + reporte + ".jasper");
+                    reportStream = resource.getInputStream();
+                }
+            } catch (IOException e) {
+                throw new FileNotFoundException("No se encontró el reporte: " + reportePath
+                        + ". Verifique que el archivo exista en src/main/resources/reports/");
             }
 
             // Cargar imagen del logo
@@ -65,17 +68,16 @@ public class ReporteServiceImpl implements ReporteService {
                 InputStream logoStream = getClass().getResourceAsStream("/static/images/escudo-barva.png");
                 parametros.put("LOGO_EMPRESA", logoStream);
             }
-
             JasperPrint jasperPrint = null;
-            
+
             // Determinar la fuente de datos
-            if (parametros.containsKey("TICKETS_DATA_SOURCE") && 
-                parametros.get("TICKETS_DATA_SOURCE") instanceof JRBeanCollectionDataSource) {
+            if (parametros.containsKey("TICKETS_DATA_SOURCE")
+                    && parametros.get("TICKETS_DATA_SOURCE") instanceof JRBeanCollectionDataSource) {
                 // Usar data source de colección de beans
                 jasperPrint = JasperFillManager.fillReport(
-                    reportStream, 
-                    parametros, 
-                    (JRBeanCollectionDataSource) parametros.get("TICKETS_DATA_SOURCE")
+                        reportStream,
+                        parametros,
+                        (JRBeanCollectionDataSource) parametros.get("TICKETS_DATA_SOURCE")
                 );
             } else {
                 // Usar conexión JDBC
@@ -131,11 +133,11 @@ public class ReporteServiceImpl implements ReporteService {
             ByteArrayResource resource = new ByteArrayResource(reportBytes);
 
             return ResponseEntity.ok()
-                .header(HttpHeaders.CONTENT_DISPOSITION, 
-                       disposition + "; filename=\"" + reporte + "." + fileExtension + "\"")
-                .contentType(MediaType.parseMediaType(contentType))
-                .contentLength(reportBytes.length)
-                .body(resource);
+                    .header(HttpHeaders.CONTENT_DISPOSITION,
+                            disposition + "; filename=\"" + reporte + "." + fileExtension + "\"")
+                    .contentType(MediaType.parseMediaType(contentType))
+                    .contentLength(reportBytes.length)
+                    .body(resource);
 
         } catch (JRException e) {
             throw new IOException("Error al generar el reporte: " + e.getMessage(), e);

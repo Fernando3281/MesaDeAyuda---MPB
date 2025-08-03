@@ -45,8 +45,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.UUID;
-import static org.hibernate.internal.CoreLogging.logger;
-import static org.hibernate.internal.HEMLogging.logger;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -280,33 +278,33 @@ public class UsuarioController {
 
     @GetMapping("/detalles/{id}")
 public String detalle(@PathVariable Long id, Model model, Authentication authentication) {
-    try {
-        if (authentication == null) {
-            return "redirect:/login";
-        }
-
+    if (authentication != null) {
         Ticket ticket = ticketService.getTicketPorId(id);
-        if (ticket == null) {
-            // En lugar de redirigir, muestra un mensaje de error en la misma vista
-            model.addAttribute("error", "El ticket solicitado no existe");
-            return "usuario/detalles"; // Asegúrate de que esta plantilla existe
+        if (ticket != null) {
+            String correoElectronico = authentication.getName();
+            Usuario usuario = usuarioService.getUsuarioPorCorreo(correoElectronico);
+            
+            if (usuario != null) {
+                // Cargar roles explícitamente
+                List<Rol> roles = rolService.obtenerRolesPorUsuario(usuario.getIdUsuario());
+                usuario.setRoles(roles != null ? roles : new ArrayList<>());
+
+                // Get ticket attachments
+                List<ArchivoTicket> archivos = archivoTicketService.obtenerArchivosPorTicket(id);
+                // Contar tickets atendidos por el soportista asignado (si existe)
+                if (ticket.getAsignadoPara() != null) {
+                    ticketService.countTicketsAtendidosPorSoportista(ticket.getAsignadoPara().getIdUsuario(), usuario.getIdUsuario());
+                }
+
+                // Add attributes to the model
+                model.addAttribute("ticket", ticket);
+                model.addAttribute("imagenes", archivos);
+                return "usuario/detalles";
+            }
+            }
         }
-
-        String correoElectronico = authentication.getName();
-        Usuario usuario = usuarioService.getUsuarioPorCorreo(correoElectronico);
-
-        List<ArchivoTicket> archivos = archivoTicketService.obtenerArchivosPorTicket(id);
-        
-        model.addAttribute("ticket", ticket);
-        model.addAttribute("imagenes", archivos);
-        return "usuario/detalles";
-        
-    } catch (Exception e) {
-        // Log del error
-        model.addAttribute("error", "Ocurrió un error al cargar los detalles del ticket");
-        return "usuario/detalles";
+        return "redirect:/login";
     }
-}
 
     @GetMapping("/configuracion")
     public String configuracion(Model model) {

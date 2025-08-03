@@ -597,196 +597,197 @@
         </section>
 
         <section th:fragment="ticket-detalle-section">
-            <meta name="_csrf" th:content="${_csrf.token}"/>
-            <meta name="_csrf_header" th:content="${_csrf.headerName}"/>
-            <div class="back-button-container" style="margin-bottom: 15px;">
-                <button class="btn btn-outline-secondary back-button" id="ticketDetailsBackButton">
-                    <i class="fa-solid fa-arrow-left"></i>
-                </button>
-                <h2 id="Title" style="margin: initial;">Detalles del Ticket</h2>
+    <meta name="_csrf" th:content="${_csrf.token}"/>
+    <meta name="_csrf_header" th:content="${_csrf.headerName}"/>
+    <div class="back-button-container" style="margin-bottom: 15px;">
+        <button class="btn btn-outline-secondary back-button" id="ticketDetailsBackButton">
+            <i class="fa-solid fa-arrow-left"></i>
+        </button>
+        <h2 id="Title" style="margin: initial;">Detalles del Ticket</h2>
+    </div>
+
+    <div class="main-container">
+        <div class="ticket-details">
+            <div class="ticket-header">
+                <div class="ticket-id"><i class="fas fa-ticket"></i> <span th:text="${ticket.codigo}">#TIC00000000</span></div>
+                <span id="status-badge" th:class="${'status-' + 
+                      (ticket.estado == 'Abierto' ? 'en-revision' : 
+                      ticket.estado == 'Pendiente' ? 'en-progreso' : 
+                      ticket.estado == 'Resuelto' ? 'solucionado' : 
+                      ticket.estado == 'Desactivado' ? 'desactivado' : 
+                      ticket.estado == 'Cancelado' ? 'cancelado' : 
+                      'cerrado')}">
+                    <i th:class="${ticket.estado == 'Abierto' ? 'far fa-clock' : 
+                       ticket.estado == 'Pendiente' ? 'fa-solid fa-arrows-rotate' : 
+                       ticket.estado == 'Resuelto' ? 'fas fa-check-circle' : 
+                       ticket.estado == 'Desactivado' ? 'fas fa-ban' : 
+                       ticket.estado == 'Cancelado' ? 'fas fa-times-circle' : 
+                       'fas fa-lock'}"></i>
+                    <th:block th:with="esUsuario=${usuario?.roles != null and #lists.contains(usuario.roles.![nombre], 'ROL_USUARIO') 
+                              and not #lists.contains(usuario.roles.![nombre], 'ROL_ADMINISTRADOR') 
+                              and not #lists.contains(usuario.roles.![nombre], 'ROL_SOPORTISTA')}">
+                        <span th:if="${esUsuario}"
+                              th:text="${ticket.estado == 'Abierto' ? 'En Revisión' : 
+                              ticket.estado == 'Pendiente' ? 'En Progreso' : 
+                              ticket.estado == 'Resuelto' ? 'Solucionado' : 
+                              ticket.estado == 'Desactivado' ? 'Desactivado' : 
+                              ticket.estado == 'Cancelado' ? 'Cancelado' : 
+                              'Cerrado'}">Estado</span>
+                        <span th:unless="${esUsuario}" th:text="${ticket.estado}">Estado</span>
+                    </th:block>
+                </span>
+            </div>
+            <div class="ticket-title" th:text="${ticket.titulo}">Titulo...</div>
+            <p class="ticket-description" th:text="${ticket.descripcion}">
+                Descripcion...
+            </p>
+            <div class="info-grid">
+                <div class="info-item">
+                    <label>Fecha de Apertura:</label>
+                    <div th:text="${#dates.format(ticket.fechaApertura, 'dd MMMM yyyy - HH:mm:ss')}">24 de Agosto del 2024 - 13:45:12</div>
+                </div>
+                <div class="info-item">
+                    <label>Prioridad:</label>
+                    <div th:text="${ticket.prioridad}">Sin Asignar</div>
+                </div>
+                <div class="info-item">
+                    <label>Encargado:</label>
+                    <div th:if="${ticket.asignadoPara != null}" 
+                         th:text="${ticket.asignadoPara.nombre + ' ' + ticket.asignadoPara.apellido}">
+                        Sin Asignar
+                    </div>
+                    <div th:unless="${ticket.asignadoPara != null}">Sin Asignar</div>
+                </div>
+                <div class="info-item">
+                    <label>Última Actualización:</label>
+                    <div th:text="${#dates.format(ticket.fechaActualizacion, 'dd MMMM yyyy - HH:mm:ss')}">24 de Agosto del 2024 - 13:45:12</div>
+                </div>
+                <div class="info-item">
+                    <label>Categoría:</label>
+                    <div th:text="${ticket.categoria}">Sistemas</div>
+                </div>
             </div>
 
-            <div class="main-container">
-                <div class="ticket-details">
-                    <div class="ticket-header">
-                        <div class="ticket-id"><i class="fas fa-ticket"></i> <span th:text="${ticket.codigo}">#TIC00000000</span></div>
-                        <span id="status-badge" th:class="${'status-' + 
-                              (ticket.estado == 'Abierto' ? 'en-revision' : 
-                              ticket.estado == 'Pendiente' ? 'en-progreso' : 
-                              ticket.estado == 'Resuelto' ? 'solucionado' : 
-                              ticket.estado == 'Desactivado' ? 'desactivado' : 
-                              ticket.estado == 'Cancelado' ? 'cancelado' : 
-                              'cerrado')}">
-                            <i th:class="${ticket.estado == 'Abierto' ? 'far fa-clock' : 
-                               ticket.estado == 'Pendiente' ? 'fa-solid fa-arrows-rotate' : 
-                               ticket.estado == 'Resuelto' ? 'fas fa-check-circle' : 
-                               ticket.estado == 'Desactivado' ? 'fas fa-ban' : 
-                               ticket.estado == 'Cancelado' ? 'fas fa-times-circle' : 
-                               'fas fa-lock'}"></i>
-                            <th:block th:with="esUsuario=${#lists.contains(usuario.roles.![nombre], 'ROL_USUARIO') 
-                                      and not #lists.contains(usuario.roles.![nombre], 'ROL_ADMINISTRADOR') 
-                                      and not #lists.contains(usuario.roles.![nombre], 'ROL_SOPORTISTA')}">
-                                <span th:if="${esUsuario}"
-                                      th:text="${ticket.estado == 'Abierto' ? 'En Revisión' : 
-                                      ticket.estado == 'Pendiente' ? 'En Progreso' : 
-                                      ticket.estado == 'Resuelto' ? 'Solucionado' : 
-                                      ticket.estado == 'Desactivado' ? 'Desactivado' : 
-                                      ticket.estado == 'Cancelado' ? 'Cancelado' : 
-                                      'Cerrado'}">Estado</span>
-                                <span th:unless="${esUsuario}" th:text="${ticket.estado}">Estado</span>
-                            </th:block>
-                        </span>
-                    </div>
-                    <div class="ticket-title" th:text="${ticket.titulo}">Titulo...</div>
-                    <p class="ticket-description" th:text="${ticket.descripcion}">
-                        Descripcion...
-                    </p>
-                    <div class="info-grid">
-                        <div class="info-item">
-                            <label>Fecha de Apertura:</label>
-                            <div th:text="${#dates.format(ticket.fechaApertura, 'dd MMMM yyyy - HH:mm:ss')}">24 de Agosto del 2024 - 13:45:12</div>
-                        </div>
-                        <div class="info-item">
-                            <label>Prioridad:</label>
-                            <div th:text="${ticket.prioridad}">Sin Asignar</div>
-                        </div>
-                        <div class="info-item">
-                            <label>Encargado:</label>
-                            <div th:if="${ticket.asignadoPara != null}" 
-                                 th:text="${ticket.asignadoPara.nombre + ' ' + ticket.asignadoPara.apellido}">
-                                Sin Asignar
-                            </div>
-                            <div th:unless="${ticket.asignadoPara != null}">Sin Asignar</div>
-                        </div>
-                        <div class="info-item">
-                            <label>Última Actualización:</label>
-                            <div th:text="${#dates.format(ticket.fechaActualizacion, 'dd MMMM yyyy - HH:mm:ss')}">24 de Agosto del 2024 - 13:45:12</div>
-                        </div>
-                        <div class="info-item">
-                            <label>Categoría:</label>
-                            <div th:text="${ticket.categoria}">Sistemas</div>
-                        </div>
-                    </div>
-
-                    <div class="attachments" th:if="${not #lists.isEmpty(imagenes)}">
-                        <div class="attachments-header">
-                            <label>ARCHIVOS ADJUNTOS</label>
-                        </div>
-                        <div class="files-grid">
-                            <div th:each="imagen : ${imagenes}" class="file-item" 
-                                 th:data-src="@{/archivos/ver/{id}(id=${imagen.idArchivo})}"
-                                 th:data-type="${imagen.tipoArchivo.startsWith('image/') ? 'image' : 'pdf'}"
-                                 th:data-filename="${imagen.nombreArchivo}">
-                                <i th:class="${imagen.tipoArchivo.startsWith('image/') ? 'far fa-file-image file-icon' : 'far fa-file-pdf file-icon'}"></i>
-                                <span class="file-name" th:text="${imagen.nombreArchivo}">ImagenEjemplo.jpg</span>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="cancel-section" 
-                         th:if="${ticket.estado == 'Abierto'
-                         and ticket.asignadoPara == null}">
-                        <div class="cancel-button-container">
-                            <button class="btn cancel-button">
-                                <i class="fa-solid fa-trash-can"></i> Cancelar Solicitud
-                            </button>
-                        </div>
-                    </div>
+            <div class="attachments" th:if="${not #lists.isEmpty(imagenes)}">
+                <div class="attachments-header">
+                    <label>ARCHIVOS ADJUNTOS</label>
                 </div>
-
-
-                <div class="manager-info">
-                    <h2>Información del Encargado</h2>
-
-                    <div th:if="${ticket.asignadoPara != null}" class="manager-content">
-                        <div class="agent-profile">
-                            <div class="agent-photo">
-                                <img th:if="${ticket.asignadoPara.imagen != null}" 
-                                     th:src="@{/usuario/imagen/{id}(id=${ticket.asignadoPara.idUsuario})}" 
-                                     alt="Foto de perfil">
-                                <i th:unless="${ticket.asignadoPara.imagen != null}" class="fas fa-user-circle"></i>
-                            </div>
-                            <div class="agent-info">
-                                <div class="agent-role">Equipo de Soporte</div>
-                                <div class="agent-name" th:text="${ticket.asignadoPara.nombre + ' ' + ticket.asignadoPara.apellido}">Nombre del Soportista</div>
-                            </div>
-                        </div>
-
-                        <div class="info-field">
-                            <label>Codigo de Identificación</label>
-                            <input class="form-control" type="text" readonly th:value="${ticket.asignadoPara.codigo}" placeholder="ID">
-                        </div>
-
-                        <div class="info-field">
-                            <label>Departamento</label>
-                            <input class="form-control" type="text" readonly th:value="${ticket.asignadoPara.departamento}" placeholder="Departamento">
-                        </div>
-
-                        <div class="info-field">
-                            <label>Numero de Teléfono</label>
-                            <input class="form-control" type="text" readonly th:value="${ticket.asignadoPara.numeroTelefono}" placeholder="Telefono no disponible">
-                        </div>
-
-                        <div class="info-field">
-                            <label>Correo Electrónico</label>
-                            <input class="form-control" type="text" readonly th:value="${ticket.asignadoPara.correoElectronico}" placeholder="Sin correo registrado">
-                        </div>
-
-                        <div class="tickets-counter">
-                            <div class="counter-label">Total de Tickets Atendidos</div>
-                            <div class="counter-value">
-                                <i class="fas fa-ticket-alt"></i>
-                                <span th:text="${ticketsAtendidos != null ? ticketsAtendidos : '0'}">0</span>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div th:unless="${ticket.asignadoPara != null}" class="manager-content">
-                        <div class="manager-icon">
-                            <i th:class="${ticket.estado == 'Cancelado' ? 'fas fa-times-circle' : 
-                               ticket.estado == 'Resuelto' ? 'fas fa-check-circle' : 
-                               ticket.estado == 'Desactivado' ? 'fas fa-ban' : 
-                               ticket.estado == 'Cerrado' ? 'fas fa-lock' : 
-                               'fas fa-headset'}"></i>
-                        </div>
-                        <div class="manager-status">
-                            <strong th:text="${ticket.estado == 'Abierto' ? 'Su ticket está en revisión.' : 
-                                    ticket.estado == 'Pendiente' ? 'Su ticket está en progreso.' : 
-                                    ticket.estado == 'Resuelto' ? 'Su ticket ha sido solucionado.' : 
-                                    ticket.estado == 'Cancelado' ? 'Su ticket ha sido cancelado.' :
-                                    ticket.estado == 'Desactivado' ? 'Su ticket ha sido desactivado.' :
-                                    ticket.estado == 'Cerrado' ? 'Su ticket ha sido cerrado.' :
-                                    'Su ticket ha sido cerrado.'}">Estado del ticket</strong>
-                            <p th:text="${ticket.estado == 'Cancelado' ? 'Su solicitud ha sido cancelada. Si necesita asistencia o tiene alguna consulta, puede crear un nuevo ticket.' : 
-                               ticket.estado == 'Resuelto' ? 'Su solicitud ha sido resuelto exitosamente. Si persiste algún inconveniente, puede crear un nuevo ticket.' :
-                               ticket.estado == 'Desactivado' ? 'Su ticket ha sido desactivado. Para obtener soporte, por favor cree un nuevo ticket.' :
-                               ticket.estado == 'Cerrado' ? 'Su ticket ha sido cerrado. Si necesita asistencia adicional, puede crear un nuevo ticket.' :
-                               'Pronto un soportista se pondrá en contacto con usted.'}">Mensaje del ticket</p>
-                        </div>
+                <div class="files-grid">
+                    <div th:each="imagen : ${imagenes}" class="file-item" 
+                         th:data-src="@{/archivos/ver/{id}(id=${imagen.idArchivo})}"
+                         th:data-type="${imagen.tipoArchivo.startsWith('image/') ? 'image' : 'pdf'}"
+                         th:data-filename="${imagen.nombreArchivo}">
+                        <i th:class="${imagen.tipoArchivo.startsWith('image/') ? 'far fa-file-image file-icon' : 'far fa-file-pdf file-icon'}"></i>
+                        <span class="file-name" th:text="${imagen.nombreArchivo}">ImagenEjemplo.jpg</span>
                     </div>
                 </div>
             </div>
 
-            <div id="cancelTicketModal" class="file-modal" style="display: none;">
-                <div class="modal-container" style="text-align: center; padding: 30px;">
-                    <h3>¿Estás seguro de cancelar este ticket?</h3>
-                    <p>El ticket será marcado como cancelado. Esta accion no se puede deshacer</p>
-                    <div style="margin-top: 20px;">
-                        <button id="confirmCancel" class="btn btn-primary">Confirmar</button>
-                        <button id="closeCancelModal" class="btn btn-secondary">Cerrar</button>
+            <div class="cancel-section" 
+                 th:if="${ticket.estado == 'Abierto'
+                 and ticket.asignadoPara == null
+                 and usuario?.roles != null
+                 and #lists.contains(usuario.roles.![nombre], 'ROL_USUARIO')}">
+                <div class="cancel-button-container">
+                    <button class="btn cancel-button">
+                        <i class="fa-solid fa-trash-can"></i> Cancelar Solicitud
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div class="manager-info">
+            <h2>Información del Encargado</h2>
+
+            <div th:if="${ticket.asignadoPara != null}" class="manager-content">
+                <div class="agent-profile">
+                    <div class="agent-photo">
+                        <img th:if="${ticket.asignadoPara.imagen != null}" 
+                             th:src="@{/usuario/imagen/{id}(id=${ticket.asignadoPara.idUsuario})}" 
+                             alt="Foto de perfil">
+                        <i th:unless="${ticket.asignadoPara.imagen != null}" class="fas fa-user-circle"></i>
+                    </div>
+                    <div class="agent-info">
+                        <div class="agent-role">Equipo de Soporte</div>
+                        <div class="agent-name" th:text="${ticket.asignadoPara.nombre + ' ' + ticket.asignadoPara.apellido}">Nombre del Soportista</div>
+                    </div>
+                </div>
+
+                <div class="info-field">
+                    <label>Codigo de Identificación</label>
+                    <input class="form-control" type="text" readonly th:value="${ticket.asignadoPara.codigo}" placeholder="ID">
+                </div>
+
+                <div class="info-field">
+                    <label>Departamento</label>
+                    <input class="form-control" type="text" readonly th:value="${ticket.asignadoPara.departamento}" placeholder="Departamento">
+                </div>
+
+                <div class="info-field">
+                    <label>Numero de Teléfono</label>
+                    <input class="form-control" type="text" readonly th:value="${ticket.asignadoPara.numeroTelefono}" placeholder="Telefono no disponible">
+                </div>
+
+                <div class="info-field">
+                    <label>Correo Electrónico</label>
+                    <input class="form-control" type="text" readonly th:value="${ticket.asignadoPara.correoElectronico}" placeholder="Sin correo registrado">
+                </div>
+
+                <div class="tickets-counter">
+                    <div class="counter-label">Total de Tickets Atendidos</div>
+                    <div class="counter-value">
+                        <i class="fas fa-ticket-alt"></i>
+                        <span th:text="${ticketsAtendidos != null ? ticketsAtendidos : '0'}">0</span>
                     </div>
                 </div>
             </div>
 
-            <div id="fileModal" class="file-modal">
-                <span class="close-modal"><i class="fa-solid fa-xmark"></i></span>
-                <div class="modal-content-container">
-                    <img id="modalFileImage" class="modal-content" style="display: none;">
-                    <iframe id="modalFilePdf" class="modal-content" style="width: 1300px;; height: 90vh; display: block; border: none;"></iframe>
-                    <div id="modalFileName" class="file-name-modal"></div>
+            <div th:unless="${ticket.asignadoPara != null}" class="manager-content">
+                <div class="manager-icon">
+                    <i th:class="${ticket.estado == 'Cancelado' ? 'fas fa-times-circle' : 
+                       ticket.estado == 'Resuelto' ? 'fas fa-check-circle' : 
+                       ticket.estado == 'Desactivado' ? 'fas fa-ban' : 
+                       ticket.estado == 'Cerrado' ? 'fas fa-lock' : 
+                       'fas fa-headset'}"></i>
+                </div>
+                <div class="manager-status">
+                    <strong th:text="${ticket.estado == 'Abierto' ? 'Su ticket está en revisión.' : 
+                            ticket.estado == 'Pendiente' ? 'Su ticket está en progreso.' : 
+                            ticket.estado == 'Resuelto' ? 'Su ticket ha sido solucionado.' : 
+                            ticket.estado == 'Cancelado' ? 'Su ticket ha sido cancelado.' :
+                            ticket.estado == 'Desactivado' ? 'Su ticket ha sido desactivado.' :
+                            ticket.estado == 'Cerrado' ? 'Su ticket ha sido cerrado.' :
+                            'Su ticket ha sido cerrado.'}">Estado del ticket</strong>
+                    <p th:text="${ticket.estado == 'Cancelado' ? 'Su solicitud ha sido cancelada. Si necesita asistencia o tiene alguna consulta, puede crear un nuevo ticket.' : 
+                       ticket.estado == 'Resuelto' ? 'Su solicitud ha sido resuelto exitosamente. Si persiste algún inconveniente, puede crear un nuevo ticket.' :
+                       ticket.estado == 'Desactivado' ? 'Su ticket ha sido desactivado. Para obtener soporte, por favor cree un nuevo ticket.' :
+                       ticket.estado == 'Cerrado' ? 'Su ticket ha sido cerrado. Si necesita asistencia adicional, puede crear un nuevo ticket.' :
+                       'Pronto un soportista se pondrá en contacto con usted.'}">Mensaje del ticket</p>
                 </div>
             </div>
-        </section>
+        </div>
+    </div>
+
+    <div id="cancelTicketModal" class="file-modal" style="display: none;">
+        <div class="modal-container" style="text-align: center; padding: 30px;">
+            <h3>¿Estás seguro de cancelar este ticket?</h3>
+            <p>El ticket será marcado como cancelado. Esta accion no se puede deshacer</p>
+            <div style="margin-top: 20px;">
+                <button id="confirmCancel" class="btn btn-primary">Confirmar</button>
+                <button id="closeCancelModal" class="btn btn-secondary">Cerrar</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="fileModal" class="file-modal">
+        <span class="close-modal"><i class="fa-solid fa-xmark"></i></span>
+        <div class="modal-content-container">
+            <img id="modalFileImage" class="modal-content" style="display: none;">
+            <iframe id="modalFilePdf" class="modal-content" style="width: 1300px;; height: 90vh; display: block; border: none;"></iframe>
+            <div id="modalFileName" class="file-name-modal"></div>
+        </div>
+    </div>
+</section>
 
 
         <section th:fragment="usuarios-listado">

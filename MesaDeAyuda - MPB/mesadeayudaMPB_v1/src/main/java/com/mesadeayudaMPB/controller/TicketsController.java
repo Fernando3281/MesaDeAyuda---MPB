@@ -620,7 +620,7 @@ public class TicketsController {
                     }
 
                     redirectAttributes.addFlashAttribute("success", "Ticket creado exitosamente");
-                    return "redirect:tickets/listado";
+                    return "redirect:listado";
                 }
             }
             return "redirect:/login";
