@@ -756,7 +756,7 @@ document.addEventListener('DOMContentLoaded', function () {
         if (fechaToActualizadoValue)
             params.set('filter_fechaActualizadoTo', fechaToActualizadoValue);
 
-        let baseUrl = '/reportes/exportarTickets';
+        let baseUrl = 'reportes/exportarTickets';
         const currentPath = window.location.pathname;
         if (currentPath.includes('/tickets/mis-tickets')) {
             params.set('section', 'mis-tickets');
