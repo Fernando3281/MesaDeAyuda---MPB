@@ -277,30 +277,30 @@ public class UsuarioController {
     }
 
     @GetMapping("/detalles/{id}")
-public String detalle(@PathVariable Long id, Model model, Authentication authentication) {
-    if (authentication != null) {
-        Ticket ticket = ticketService.getTicketPorId(id);
-        if (ticket != null) {
-            String correoElectronico = authentication.getName();
-            Usuario usuario = usuarioService.getUsuarioPorCorreo(correoElectronico);
-            
-            if (usuario != null) {
-                // Cargar roles explícitamente
-                List<Rol> roles = rolService.obtenerRolesPorUsuario(usuario.getIdUsuario());
-                usuario.setRoles(roles != null ? roles : new ArrayList<>());
+    public String detalle(@PathVariable Long id, Model model, Authentication authentication) {
+        if (authentication != null) {
+            Ticket ticket = ticketService.getTicketPorId(id);
+            if (ticket != null) {
+                String correoElectronico = authentication.getName();
+                Usuario usuario = usuarioService.getUsuarioPorCorreo(correoElectronico);
 
-                // Get ticket attachments
-                List<ArchivoTicket> archivos = archivoTicketService.obtenerArchivosPorTicket(id);
-                // Contar tickets atendidos por el soportista asignado (si existe)
-                if (ticket.getAsignadoPara() != null) {
-                    ticketService.countTicketsAtendidosPorSoportista(ticket.getAsignadoPara().getIdUsuario(), usuario.getIdUsuario());
+                if (usuario != null) {
+                    // Cargar roles explícitamente
+                    List<Rol> roles = rolService.obtenerRolesPorUsuario(usuario.getIdUsuario());
+                    usuario.setRoles(roles != null ? roles : new ArrayList<>());
+
+                    // Get ticket attachments
+                    List<ArchivoTicket> archivos = archivoTicketService.obtenerArchivosPorTicket(id);
+                    // Contar tickets atendidos por el soportista asignado (si existe)
+                    if (ticket.getAsignadoPara() != null) {
+                        ticketService.countTicketsAtendidosPorSoportista(ticket.getAsignadoPara().getIdUsuario(), usuario.getIdUsuario());
+                    }
+
+                    // Add attributes to the model
+                    model.addAttribute("ticket", ticket);
+                    model.addAttribute("imagenes", archivos);
+                    return "usuario/detalles";
                 }
-
-                // Add attributes to the model
-                model.addAttribute("ticket", ticket);
-                model.addAttribute("imagenes", archivos);
-                return "usuario/detalles";
-            }
             }
         }
         return "redirect:/login";
@@ -853,7 +853,7 @@ public String detalle(@PathVariable Long id, Model model, Authentication authent
     public String mostrarCambiarContrasenaUsuario(@RequestParam String token, Model model) {
         // Verificar si el token existe y es válido
         if (!passwordResetTokens.containsKey(token)) {
-            return "redirect:usuario/perfil?error=token_invalido";
+            return "redirect:/usuario/perfil?error=token_invalido";
         }
 
         Map<String, Object> tokenData = passwordResetTokens.get(token);
@@ -920,7 +920,7 @@ public String detalle(@PathVariable Long id, Model model, Authentication authent
             passwordResetTokens.remove(token);
 
             // Redirigir con parámetro de éxito para que el JavaScript pueda detectarlo
-            return "redirect:usuario/cambiar-contrasena?token=" + token + "&success=true";
+            return "redirect:/usuario/cambiar-contrasena?token=" + token + "&success=true";
 
         } catch (Exception e) {
             return "redirect:usuario/cambiar-contrasena?token=" + token + "&error=update_failed";
