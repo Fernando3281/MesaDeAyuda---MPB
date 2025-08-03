@@ -277,67 +277,31 @@ public class UsuarioController {
     }
 
     @GetMapping("/detalles/{id}")
-public String detalle(@PathVariable Long id, Model model, Authentication authentication) {
-    try {
-        if (authentication == null) {
-            return "redirect:/login";
+    public String detalle(@PathVariable Long id, Model model, Authentication authentication) {
+        if (authentication != null) {
+            Ticket ticket = ticketService.getTicketPorId(id);
+            if (ticket != null) {
+                // Get the logged-in user
+                String correoElectronico = authentication.getName();
+                Usuario usuario = usuarioService.getUsuarioPorCorreo(correoElectronico);
+
+                // Get ticket attachments
+                List<ArchivoTicket> archivos = archivoTicketService.obtenerArchivosPorTicket(id);
+
+                // Contar tickets atendidos por el soportista asignado (si existe)
+                Long ticketsAtendidos = 0L;
+                if (ticket.getAsignadoPara() != null) {
+                    ticketsAtendidos = ticketService.countTicketsAtendidosPorSoportista(ticket.getAsignadoPara().getIdUsuario(), usuario.getIdUsuario());
+                }
+
+                // Add attributes to the model
+                model.addAttribute("ticket", ticket);
+                model.addAttribute("imagenes", archivos);
+                return "usuario/detalles";
+            }
         }
-
-        // Obtener el usuario logueado
-        String correoElectronico = authentication.getName();
-        Usuario usuarioLogueado = usuarioService.getUsuarioPorCorreo(correoElectronico);
-        
-        if (usuarioLogueado == null) {
-            return "redirect:/login";
-        }
-
-        // Obtener el ticket
-        Ticket ticket = ticketService.getTicketPorId(id);
-        if (ticket == null) {
-            // Si el ticket no existe, redirigir al historial con mensaje de error
-            return "redirect:/usuario/historial?error=ticket_no_encontrado";
-        }
-
-        // Verificar permisos: el usuario solo puede ver sus propios tickets
-        // a menos que sea soportista o administrador
-        boolean esSoportistaOAdmin = usuarioLogueado.getRoles().stream()
-                .anyMatch(rol -> "ROL_SOPORTISTA".equals(rol.getNombre()) 
-                              || "ROL_ADMINISTRADOR".equals(rol.getNombre()));
-
-        if (!esSoportistaOAdmin && !ticket.getSolicitante().getIdUsuario().equals(usuarioLogueado.getIdUsuario())) {
-            // Usuario no tiene permisos para ver este ticket
-            return "redirect:/usuario/historial?error=sin_permisos";
-        }
-
-        // Obtener archivos adjuntos del ticket
-        List<ArchivoTicket> archivos = archivoTicketService.obtenerArchivosPorTicket(id);
-
-        // Contar tickets atendidos por el soportista asignado (si existe)
-        Long ticketsAtendidos = 0L;
-        if (ticket.getAsignadoPara() != null) {
-            ticketsAtendidos = ticketService.countTicketsAtendidosPorSoportista(
-                ticket.getAsignadoPara().getIdUsuario(), 
-                usuarioLogueado.getIdUsuario()
-            );
-        }
-
-        // Agregar atributos al modelo
-        model.addAttribute("ticket", ticket);
-        model.addAttribute("imagenes", archivos);
-        model.addAttribute("ticketsAtendidos", ticketsAtendidos);
-        model.addAttribute("usuarioLogueado", usuarioLogueado);
-
-        return "usuario/detalles";
-
-    } catch (Exception e) {
-        // Log del error para debugging
-        System.err.println("Error en detalle de ticket ID " + id + ": " + e.getMessage());
-        e.printStackTrace();
-        
-        // Redirigir con mensaje de error
-        return "redirect:/usuario/historial?error=error_sistema";
+        return "redirect:/login";
     }
-}
 
     @GetMapping("/configuracion")
     public String configuracion(Model model) {
