@@ -4,9 +4,6 @@ FROM eclipse-temurin:20-jdk-alpine
 # Establecer el directorio de trabajo
 WORKDIR /app
 
-# Instalar Maven para construir la aplicación
-RUN apk add --no-cache maven
-
 # Instalar Maven y fuentes necesarias para JasperReports
 RUN apk add --no-cache maven fontconfig ttf-dejavu
 
@@ -51,9 +48,6 @@ ENV NET_SF_JASPERREPORTS_DEFAULT_FONT_NAME=SansSerif
 
 # Configurar JVM para contenedores con configuración específica para JasperReports
 ENV JAVA_OPTS="-Xmx512m -Xms256m -XX:+UseContainerSupport -XX:MaxRAMPercentage=80.0 -Djava.awt.headless=true -Dnet.sf.jasperreports.awt.ignore.missing.font=true -Dnet.sf.jasperreports.default.font.name=SansSerif"
-
-# Configurar JVM para contenedores
-ENV JAVA_OPTS="-Xmx512m -Xms256m -XX:+UseContainerSupport -XX:MaxRAMPercentage=80.0"
 
 # Ejecutar la aplicación
 ENTRYPOINT ["sh", "-c", "java $JAVA_OPTS -jar app.jar"]
