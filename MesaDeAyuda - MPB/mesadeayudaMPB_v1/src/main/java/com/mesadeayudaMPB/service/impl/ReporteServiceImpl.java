@@ -60,13 +60,13 @@ public class ReporteServiceImpl implements ReporteService {
             // Cargar imagen del logo desde recursos estáticos
             if (!parametros.containsKey("LOGO_EMPRESA")) {
                 try {
-                    InputStream logoStream = getClass().getResourceAsStream("/static/images/escudo-barva.png");
+                    InputStream logoStream = getClass().getResourceAsStream("/static/img/escudo-barva.png");
                     if (logoStream != null) {
                         parametros.put("LOGO_EMPRESA", logoStream);
                     } else {
                         // Si no se encuentra, intentar cargar desde el sistema de archivos (solo para desarrollo)
                         try {
-                            Path logoPath = Paths.get("src/main/resources/static/images/escudo-barva.png");
+                            Path logoPath = Paths.get("src/main/resources/static/img/escudo-barva.png");
                             if (Files.exists(logoPath)) {
                                 parametros.put("LOGO_EMPRESA", Files.newInputStream(logoPath));
                             }
