@@ -13,23 +13,18 @@ RUN apk add --no-cache \
     ttf-linux-libertine \
     && fc-cache -fv
 
-# Copiar archivos de configuración de Maven primero (para cache de layers)
+# Copiar archivos de configuración de Maven y reportes
 COPY ["MesaDeAyuda - MPB/mesadeayudaMPB_v1/pom.xml", "."]
-
-# Descargar dependencias (se cachea si pom.xml no cambia)
-RUN mvn dependency:go-offline -B
-
-# Copiar todo el código fuente
 COPY ["MesaDeAyuda - MPB/mesadeayudaMPB_v1/src", "./src"]
+COPY ["MesaDeAyuda - MPB/mesadeayudaMPB_v1/src/main/resources", "./src/main/resources"]
+# Asegurarse de copiar los reportes
+COPY ["MesaDeAyuda - MPB/mesadeayudaMPB_v1/src/main/resources/reports", "./src/main/resources/reports"]
 
 # Compilar la aplicación
 RUN mvn clean package -DskipTests
 
 # Mover el JAR compilado a la raíz del directorio de trabajo
 RUN mv target/*.jar app.jar
-
-# Verificar que los recursos estáticos estén en el JAR
-RUN jar tf app.jar | grep -E "\.(css|js|html)$" | head -10
 
 # Crear un usuario no privilegiado para mayor seguridad
 RUN addgroup -g 1001 -S spring && \
@@ -39,7 +34,7 @@ RUN addgroup -g 1001 -S spring && \
 RUN chown -R spring:spring /app
 USER spring
 
-# Exponer el puerto que usa Spring Boot
+# Exponer el puerto que usa Spring Boot (cambiado a 8080 para Render)
 EXPOSE 8080
 
 # Variables de entorno para producción
