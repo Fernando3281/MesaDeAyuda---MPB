@@ -29,13 +29,9 @@ import java.nio.file.Paths;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.Arrays;
-import java.util.Locale;
 import java.util.Map;
-import java.util.TimeZone;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import net.sf.jasperreports.engine.JRParameter;
-import net.sf.jasperreports.engine.base.JRBaseFont;
 import org.springframework.core.io.ByteArrayResource;
 
 @Service
@@ -45,129 +41,106 @@ public class ReporteServiceImpl implements ReporteService {
     private javax.sql.DataSource dataSource;
 
     @Override
-public ResponseEntity<Resource> generaReporte(String reporte, Map<String, Object> parametros, String tipo) throws IOException {
-    try {
-        // Validar tipo de exportación
-        String tipoExport = tipo.toUpperCase();
-        if (!Arrays.asList("PDF", "VPDF", "XLS", "CSV", "RTF").contains(tipoExport)) {
-            throw new IllegalArgumentException("Tipo de exportación no soportado: " + tipo);
-        }
-
-        // Configuración de fuentes para evitar errores en entornos sin GUI
-        parametros.put(JRParameter.IS_IGNORE_PAGINATION, Boolean.TRUE);
-        parametros.put("REPORT_LOCALE", Locale.getDefault());
-        parametros.put("REPORT_TIME_ZONE", TimeZone.getDefault());
-
-        // Cargar el reporte desde classpath
-        String reportePath = "/reports/" + reporte + ".jasper";
-        InputStream reportStream = getClass().getResourceAsStream(reportePath);
-        
-        if (reportStream == null) {
-            throw new FileNotFoundException("No se encontró el reporte: " + reportePath);
-        }
-
-        // Cargar la imagen como InputStream
-        InputStream imageStream = getClass().getResourceAsStream("/static/img/escudo-barva.png");
-        if (imageStream == null) {
-            throw new FileNotFoundException("No se encontró la imagen: /static/img/escudo-barva.png");
-        }
-
-        // Configurar parámetros de imagen
-        parametros.put("ImagePath", "/static/img/escudo-barva.png"); // Ruta relativa
-        parametros.put("LOGO_EMPRESA", imageStream); // InputStream de la imagen
-
-        JasperPrint jasperPrint = null;
-
-        // Determinar la fuente de datos
-        if (parametros.containsKey("TICKETS_DATA_SOURCE") 
-                && parametros.get("TICKETS_DATA_SOURCE") instanceof JRBeanCollectionDataSource) {
-            jasperPrint = JasperFillManager.fillReport(
-                    reportStream,
-                    parametros,
-                    (JRBeanCollectionDataSource) parametros.get("TICKETS_DATA_SOURCE")
-            );
-        } else {
-            try (Connection conn = dataSource.getConnection()) {
-                jasperPrint = JasperFillManager.fillReport(reportStream, parametros, conn);
-            } catch (SQLException ex) {
-                Logger.getLogger(ReporteServiceImpl.class.getName()).log(Level.SEVERE, null, ex);
-                throw new IOException("Error al conectar con la base de datos", ex);
+    public ResponseEntity<Resource> generaReporte(String reporte, Map<String, Object> parametros, String tipo) throws IOException {
+        try {
+            // Validar tipo de exportación
+            String tipoExport = tipo.toUpperCase();
+            if (!Arrays.asList("PDF", "VPDF", "XLS", "CSV", "RTF").contains(tipoExport)) {
+                throw new IllegalArgumentException("Tipo de exportación no soportado: " + tipo);
             }
-        }
 
-        // Cerrar streams
-        imageStream.close();
-        reportStream.close();
+            // Cargar el reporte desde classpath
+            String reportePath = "/reports/" + reporte + ".jasper";
+            InputStream reportStream = getClass().getResourceAsStream(reportePath);
+            
+            if (reportStream == null) {
+                throw new FileNotFoundException("No se encontró el reporte: " + reportePath);
+            }
 
-        // Configurar respuesta
-        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-        String contentType;
-        String fileExtension;
-        String disposition = tipoExport.equals("VPDF") ? "inline" : "attachment";
+            // Cargar la imagen como InputStream
+            InputStream imageStream = getClass().getResourceAsStream("/static/img/escudo-barva.png");
+            if (imageStream == null) {
+                throw new FileNotFoundException("No se encontró la imagen: /static/img/escudo-barva.png");
+            }
 
-        switch (tipoExport) {
-            case "PDF":
-            case "VPDF":
-                try {
+            // Configurar parámetros
+            parametros.put("ImagePath", "/static/img/escudo-barva.png"); // Ruta relativa
+            parametros.put("LOGO_EMPRESA", imageStream); // InputStream de la imagen
+
+            JasperPrint jasperPrint = null;
+
+            // Determinar la fuente de datos
+            if (parametros.containsKey("TICKETS_DATA_SOURCE") 
+                    && parametros.get("TICKETS_DATA_SOURCE") instanceof JRBeanCollectionDataSource) {
+                jasperPrint = JasperFillManager.fillReport(
+                        reportStream,
+                        parametros,
+                        (JRBeanCollectionDataSource) parametros.get("TICKETS_DATA_SOURCE")
+                );
+            } else {
+                try (Connection conn = dataSource.getConnection()) {
+                    jasperPrint = JasperFillManager.fillReport(reportStream, parametros, conn);
+                } catch (SQLException ex) {
+                    Logger.getLogger(ReporteServiceImpl.class.getName()).log(Level.SEVERE, null, ex);
+                }
+            }
+
+            // Cerrar el stream de la imagen después de usarlo
+            imageStream.close();
+
+            // Configurar respuesta
+            ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+            String contentType;
+            String fileExtension;
+            String disposition = tipoExport.equals("VPDF") ? "inline" : "attachment";
+
+            switch (tipoExport) {
+                case "PDF":
+                case "VPDF":
                     JasperExportManager.exportReportToPdfStream(jasperPrint, outputStream);
-                } catch (JRException e) {
-                    throw new IOException("Error al exportar a PDF: " + e.getMessage(), e);
-                }
-                contentType = MediaType.APPLICATION_PDF_VALUE;
-                fileExtension = "pdf";
-                break;
-            case "XLS":
-                JRXlsxExporter exporterXLS = new JRXlsxExporter();
-                exporterXLS.setExporterInput(new SimpleExporterInput(jasperPrint));
-                exporterXLS.setExporterOutput(new SimpleOutputStreamExporterOutput(outputStream));
-                try {
+                    contentType = MediaType.APPLICATION_PDF_VALUE;
+                    fileExtension = "pdf";
+                    break;
+                case "XLS":
+                    JRXlsxExporter exporterXLS = new JRXlsxExporter();
+                    exporterXLS.setExporterInput(new SimpleExporterInput(jasperPrint));
+                    exporterXLS.setExporterOutput(new SimpleOutputStreamExporterOutput(outputStream));
                     exporterXLS.exportReport();
-                } catch (JRException e) {
-                    throw new IOException("Error al exportar a Excel: " + e.getMessage(), e);
-                }
-                contentType = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
-                fileExtension = "xlsx";
-                break;
-            case "CSV":
-                JRCsvExporter exporterCSV = new JRCsvExporter();
-                exporterCSV.setExporterInput(new SimpleExporterInput(jasperPrint));
-                exporterCSV.setExporterOutput(new SimpleWriterExporterOutput(outputStream));
-                try {
+                    contentType = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
+                    fileExtension = "xlsx";
+                    break;
+                case "CSV":
+                    JRCsvExporter exporterCSV = new JRCsvExporter();
+                    exporterCSV.setExporterInput(new SimpleExporterInput(jasperPrint));
+                    exporterCSV.setExporterOutput(new SimpleWriterExporterOutput(outputStream));
                     exporterCSV.exportReport();
-                } catch (JRException e) {
-                    throw new IOException("Error al exportar a CSV: " + e.getMessage(), e);
-                }
-                contentType = "text/csv";
-                fileExtension = "csv";
-                break;
-            case "RTF":
-                JRRtfExporter exporterRTF = new JRRtfExporter();
-                exporterRTF.setExporterInput(new SimpleExporterInput(jasperPrint));
-                exporterRTF.setExporterOutput(new SimpleWriterExporterOutput(outputStream));
-                try {
+                    contentType = "text/csv";
+                    fileExtension = "csv";
+                    break;
+                case "RTF":
+                    JRRtfExporter exporterRTF = new JRRtfExporter();
+                    exporterRTF.setExporterInput(new SimpleExporterInput(jasperPrint));
+                    exporterRTF.setExporterOutput(new SimpleWriterExporterOutput(outputStream));
                     exporterRTF.exportReport();
-                } catch (JRException e) {
-                    throw new IOException("Error al exportar a RTF: " + e.getMessage(), e);
-                }
-                contentType = "application/rtf";
-                fileExtension = "rtf";
-                break;
-            default:
-                throw new IllegalArgumentException("Tipo no soportado: " + tipo);
+                    contentType = "application/rtf";
+                    fileExtension = "rtf";
+                    break;
+                default:
+                    throw new IllegalArgumentException("Tipo no soportado: " + tipo);
+            }
+
+            byte[] reportBytes = outputStream.toByteArray();
+            ByteArrayResource resource = new ByteArrayResource(reportBytes);
+
+            return ResponseEntity.ok()
+                    .header(HttpHeaders.CONTENT_DISPOSITION,
+                            disposition + "; filename=\"" + reporte + "." + fileExtension + "\"")
+                    .contentType(MediaType.parseMediaType(contentType))
+                    .contentLength(reportBytes.length)
+                    .body(resource);
+
+        } catch (JRException e) {
+            throw new IOException("Error al generar el reporte: " + e.getMessage(), e);
         }
-
-        byte[] reportBytes = outputStream.toByteArray();
-        ByteArrayResource resource = new ByteArrayResource(reportBytes);
-
-        return ResponseEntity.ok()
-                .header(HttpHeaders.CONTENT_DISPOSITION,
-                        disposition + "; filename=\"" + reporte + "." + fileExtension + "\"")
-                .contentType(MediaType.parseMediaType(contentType))
-                .contentLength(reportBytes.length)
-                .body(resource);
-
-    } catch (Exception e) {
-        throw new IOException("Error al generar el reporte: " + e.getMessage(), e);
     }
-}
 }
