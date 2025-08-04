@@ -7,10 +7,12 @@ WORKDIR /app
 # Instalar Maven para construir la aplicación
 RUN apk add --no-cache maven
 
-# Copiar archivos de configuración de Maven
+# Copiar archivos de configuración de Maven y reportes
 COPY ["MesaDeAyuda - MPB/mesadeayudaMPB_v1/pom.xml", "."]
 COPY ["MesaDeAyuda - MPB/mesadeayudaMPB_v1/src", "./src"]
 COPY ["MesaDeAyuda - MPB/mesadeayudaMPB_v1/src/main/resources", "./src/main/resources"]
+# Asegurarse de copiar los reportes
+COPY ["MesaDeAyuda - MPB/mesadeayudaMPB_v1/src/main/resources/reports", "./src/main/resources/reports"]
 
 # Compilar la aplicación
 RUN mvn clean package -DskipTests
@@ -38,6 +40,3 @@ ENV JAVA_OPTS="-Xmx512m -Xms256m -XX:+UseContainerSupport -XX:MaxRAMPercentage=8
 
 # Ejecutar la aplicación
 ENTRYPOINT ["sh", "-c", "java $JAVA_OPTS -jar app.jar"]
-
-# Agrega esto antes del ENTRYPOINT si necesitas configurar algo específico
-ENV ALLOWED_IPS=34.213.214.55

@@ -23,6 +23,9 @@ import java.io.ByteArrayOutputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.Arrays;
@@ -46,45 +49,54 @@ public class ReporteServiceImpl implements ReporteService {
                 throw new IllegalArgumentException("Tipo de exportación no soportado: " + tipo);
             }
 
-            // Cargar el reporte desde classpath - Opción mejorada
-            String reportePath = "/reports/" + reporte + ".jasper"; // Cambiado a /reports/
-            InputStream reportStream;
-
-            try {
-                // Primero intenta cargar como recurso de clase
-                reportStream = getClass().getResourceAsStream(reportePath);
-                if (reportStream == null) {
-                    // Si no se encuentra, intenta con ClassPathResource
-                    Resource resource = new ClassPathResource("reports/" + reporte + ".jasper");
-                    reportStream = resource.getInputStream();
-                }
-            } catch (IOException e) {
-                throw new FileNotFoundException("No se encontró el reporte: " + reportePath
-                        + ". Verifique que el archivo exista en src/main/resources/reports/");
+            // Cargar el reporte desde classpath
+            String reportePath = "/reports/" + reporte + ".jasper";
+            InputStream reportStream = getClass().getResourceAsStream(reportePath);
+            
+            if (reportStream == null) {
+                throw new FileNotFoundException("No se encontró el reporte: " + reportePath);
             }
 
-            // Cargar imagen del logo
+            // Cargar imagen del logo desde recursos estáticos
             if (!parametros.containsKey("LOGO_EMPRESA")) {
-                InputStream logoStream = getClass().getResourceAsStream("/static/images/escudo-barva.png");
-                parametros.put("LOGO_EMPRESA", logoStream);
+                try {
+                    InputStream logoStream = getClass().getResourceAsStream("/static/images/escudo-barva.png");
+                    if (logoStream != null) {
+                        parametros.put("LOGO_EMPRESA", logoStream);
+                    } else {
+                        // Si no se encuentra, intentar cargar desde el sistema de archivos (solo para desarrollo)
+                        try {
+                            Path logoPath = Paths.get("src/main/resources/static/images/escudo-barva.png");
+                            if (Files.exists(logoPath)) {
+                                parametros.put("LOGO_EMPRESA", Files.newInputStream(logoPath));
+                            }
+                        } catch (IOException e) {
+                            // Si no se encuentra en ningún lugar, continuar sin logo
+                            Logger.getLogger(ReporteServiceImpl.class.getName())
+                                .warning("No se pudo cargar el logo: escudo-barva.png");
+                        }
+                    }
+                } catch (Exception e) {
+                    Logger.getLogger(ReporteServiceImpl.class.getName())
+                        .warning("Error al cargar el logo: " + e.getMessage());
+                }
             }
-            JasperPrint jasperPrint = null;
 
+            JasperPrint jasperPrint;
+            
             // Determinar la fuente de datos
             if (parametros.containsKey("TICKETS_DATA_SOURCE")
                     && parametros.get("TICKETS_DATA_SOURCE") instanceof JRBeanCollectionDataSource) {
-                // Usar data source de colección de beans
                 jasperPrint = JasperFillManager.fillReport(
-                        reportStream,
-                        parametros,
-                        (JRBeanCollectionDataSource) parametros.get("TICKETS_DATA_SOURCE")
+                    reportStream,
+                    parametros,
+                    (JRBeanCollectionDataSource) parametros.get("TICKETS_DATA_SOURCE")
                 );
             } else {
-                // Usar conexión JDBC
                 try (Connection conn = dataSource.getConnection()) {
                     jasperPrint = JasperFillManager.fillReport(reportStream, parametros, conn);
                 } catch (SQLException ex) {
-                    Logger.getLogger(ReporteServiceImpl.class.getName()).log(Level.SEVERE, null, ex);
+                    throw new IOException("Error al conectar con la base de datos", ex);
                 }
             }
 
@@ -130,14 +142,12 @@ public class ReporteServiceImpl implements ReporteService {
             }
 
             byte[] reportBytes = outputStream.toByteArray();
-            ByteArrayResource resource = new ByteArrayResource(reportBytes);
-
             return ResponseEntity.ok()
                     .header(HttpHeaders.CONTENT_DISPOSITION,
                             disposition + "; filename=\"" + reporte + "." + fileExtension + "\"")
                     .contentType(MediaType.parseMediaType(contentType))
                     .contentLength(reportBytes.length)
-                    .body(resource);
+                    .body(new ByteArrayResource(reportBytes));
 
         } catch (JRException e) {
             throw new IOException("Error al generar el reporte: " + e.getMessage(), e);
