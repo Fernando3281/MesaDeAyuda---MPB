@@ -52,51 +52,31 @@ public class ReporteServiceImpl implements ReporteService {
             // Cargar el reporte desde classpath
             String reportePath = "/reports/" + reporte + ".jasper";
             InputStream reportStream = getClass().getResourceAsStream(reportePath);
-            
+
             if (reportStream == null) {
                 throw new FileNotFoundException("No se encontró el reporte: " + reportePath);
             }
 
-            // Cargar imagen del logo desde recursos estáticos
-            if (!parametros.containsKey("LOGO_EMPRESA")) {
-                try {
-                    InputStream logoStream = getClass().getResourceAsStream("/static/img/escudo-barva.png");
-                    if (logoStream != null) {
-                        parametros.put("LOGO_EMPRESA", logoStream);
-                    } else {
-                        // Si no se encuentra, intentar cargar desde el sistema de archivos (solo para desarrollo)
-                        try {
-                            Path logoPath = Paths.get("src/main/resources/static/img/escudo-barva.png");
-                            if (Files.exists(logoPath)) {
-                                parametros.put("LOGO_EMPRESA", Files.newInputStream(logoPath));
-                            }
-                        } catch (IOException e) {
-                            // Si no se encuentra en ningún lugar, continuar sin logo
-                            Logger.getLogger(ReporteServiceImpl.class.getName())
-                                .warning("No se pudo cargar el logo: escudo-barva.png");
-                        }
-                    }
-                } catch (Exception e) {
-                    Logger.getLogger(ReporteServiceImpl.class.getName())
-                        .warning("Error al cargar el logo: " + e.getMessage());
-                }
+            // Configurar la ruta de la imagen
+            if (!parametros.containsKey("ImagePath")) {
+                parametros.put("ImagePath", "static/img/escudo-barva.png");
             }
 
-            JasperPrint jasperPrint;
-            
+            JasperPrint jasperPrint = null;
+
             // Determinar la fuente de datos
             if (parametros.containsKey("TICKETS_DATA_SOURCE")
                     && parametros.get("TICKETS_DATA_SOURCE") instanceof JRBeanCollectionDataSource) {
                 jasperPrint = JasperFillManager.fillReport(
-                    reportStream,
-                    parametros,
-                    (JRBeanCollectionDataSource) parametros.get("TICKETS_DATA_SOURCE")
+                        reportStream,
+                        parametros,
+                        (JRBeanCollectionDataSource) parametros.get("TICKETS_DATA_SOURCE")
                 );
             } else {
                 try (Connection conn = dataSource.getConnection()) {
                     jasperPrint = JasperFillManager.fillReport(reportStream, parametros, conn);
                 } catch (SQLException ex) {
-                    throw new IOException("Error al conectar con la base de datos", ex);
+                    Logger.getLogger(ReporteServiceImpl.class.getName()).log(Level.SEVERE, null, ex);
                 }
             }
 
@@ -142,12 +122,14 @@ public class ReporteServiceImpl implements ReporteService {
             }
 
             byte[] reportBytes = outputStream.toByteArray();
+            ByteArrayResource resource = new ByteArrayResource(reportBytes);
+
             return ResponseEntity.ok()
                     .header(HttpHeaders.CONTENT_DISPOSITION,
                             disposition + "; filename=\"" + reporte + "." + fileExtension + "\"")
                     .contentType(MediaType.parseMediaType(contentType))
                     .contentLength(reportBytes.length)
-                    .body(new ByteArrayResource(reportBytes));
+                    .body(resource);
 
         } catch (JRException e) {
             throw new IOException("Error al generar el reporte: " + e.getMessage(), e);
