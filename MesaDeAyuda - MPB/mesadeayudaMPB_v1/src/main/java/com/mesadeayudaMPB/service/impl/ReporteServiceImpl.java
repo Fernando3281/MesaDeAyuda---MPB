@@ -52,20 +52,25 @@ public class ReporteServiceImpl implements ReporteService {
             // Cargar el reporte desde classpath
             String reportePath = "/reports/" + reporte + ".jasper";
             InputStream reportStream = getClass().getResourceAsStream(reportePath);
-
+            
             if (reportStream == null) {
                 throw new FileNotFoundException("No se encontró el reporte: " + reportePath);
             }
 
-            // Configurar la ruta de la imagen
-            if (!parametros.containsKey("ImagePath")) {
-                parametros.put("ImagePath", "static/img/escudo-barva.png");
+            // Cargar la imagen como InputStream
+            InputStream imageStream = getClass().getResourceAsStream("/static/img/escudo-barva.png");
+            if (imageStream == null) {
+                throw new FileNotFoundException("No se encontró la imagen: /static/img/escudo-barva.png");
             }
+
+            // Configurar parámetros
+            parametros.put("ImagePath", "/static/img/escudo-barva.png"); // Ruta relativa
+            parametros.put("LOGO_EMPRESA", imageStream); // InputStream de la imagen
 
             JasperPrint jasperPrint = null;
 
             // Determinar la fuente de datos
-            if (parametros.containsKey("TICKETS_DATA_SOURCE")
+            if (parametros.containsKey("TICKETS_DATA_SOURCE") 
                     && parametros.get("TICKETS_DATA_SOURCE") instanceof JRBeanCollectionDataSource) {
                 jasperPrint = JasperFillManager.fillReport(
                         reportStream,
@@ -79,6 +84,9 @@ public class ReporteServiceImpl implements ReporteService {
                     Logger.getLogger(ReporteServiceImpl.class.getName()).log(Level.SEVERE, null, ex);
                 }
             }
+
+            // Cerrar el stream de la imagen después de usarlo
+            imageStream.close();
 
             // Configurar respuesta
             ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
