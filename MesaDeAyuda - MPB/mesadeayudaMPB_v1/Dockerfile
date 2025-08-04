@@ -1,18 +1,20 @@
-# Usar imagen base de Java con JDK 20 (coincide con tu pom.xml)
+# Usar imagen base de Java con JDK 20
 FROM eclipse-temurin:20-jdk-alpine
+
+# Instalar dependencias necesarias
+RUN apk add --no-cache maven fontconfig ttf-dejavu ttf-liberation
+
+# Configurar fuentes
+RUN mkdir -p /usr/share/fonts/truetype && \
+    ln -s /usr/share/fonts/truetype/dejavu /usr/share/fonts/truetype/dejavu
 
 # Establecer el directorio de trabajo
 WORKDIR /app
 
-# Instalar Maven para construir la aplicación
-RUN apk add --no-cache maven
-
-# Copiar archivos de configuración de Maven y reportes
+# Copiar archivos de configuración de Maven
 COPY ["MesaDeAyuda - MPB/mesadeayudaMPB_v1/pom.xml", "."]
 COPY ["MesaDeAyuda - MPB/mesadeayudaMPB_v1/src", "./src"]
 COPY ["MesaDeAyuda - MPB/mesadeayudaMPB_v1/src/main/resources", "./src/main/resources"]
-# Asegurarse de copiar los reportes
-COPY ["MesaDeAyuda - MPB/mesadeayudaMPB_v1/src/main/resources/reports", "./src/main/resources/reports"]
 
 # Compilar la aplicación
 RUN mvn clean package -DskipTests
@@ -28,15 +30,13 @@ RUN addgroup -g 1001 -S spring && \
 RUN chown -R spring:spring /app
 USER spring
 
-# Exponer el puerto que usa Spring Boot (cambiado a 8080 para Render)
+# Exponer el puerto que usa Spring Boot
 EXPOSE 8080
 
 # Variables de entorno para producción
 ENV SPRING_PROFILES_ACTIVE=prod
 ENV SERVER_PORT=8080
-
-# Configurar JVM para contenedores
-ENV JAVA_OPTS="-Xmx512m -Xms256m -XX:+UseContainerSupport -XX:MaxRAMPercentage=80.0"
+ENV JAVA_OPTS="-Xmx512m -Xms256m -XX:+UseContainerSupport -XX:MaxRAMPercentage=80.0 -Djava.awt.headless=true"
 
 # Ejecutar la aplicación
 ENTRYPOINT ["sh", "-c", "java $JAVA_OPTS -jar app.jar"]
