@@ -13,18 +13,40 @@ RUN apk add --no-cache \
     ttf-linux-libertine \
     && fc-cache -fv
 
-# Copiar archivos de configuración de Maven y reportes
+# Copiar archivos de configuración de Maven primero (para mejor cache de Docker)
 COPY ["MesaDeAyuda - MPB/mesadeayudaMPB_v1/pom.xml", "."]
-COPY ["MesaDeAyuda - MPB/mesadeayudaMPB_v1/src", "./src"]
-COPY ["MesaDeAyuda - MPB/mesadeayudaMPB_v1/src/main/resources", "./src/main/resources"]
-# Asegurarse de copiar los reportes
-COPY ["MesaDeAyuda - MPB/mesadeayudaMPB_v1/src/main/resources/reports", "./src/main/resources/reports"]
 
-# Compilar la aplicación
-RUN mvn clean package -DskipTests
+# Descargar dependencias de Maven (esto se cachea si pom.xml no cambia)
+RUN mvn dependency:go-offline -B
+
+# Copiar todo el código fuente incluyendo recursos estáticos
+COPY ["MesaDeAyuda - MPB/mesadeayudaMPB_v1/src", "./src"]
+
+# Verificar que los archivos estáticos se copiaron correctamente
+RUN echo "=== Verificando estructura de archivos ===" && \
+    find src/main/resources -type f -name "*.css" -o -name "*.js" -o -name "*.png" -o -name "*.jpg" -o -name "*.jpeg" -o -name "*.gif" | head -20 && \
+    echo "=== Verificando templates ===" && \
+    find src/main/resources/templates -type f -name "*.html" | head -10 && \
+    echo "=== Verificando reportes ===" && \
+    find src/main/resources/reports -type f | head -10
+
+# Compilar la aplicación con perfil de producción
+RUN mvn clean package -DskipTests -Pprod || mvn clean package -DskipTests
+
+# Verificar que el JAR se compiló correctamente
+RUN echo "=== Verificando JAR compilado ===" && \
+    ls -la target/ && \
+    echo "=== Verificando contenido del JAR ===" && \
+    jar -tf target/*.jar | grep -E "\.(css|js|png|jpg|jpeg|gif|html)$" | head -20
 
 # Mover el JAR compilado a la raíz del directorio de trabajo
 RUN mv target/*.jar app.jar
+
+# Verificar el contenido final del JAR
+RUN echo "=== Contenido final del JAR app.jar ===" && \
+    jar -tf app.jar | grep -E "static/.*\.(css|js|png|jpg|jpeg|gif)$" | head -10 && \
+    echo "=== Templates en el JAR ===" && \
+    jar -tf app.jar | grep -E "templates/.*\.html$" | head -10
 
 # Crear un usuario no privilegiado para mayor seguridad
 RUN addgroup -g 1001 -S spring && \
