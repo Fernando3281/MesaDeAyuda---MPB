@@ -241,7 +241,8 @@ public class UsuarioController {
     }
 
     @GetMapping("/historial")
-    public String historial(Model model, Authentication authentication) {
+    public String historial(Model model, Authentication authentication,
+            @RequestParam(value = "preserveFilters", required = false) String preserveFilters) {
         if (authentication != null) {
             String correoElectronico = authentication.getName();
             Usuario usuario = usuarioService.getUsuarioPorCorreo(correoElectronico);
@@ -276,7 +277,10 @@ public class UsuarioController {
                 model.addAttribute("ticketsConEstados", ticketsConEstados);
                 model.addAttribute("usuario", usuario);
                 model.addAttribute("esSoportistaOAdmin", esSoportistaOAdmin);
-                model.addAttribute("categoriasActivas", categoriasActivas); // Agregar categorías al modelo
+                model.addAttribute("categoriasActivas", categoriasActivas);
+
+                // Agregar flag para indicar si se deben preservar los filtros
+                model.addAttribute("preserveFilters", "true".equals(preserveFilters));
 
                 return "/usuario/historial";
             }
@@ -299,7 +303,8 @@ public class UsuarioController {
     }
 
     @GetMapping("/detalles/{id}")
-    public String detalle(@PathVariable Long id, Model model, Authentication authentication) {
+    public String detalle(@PathVariable Long id, Model model, Authentication authentication,
+            HttpServletRequest request) {
         if (authentication != null) {
             Ticket ticket = ticketService.getTicketPorId(id);
             if (ticket != null) {
@@ -321,6 +326,10 @@ public class UsuarioController {
                 model.addAttribute("imagenes", archivos);
                 model.addAttribute("usuario", usuario);
                 model.addAttribute("ticketsAtendidos", ticketsAtendidos);
+
+                // Obtener el referer para saber de dónde viene
+                String referer = request.getHeader("Referer");
+                model.addAttribute("referer", referer);
 
                 return "/usuario/detalles";
             }

@@ -1124,7 +1124,7 @@ document.addEventListener('DOMContentLoaded', function () {
     }
     const btnCerrarError = document.querySelector('#errorPriorityModalOverlay .btn-primary');
     if (btnCerrarError) {
-        btnCerrarError.onclick = closeErrorPriorityModal();
+        btnCerrarError.onclick = closeErrorPriorityModal;
     }
     const errorModalOverlay = document.getElementById('errorPriorityModalOverlay');
     if (errorModalOverlay) {
