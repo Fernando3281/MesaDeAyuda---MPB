@@ -17,11 +17,11 @@ import java.time.LocalDate;
 import java.time.ZoneId;
 import java.util.*;
 import java.util.stream.Collectors;
-import net.sf.jasperreports.engine.data.JRBeanCollectionDataSource;
 import org.springframework.core.io.Resource;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.RequestParam;
+import java.time.format.DateTimeFormatter;
 
 @Controller
 @RequestMapping("/reportes")
@@ -39,157 +39,81 @@ public class ReporteController {
     @Autowired
     private ReporteService reporteService;
 
+    /**
+     * Muestra el dashboard de reportes con estadísticas y gráficos
+     * @param model Modelo para pasar datos a la vista
+     * @param authentication Información de autenticación del usuario
+     * @return Vista del dashboard de reportes
+     */
     @GetMapping("/listado")
     public String mostrarDashboardReportes(Model model, Authentication authentication) {
-        // Estadísticas principales
+        // Obtener datos base
         List<Ticket> todosTickets = ticketService.getTickets();
         List<Usuario> todosUsuarios = usuarioService.getUsuarios();
 
-        // Total de tickets
-        int totalTickets = todosTickets.size();
+        // Estadísticas principales
+        model.addAttribute("totalTickets", todosTickets.size());
+        model.addAttribute("ticketsAbiertos", contarTicketsAbiertos(todosTickets));
+        model.addAttribute("ticketsPendientes", contarTicketsPendientes(todosTickets));
+        model.addAttribute("ticketsResueltos", contarTicketsResueltos(todosTickets));
+        model.addAttribute("ticketsCerrados", contarTicketsCerrados(todosTickets));
+        model.addAttribute("totalUsuarios", todosUsuarios.size());
+        model.addAttribute("totalColaboradores", contarColaboradores(todosUsuarios));
 
-        // Modified: Count only unassigned tickets with "Abierto" status
-        long ticketsAbiertos = todosTickets.stream()
-                .filter(t -> "Abierto".equals(t.getEstado()) && t.getAsignadoPara() == null)
-                .count();
-        long ticketsPendientes = todosTickets.stream()
-                .filter(t -> "Pendiente".equals(t.getEstado()))
-                .count();
-        long ticketsResueltos = todosTickets.stream()
-                .filter(t -> "Resuelto".equals(t.getEstado()))
-                .count();
-        long ticketsCerrados = todosTickets.stream()
-                .filter(t -> "Cerrado".equals(t.getEstado()))
-                .count();
-
-        // Total de usuarios
-        int totalUsuarios = todosUsuarios.size();
-
-        // Total de colaboradores (administradores y soportistas)
-        long totalColaboradores = todosUsuarios.stream()
-                .filter(u -> u.getRoles().stream()
-                .anyMatch(r -> "ROL_SOPORTISTA".equals(r.getNombre())
-                || "ROL_ADMINISTRADOR".equals(r.getNombre())))
-                .count();
-
-        // Tickets del usuario autenticado
-        long misTicketsPendientes = 0;
-        long misTicketsResueltos = 0;
+        // Estadísticas del usuario actual
         if (authentication != null) {
             Usuario usuario = usuarioService.getUsuarioPorCorreo(authentication.getName());
             if (usuario != null) {
-                misTicketsPendientes = todosTickets.stream()
-                        .filter(t -> usuario.equals(t.getAsignadoPara())
-                        && ("Abierto".equals(t.getEstado()) || "Pendiente".equals(t.getEstado())))
-                        .count();
-                misTicketsResueltos = todosTickets.stream()
-                        .filter(t -> usuario.equals(t.getAsignadoPara())
-                        && ("Resuelto".equals(t.getEstado()) || "Cerrado".equals(t.getEstado())))
-                        .count();
+                model.addAttribute("misTicketsPendientes", contarTicketsPendientesUsuario(todosTickets, usuario));
+                model.addAttribute("misTicketsResueltos", contarTicketsResueltosUsuario(todosTickets, usuario));
             }
         }
 
-        // Tickets por diferentes períodos
-        Map<String, Long> ticketsPorMes6m = calcularTicketsPorPeriodo(todosTickets, 6);
-        Map<String, Long> ticketsPorMes1y = calcularTicketsPorPeriodo(todosTickets, 12);
-        Map<String, Long> ticketsPorMes3m = calcularTicketsPorPeriodo(todosTickets, 3);
-
-        // Tickets abiertos y resueltos por mes para el gráfico
-        Map<String, Map<String, Long>> estadoTickets6m = calcularEstadoTicketsPorPeriodo(todosTickets, 6);
-        Map<String, Map<String, Long>> estadoTickets1y = calcularEstadoTicketsPorPeriodo(todosTickets, 12);
-        Map<String, Map<String, Long>> estadoTickets3m = calcularEstadoTicketsPorPeriodo(todosTickets, 3);
-
-        // Categorías más comunes
-        Map<String, Long> categoriasPopulares = calcularCategoriasPopulares(todosTickets);
-
-        // Colaboradores más activos
-        Map<String, Long> colaboradoresActivos = calcularColaboradoresActivos(todosTickets, todosUsuarios);
-
-        // Historial de auditoría
-        List<Map<String, Object>> historialAuditoria = obtenerHistorialAuditoria();
-
-        // Ordenar los meses cronológicamente
-        ticketsPorMes6m = ordenarMeses(ticketsPorMes6m);
-        ticketsPorMes1y = ordenarMeses(ticketsPorMes1y);
-        ticketsPorMes3m = ordenarMeses(ticketsPorMes3m);
-
-        estadoTickets6m = ordenarMesesEnMapa(estadoTickets6m);
-        estadoTickets1y = ordenarMesesEnMapa(estadoTickets1y);
-        estadoTickets3m = ordenarMesesEnMapa(estadoTickets3m);
-
-        // Agregar datos al modelo
-        model.addAttribute("totalTickets", totalTickets);
-        model.addAttribute("ticketsAbiertos", ticketsAbiertos);
-        model.addAttribute("ticketsPendientes", ticketsPendientes);
-        model.addAttribute("ticketsResueltos", ticketsResueltos);
-        model.addAttribute("ticketsCerrados", ticketsCerrados);
-        model.addAttribute("totalUsuarios", totalUsuarios);
-        model.addAttribute("totalColaboradores", totalColaboradores);
-        model.addAttribute("misTicketsPendientes", misTicketsPendientes);
-        model.addAttribute("misTicketsResueltos", misTicketsResueltos);
-
         // Datos para gráficos
-        model.addAttribute("ticketsPorMes", ticketsPorMes6m);
-        model.addAttribute("ticketsPorUltimoAnio", ticketsPorMes1y);
-        model.addAttribute("ticketsPorUltimoTrimestre", ticketsPorMes3m);
+        model.addAttribute("ticketsPorMes", calcularTicketsPorPeriodo(todosTickets, 6));
+        model.addAttribute("ticketsPorUltimoAnio", calcularTicketsPorPeriodo(todosTickets, 12));
+        model.addAttribute("ticketsPorUltimoTrimestre", calcularTicketsPorPeriodo(todosTickets, 3));
 
-        model.addAttribute("estadoTicketsPorMes", estadoTickets6m);
-        model.addAttribute("estadoTicketsPorUltimoAnio", estadoTickets1y);
-        model.addAttribute("estadoTicketsPorUltimoTrimestre", estadoTickets3m);
+        model.addAttribute("estadoTicketsPorMes", calcularEstadoTicketsPorPeriodo(todosTickets, 6));
+        model.addAttribute("estadoTicketsPorUltimoAnio", calcularEstadoTicketsPorPeriodo(todosTickets, 12));
+        model.addAttribute("estadoTicketsPorUltimoTrimestre", calcularEstadoTicketsPorPeriodo(todosTickets, 3));
 
-        model.addAttribute("categoriasPopulares", categoriasPopulares);
-        model.addAttribute("colaboradoresActivos", colaboradoresActivos);
-        model.addAttribute("historialAuditoria", historialAuditoria);
+        // Datos adicionales
+        model.addAttribute("categoriasPopulares", calcularCategoriasPopulares(todosTickets));
+        model.addAttribute("colaboradoresActivos", calcularColaboradoresActivos(todosTickets, todosUsuarios));
+        model.addAttribute("historialAuditoria", obtenerHistorialAuditoria());
 
         return "reportes/listado";
     }
 
+    /**
+     * Endpoint para obtener datos del dashboard en formato JSON
+     * @param authentication Información de autenticación del usuario
+     * @return ResponseEntity con los datos del dashboard
+     */
     @GetMapping("/datos")
     public ResponseEntity<Map<String, Object>> obtenerDatosDashboard(Authentication authentication) {
         Map<String, Object> datos = new HashMap<>();
-
-        // Estadísticas principales
         List<Ticket> todosTickets = ticketService.getTickets();
         List<Usuario> todosUsuarios = usuarioService.getUsuarios();
 
+        // Estadísticas principales
         datos.put("totalTickets", todosTickets.size());
-        // Modified: Count only unassigned tickets with "Abierto" status
-        datos.put("ticketsAbiertos", todosTickets.stream()
-                .filter(t -> "Abierto".equals(t.getEstado()) && t.getAsignadoPara() == null)
-                .count());
-        datos.put("ticketsPendientes", todosTickets.stream()
-                .filter(t -> "Pendiente".equals(t.getEstado()))
-                .count());
-        datos.put("ticketsResueltos", todosTickets.stream()
-                .filter(t -> "Resuelto".equals(t.getEstado()))
-                .count());
-        datos.put("ticketsCerrados", todosTickets.stream()
-                .filter(t -> "Cerrado".equals(t.getEstado()))
-                .count());
+        datos.put("ticketsAbiertos", contarTicketsAbiertos(todosTickets));
+        datos.put("ticketsPendientes", contarTicketsPendientes(todosTickets));
+        datos.put("ticketsResueltos", contarTicketsResueltos(todosTickets));
+        datos.put("ticketsCerrados", contarTicketsCerrados(todosTickets));
         datos.put("totalUsuarios", todosUsuarios.size());
-        datos.put("totalColaboradores", todosUsuarios.stream()
-                .filter(u -> u.getRoles().stream()
-                .anyMatch(r -> "ROL_SOPORTISTA".equals(r.getNombre()) || "ROL_ADMINISTRADOR".equals(r.getNombre())))
-                .count());
+        datos.put("totalColaboradores", contarColaboradores(todosUsuarios));
 
-        // Tickets del usuario autenticado
-        long misTicketsPendientes = 0;
-        long misTicketsResueltos = 0;
+        // Estadísticas del usuario actual
         if (authentication != null) {
             Usuario usuario = usuarioService.getUsuarioPorCorreo(authentication.getName());
             if (usuario != null) {
-                misTicketsPendientes = todosTickets.stream()
-                        .filter(t -> usuario.equals(t.getAsignadoPara())
-                        && ("Abierto".equals(t.getEstado()) || "Pendiente".equals(t.getEstado())))
-                        .count();
-                misTicketsResueltos = todosTickets.stream()
-                        .filter(t -> usuario.equals(t.getAsignadoPara())
-                        && ("Resuelto".equals(t.getEstado()) || "Cerrado".equals(t.getEstado())))
-                        .count();
+                datos.put("misTicketsPendientes", contarTicketsPendientesUsuario(todosTickets, usuario));
+                datos.put("misTicketsResueltos", contarTicketsResueltosUsuario(todosTickets, usuario));
             }
         }
-        datos.put("misTicketsPendientes", misTicketsPendientes);
-        datos.put("misTicketsResueltos", misTicketsResueltos);
 
         // Datos para gráficos
         datos.put("ticketsPorMes", calcularTicketsPorPeriodo(todosTickets, 6));
@@ -199,156 +123,207 @@ public class ReporteController {
         datos.put("estadoTicketsPorUltimoAnio", calcularEstadoTicketsPorPeriodo(todosTickets, 12));
         datos.put("estadoTicketsPorUltimoTrimestre", calcularEstadoTicketsPorPeriodo(todosTickets, 3));
 
-        // Categorías y colaboradores
+        // Datos adicionales
         datos.put("categoriasPopulares", calcularCategoriasPopulares(todosTickets));
         datos.put("colaboradoresActivos", calcularColaboradoresActivos(todosTickets, todosUsuarios));
-
-        // Historial de auditoría
         datos.put("historialAuditoria", obtenerHistorialAuditoria());
 
         return ResponseEntity.ok(datos);
     }
 
+    /**
+     * Exporta tickets en diferentes formatos (PDF, Excel, etc.)
+     * @param tipo Tipo de reporte a generar (pdf, xlsx, etc.)
+     * @param search Búsqueda general
+     * @param filter_fechaAperturaFrom Filtro de fecha de apertura desde
+     * @param filter_fechaAperturaTo Filtro de fecha de apertura hasta
+     * @param filter_fechaActualizacionFrom Filtro de fecha de actualización desde
+     * @param filter_fechaActualizacionTo Filtro de fecha de actualización hasta
+     * @param section Sección de tickets a exportar
+     * @param allParams Todos los parámetros de filtro
+     * @param authentication Información de autenticación
+     * @return ResponseEntity con el recurso del reporte generado
+     */
+    @GetMapping("/exportarTickets")
+    public ResponseEntity<Resource> exportarTickets(
+            @RequestParam String tipo,
+            @RequestParam(required = false) String search,
+            @RequestParam(required = false) String filter_fechaAperturaFrom,
+            @RequestParam(required = false) String filter_fechaAperturaTo,
+            @RequestParam(required = false) String filter_fechaActualizacionFrom,
+            @RequestParam(required = false) String filter_fechaActualizacionTo,
+            @RequestParam(required = false) String section,
+            @RequestParam Map<String, String> allParams,
+            Authentication authentication) throws IOException {
+
+        // Procesar filtros de columnas
+        Map<String, String> columnFilters = extraerFiltrosColumnas(allParams);
+
+        // Obtener tickets según la sección seleccionada
+        List<Ticket> ticketsFiltrados = obtenerTicketsFiltrados(section, authentication, 
+                columnFilters, search, filter_fechaAperturaFrom, filter_fechaAperturaTo,
+                filter_fechaActualizacionFrom, filter_fechaActualizacionTo);
+
+        // Preparar datos para el reporte
+        List<Map<String, Object>> reportData = prepararDatosReporte(ticketsFiltrados);
+        Map<String, Object> parametros = prepararParametrosReporte(section, authentication, 
+                search, filter_fechaAperturaFrom, filter_fechaAperturaTo,
+                filter_fechaActualizacionFrom, filter_fechaActualizacionTo, columnFilters);
+
+        return reporteService.generaReporte("ReporteTickets", parametros, tipo);
+    }
+
+    // Métodos auxiliares para contar tickets
+
+    private long contarTicketsAbiertos(List<Ticket> tickets) {
+        return tickets.stream()
+                .filter(t -> "Abierto".equals(t.getEstado()) && t.getAsignadoPara() == null)
+                .count();
+    }
+
+    private long contarTicketsPendientes(List<Ticket> tickets) {
+        return tickets.stream()
+                .filter(t -> "Pendiente".equals(t.getEstado()))
+                .count();
+    }
+
+    private long contarTicketsResueltos(List<Ticket> tickets) {
+        return tickets.stream()
+                .filter(t -> "Resuelto".equals(t.getEstado()))
+                .count();
+    }
+
+    private long contarTicketsCerrados(List<Ticket> tickets) {
+        return tickets.stream()
+                .filter(t -> "Cerrado".equals(t.getEstado()))
+                .count();
+    }
+
+    private long contarColaboradores(List<Usuario> usuarios) {
+        return usuarios.stream()
+                .filter(u -> u.getRoles().stream()
+                .anyMatch(r -> "ROL_SOPORTISTA".equals(r.getNombre()) || "ROL_ADMINISTRADOR".equals(r.getNombre())))
+                .count();
+    }
+
+    private long contarTicketsPendientesUsuario(List<Ticket> tickets, Usuario usuario) {
+        return tickets.stream()
+                .filter(t -> usuario.equals(t.getAsignadoPara())
+                && ("Abierto".equals(t.getEstado()) || "Pendiente".equals(t.getEstado())))
+                .count();
+    }
+
+    private long contarTicketsResueltosUsuario(List<Ticket> tickets, Usuario usuario) {
+        return tickets.stream()
+                .filter(t -> usuario.equals(t.getAsignadoPara())
+                && ("Resuelto".equals(t.getEstado()) || "Cerrado".equals(t.getEstado())))
+                .count();
+    }
+
+    // Métodos para procesar datos de auditoría
+
     private List<Map<String, Object>> obtenerHistorialAuditoria() {
         try {
             List<Auditoria> auditorias = auditoriaService.findTop50RecentAuditActions();
-
-            if (auditorias.isEmpty()) {
-                return Collections.emptyList();
-            }
-
-            return auditorias.stream().map(auditoria -> {
-                Map<String, Object> item = new HashMap<>();
-                String icono = determinarIconoAuditoria(auditoria.getAccion());
-                String accion = formatearAccionAuditoria(auditoria);
-                String usuario = "Sistema";
-
-                if (auditoria.getUsuario() != null) {
-                    usuario = auditoria.getUsuario().getNombre() + " " + auditoria.getUsuario().getApellido();
-                    if (auditoria.getUsuario().getCodigo() != null) {
-                        usuario += " (" + auditoria.getUsuario().getCodigo() + ")";
-                    }
-                }
-
-                String tiempoTranscurrido = calcularTiempoTranscurrido(auditoria.getFechaAccion());
-                String infoTicket = "";
-
-                if (auditoria.getTicket() != null) {
-                    infoTicket = "Ticket #" + auditoria.getTicket().getIdTicket();
-                    if (auditoria.getTicket().getCodigo() != null) {
-                        infoTicket = auditoria.getTicket().getCodigo();
-                    }
-                }
-
-                item.put("accion", accion);
-                item.put("icono", icono);
-                item.put("usuario", usuario);
-                item.put("tiempo", tiempoTranscurrido);
-                item.put("infoTicket", infoTicket);
-                item.put("fechaAccion", auditoria.getFechaAccion());
-                item.put("detalle", auditoria.getDetalle());
-
-                return item;
-            }).collect(Collectors.toList());
+            return auditorias.stream()
+                    .map(this::mapearAuditoria)
+                    .collect(Collectors.toList());
         } catch (Exception e) {
             System.err.println("Error obteniendo historial de auditoría: " + e.getMessage());
-            e.printStackTrace();
             return Collections.emptyList();
         }
     }
 
-    private String determinarIconoAuditoria(String accion) {
-        if (accion == null) {
-            return "fa-ticket-alt";
-        }
+    private Map<String, Object> mapearAuditoria(Auditoria auditoria) {
+        Map<String, Object> item = new HashMap<>();
+        item.put("accion", formatearAccionAuditoria(auditoria));
+        item.put("icono", determinarIconoAuditoria(auditoria.getAccion()));
+        item.put("usuario", obtenerNombreUsuario(auditoria));
+        item.put("tiempo", calcularTiempoTranscurrido(auditoria.getFechaAccion()));
+        item.put("infoTicket", obtenerInfoTicket(auditoria));
+        item.put("fechaAccion", auditoria.getFechaAccion());
+        item.put("detalle", auditoria.getDetalle());
+        return item;
+    }
 
-        return switch (accion.toUpperCase()) {
-            case "CREACION" ->
-                "fa-plus-circle";
-            case "ACTUALIZACION" ->
-                "fa-edit";
-            case "ASIGNACION" ->
-                "fa-user-tag";
-            case "CAMBIO_ESTADO" ->
-                "fa-exchange-alt";
-            case "CIERRE" ->
-                "fa-check-circle";
-            case "COMENTARIO" ->
-                "fa-comment";
-            case "REAPERTURA" ->
-                "fa-undo";
-            case "PRIORIDAD" ->
-                "fa-exclamation-circle";
-            default ->
-                "fa-ticket-alt";
-        };
+    private String obtenerNombreUsuario(Auditoria auditoria) {
+        if (auditoria.getUsuario() == null) return "Sistema";
+        
+        String nombre = auditoria.getUsuario().getNombre() + " " + auditoria.getUsuario().getApellido();
+        if (auditoria.getUsuario().getCodigo() != null) {
+            nombre += " (" + auditoria.getUsuario().getCodigo() + ")";
+        }
+        return nombre;
+    }
+
+    private String obtenerInfoTicket(Auditoria auditoria) {
+        if (auditoria.getTicket() == null) return "";
+        return auditoria.getTicket().getCodigo() != null ? 
+                auditoria.getTicket().getCodigo() : 
+                "Ticket #" + auditoria.getTicket().getIdTicket();
+    }
+
+    private String determinarIconoAuditoria(String accion) {
+        if (accion == null) return "fa-ticket-alt";
+        
+        switch (accion.toUpperCase()) {
+            case "CREACION": return "fa-plus-circle";
+            case "ACTUALIZACION": return "fa-edit";
+            case "ASIGNACION": return "fa-user-tag";
+            case "CAMBIO_ESTADO": return "fa-exchange-alt";
+            case "CIERRE": return "fa-check-circle";
+            case "COMENTARIO": return "fa-comment";
+            case "REAPERTURA": return "fa-undo";
+            case "PRIORIDAD": return "fa-exclamation-circle";
+            default: return "fa-ticket-alt";
+        }
     }
 
     private String formatearAccionAuditoria(Auditoria auditoria) {
-        if (auditoria.getAccion() == null) {
-            return "Acción no especificada";
+        if (auditoria.getAccion() == null) return "Acción no especificada";
+        
+        String accionBase;
+        switch (auditoria.getAccion().toUpperCase()) {
+            case "CREACION": accionBase = "Nuevo ticket creado"; break;
+            case "ACTUALIZACION": accionBase = "Ticket actualizado"; break;
+            case "ASIGNACION": accionBase = "Ticket reasignado"; break;
+            case "CAMBIO_ESTADO": accionBase = "Cambio de estado del ticket"; break;
+            case "CIERRE": accionBase = "Ticket cerrado"; break;
+            case "COMENTARIO": accionBase = "Nuevo comentario en ticket"; break;
+            case "REAPERTURA": accionBase = "Ticket reabierto"; break;
+            case "PRIORIDAD": accionBase = "Cambio de prioridad"; break;
+            default: accionBase = "Acción en ticket"; break;
         }
-
-        String accionBase = switch (auditoria.getAccion().toUpperCase()) {
-            case "CREACION" ->
-                "Nuevo ticket creado";
-            case "ACTUALIZACION" ->
-                "Ticket actualizado";
-            case "ASIGNACION" ->
-                "Ticket reasignado";
-            case "CAMBIO_ESTADO" ->
-                "Cambio de estado del ticket";
-            case "CIERRE" ->
-                "Ticket cerrado";
-            case "COMENTARIO" ->
-                "Nuevo comentario en ticket";
-            case "REAPERTURA" ->
-                "Ticket reabierto";
-            case "PRIORIDAD" ->
-                "Cambio de prioridad";
-            default ->
-                "Acción en ticket";
-        };
-
+        
         if (auditoria.getTicket() != null) {
-            accionBase += " (" + (auditoria.getTicket().getCodigo() != null
-                    ? auditoria.getTicket().getCodigo()
-                    : "#" + auditoria.getTicket().getIdTicket()) + ")";
+            accionBase += " (" + obtenerInfoTicket(auditoria) + ")";
         }
-
+        
         return accionBase;
     }
 
     private String calcularTiempoTranscurrido(Date fecha) {
-        if (fecha == null) {
-            return "Hace algún tiempo";
-        }
-
+        if (fecha == null) return "Hace algún tiempo";
+        
         long diff = new Date().getTime() - fecha.getTime();
         long diffMinutes = diff / (60 * 1000);
         long diffHours = diff / (60 * 60 * 1000);
         long diffDays = diff / (24 * 60 * 60 * 1000);
 
-        if (diffMinutes < 1) {
-            return "Hace unos momentos";
-        }
-        if (diffMinutes < 60) {
-            return "Hace " + diffMinutes + " minuto" + (diffMinutes > 1 ? "s" : "");
-        }
-        if (diffHours < 24) {
-            return "Hace " + diffHours + " hora" + (diffHours > 1 ? "s" : "");
-        }
-        if (diffDays < 7) {
-            return "Hace " + diffDays + " día" + (diffDays > 1 ? "s" : "");
-        }
+        if (diffMinutes < 1) return "Hace unos momentos";
+        if (diffMinutes < 60) return "Hace " + diffMinutes + " minuto" + (diffMinutes > 1 ? "s" : "");
+        if (diffHours < 24) return "Hace " + diffHours + " hora" + (diffHours > 1 ? "s" : "");
+        if (diffDays < 7) return "Hace " + diffDays + " día" + (diffDays > 1 ? "s" : "");
         return "Hace " + (diffDays / 7) + " semana" + ((diffDays / 7) > 1 ? "s" : "");
     }
+
+    // Métodos para cálculos de estadísticas
 
     private Map<String, Long> calcularTicketsPorPeriodo(List<Ticket> tickets, int meses) {
         Map<String, Long> ticketsPorPeriodo = new LinkedHashMap<>();
         LocalDate ahora = LocalDate.now();
 
-        // Inicializar los meses con 0
+        // Inicializar meses con 0
         for (int i = meses - 1; i >= 0; i--) {
             LocalDate mes = ahora.minusMonths(i);
             String claveMes = obtenerNombreMes(mes.getMonthValue()) + " " + mes.getYear();
@@ -362,46 +337,43 @@ public class ReporteController {
                         .atZone(ZoneId.systemDefault()).toLocalDate();
                 String mes = obtenerNombreMes(fechaTicket.getMonthValue()) + " " + fechaTicket.getYear();
 
-                // Solo considerar los meses dentro del período
                 if (fechaTicket.isAfter(ahora.minusMonths(meses).minusDays(1))) {
                     ticketsPorPeriodo.put(mes, ticketsPorPeriodo.getOrDefault(mes, 0L) + 1);
                 }
             }
         });
 
-        return ticketsPorPeriodo;
+        return ordenarMeses(ticketsPorPeriodo);
     }
 
     private Map<String, Map<String, Long>> calcularEstadoTicketsPorPeriodo(List<Ticket> tickets, int meses) {
         Map<String, Map<String, Long>> estadoPorPeriodo = new LinkedHashMap<>();
         LocalDate ahora = LocalDate.now();
 
-        // Inicializar los meses
+        // Inicializar meses con contadores
         for (int i = meses - 1; i >= 0; i--) {
             LocalDate mes = ahora.minusMonths(i);
             String claveMes = obtenerNombreMes(mes.getMonthValue()) + " " + mes.getYear();
 
             Map<String, Long> estados = new HashMap<>();
-            estados.put("Pendientes", 0L); // Only track "Pendiente" tickets
-            estados.put("Resueltos", 0L);  // Keep "Resueltos" for consistency
-
+            estados.put("Pendientes", 0L);
+            estados.put("Resueltos", 0L);
             estadoPorPeriodo.put(claveMes, estados);
         }
 
-        // Contar por estado y mes
+        // Contar tickets por estado y mes
         tickets.forEach(t -> {
             if (t.getFechaApertura() != null) {
                 LocalDate fechaTicket = t.getFechaApertura().toInstant()
                         .atZone(ZoneId.systemDefault()).toLocalDate();
                 String mes = obtenerNombreMes(fechaTicket.getMonthValue()) + " " + fechaTicket.getYear();
 
-                // Solo considerar los meses dentro del período
                 if (fechaTicket.isAfter(ahora.minusMonths(meses).minusDays(1))) {
                     Map<String, Long> estados = estadoPorPeriodo.get(mes);
                     if (estados != null) {
                         if ("Resuelto".equals(t.getEstado()) || "Cerrado".equals(t.getEstado())) {
                             estados.put("Resueltos", estados.get("Resueltos") + 1);
-                        } else if ("Pendiente".equals(t.getEstado())) { // Only count "Pendiente"
+                        } else if ("Pendiente".equals(t.getEstado())) {
                             estados.put("Pendientes", estados.get("Pendientes") + 1);
                         }
                     }
@@ -409,7 +381,7 @@ public class ReporteController {
             }
         });
 
-        return estadoPorPeriodo;
+        return ordenarMesesEnMapa(estadoPorPeriodo);
     }
 
     private Map<String, Long> calcularCategoriasPopulares(List<Ticket> tickets) {
@@ -427,14 +399,11 @@ public class ReporteController {
     }
 
     private Map<String, Long> calcularColaboradoresActivos(List<Ticket> tickets, List<Usuario> usuarios) {
-        // Filtramos usuarios que son colaboradores (soporte o admin)
         List<Usuario> colaboradores = usuarios.stream()
                 .filter(u -> u.getRoles().stream()
-                .anyMatch(r -> "ROL_SOPORTISTA".equals(r.getNombre())
-                || "ROL_ADMINISTRADOR".equals(r.getNombre())))
+                .anyMatch(r -> "ROL_SOPORTISTA".equals(r.getNombre()) || "ROL_ADMINISTRADOR".equals(r.getNombre())))
                 .collect(Collectors.toList());
 
-        // Contamos tickets resueltos por colaborador
         Map<String, Long> colaboradoresActivos = new HashMap<>();
 
         for (Usuario colaborador : colaboradores) {
@@ -443,7 +412,6 @@ public class ReporteController {
                     && ("Resuelto".equals(t.getEstado()) || "Cerrado".equals(t.getEstado())))
                     .count();
 
-            // Mostrar todos los colaboradores, incluso si no han resuelto tickets
             String nombreCompleto = colaborador.getNombre() + " " + colaborador.getApellido();
             if (colaborador.getCodigo() != null && !colaborador.getCodigo().isEmpty()) {
                 nombreCompleto += " (" + colaborador.getCodigo() + ")";
@@ -451,7 +419,6 @@ public class ReporteController {
             colaboradoresActivos.put(nombreCompleto, ticketsResueltos);
         }
 
-        // Ordenamos por cantidad de tickets resueltos (descendente)
         return colaboradoresActivos.entrySet().stream()
                 .sorted(Map.Entry.<String, Long>comparingByValue().reversed())
                 .collect(Collectors.toMap(
@@ -462,29 +429,11 @@ public class ReporteController {
                 ));
     }
 
-    private String obtenerNombreMes(int mes) {
-        String[] nombresMeses = {"Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"};
-        return nombresMeses[mes - 1];
-    }
+    // Métodos auxiliares para ordenación
 
     private Map<String, Long> ordenarMeses(Map<String, Long> mapa) {
-        // Ordenar por año y mes
         return mapa.entrySet().stream()
-                .sorted((e1, e2) -> {
-                    String[] parts1 = e1.getKey().split(" ");
-                    String[] parts2 = e2.getKey().split(" ");
-                    int year1 = Integer.parseInt(parts1[1]);
-                    int year2 = Integer.parseInt(parts2[1]);
-                    if (year1 != year2) {
-                        return Integer.compare(year1, year2);
-                    }
-
-                    String mes1 = parts1[0];
-                    String mes2 = parts2[0];
-                    List<String> mesesOrdenados = Arrays.asList("Ene", "Feb", "Mar", "Abr", "May", "Jun",
-                            "Jul", "Ago", "Sep", "Oct", "Nov", "Dic");
-                    return Integer.compare(mesesOrdenados.indexOf(mes1), mesesOrdenados.indexOf(mes2));
-                })
+                .sorted(this::compararMeses)
                 .collect(Collectors.toMap(
                         Map.Entry::getKey,
                         Map.Entry::getValue,
@@ -494,23 +443,8 @@ public class ReporteController {
     }
 
     private Map<String, Map<String, Long>> ordenarMesesEnMapa(Map<String, Map<String, Long>> mapa) {
-        // Ordenar por año y mes
         return mapa.entrySet().stream()
-                .sorted((e1, e2) -> {
-                    String[] parts1 = e1.getKey().split(" ");
-                    String[] parts2 = e2.getKey().split(" ");
-                    int year1 = Integer.parseInt(parts1[1]);
-                    int year2 = Integer.parseInt(parts2[1]);
-                    if (year1 != year2) {
-                        return Integer.compare(year1, year2);
-                    }
-
-                    String mes1 = parts1[0];
-                    String mes2 = parts2[0];
-                    List<String> mesesOrdenados = Arrays.asList("Ene", "Feb", "Mar", "Abr", "May", "Jun",
-                            "Jul", "Ago", "Sep", "Oct", "Nov", "Dic");
-                    return Integer.compare(mesesOrdenados.indexOf(mes1), mesesOrdenados.indexOf(mes2));
-                })
+                .sorted(this::compararMeses)
                 .collect(Collectors.toMap(
                         Map.Entry::getKey,
                         Map.Entry::getValue,
@@ -519,20 +453,24 @@ public class ReporteController {
                 ));
     }
 
-    @GetMapping("/exportarTickets")
-    public ResponseEntity<Resource> exportarTickets(
-            @RequestParam String tipo,
-            @RequestParam(required = false) String search,
-            @RequestParam(required = false) String filter_fechaAperturaFrom,
-            @RequestParam(required = false) String filter_fechaAperturaTo,
-            @RequestParam(required = false) String filter_fechaActualizacionFrom,
-            @RequestParam(required = false) String filter_fechaActualizacionTo,
-            @RequestParam(required = false) String section,
-            @RequestParam Map<String, String> allParams,
-            Authentication authentication) throws IOException {
+    private int compararMeses(Map.Entry<String, ?> e1, Map.Entry<String, ?> e2) {
+        String[] parts1 = e1.getKey().split(" ");
+        String[] parts2 = e2.getKey().split(" ");
+        int year1 = Integer.parseInt(parts1[1]);
+        int year2 = Integer.parseInt(parts2[1]);
+        if (year1 != year2) return Integer.compare(year1, year2);
 
-        // Extraer filtros de columnas
-        Map<String, String> columnFilters = allParams.entrySet().stream()
+        String mes1 = parts1[0];
+        String mes2 = parts2[0];
+        List<String> mesesOrdenados = Arrays.asList("Ene", "Feb", "Mar", "Abr", "May", "Jun",
+                "Jul", "Ago", "Sep", "Oct", "Nov", "Dic");
+        return Integer.compare(mesesOrdenados.indexOf(mes1), mesesOrdenados.indexOf(mes2));
+    }
+
+    // Métodos auxiliares para exportación
+
+    private Map<String, String> extraerFiltrosColumnas(Map<String, String> allParams) {
+        return allParams.entrySet().stream()
                 .filter(e -> e.getKey().startsWith("filter_")
                 && !e.getKey().matches("filter_(fechaAperturaFrom|fechaAperturaTo|fechaActualizacionFrom|fechaActualizacionTo)")
                 && !e.getValue().isEmpty())
@@ -540,8 +478,13 @@ public class ReporteController {
                         e -> e.getKey().replace("filter_", ""),
                         Map.Entry::getValue
                 ));
+    }
 
-        // Obtener lista base según la sección
+    private List<Ticket> obtenerTicketsFiltrados(String section, Authentication authentication, 
+            Map<String, String> columnFilters, String search, 
+            String fechaAperturaFrom, String fechaAperturaTo,
+            String fechaActualizacionFrom, String fechaActualizacionTo) {
+        
         List<Ticket> baseTickets;
         if ("mis-tickets".equals(section) && authentication != null) {
             Usuario usuario = usuarioService.getUsuarioPorCorreo(authentication.getName());
@@ -552,18 +495,14 @@ public class ReporteController {
             baseTickets = ticketService.getTickets();
         }
 
-        // Aplicar filtros
-        List<Ticket> filteredTickets = ticketService.buscarTicketsPorFiltrosAvanzadosEnLista(
-                baseTickets,
-                columnFilters,
-                search,
-                filter_fechaAperturaFrom,
-                filter_fechaAperturaTo,
-                filter_fechaActualizacionFrom,
-                filter_fechaActualizacionTo);
+        return ticketService.buscarTicketsPorFiltrosAvanzadosEnLista(
+                baseTickets, columnFilters, search, 
+                fechaAperturaFrom, fechaAperturaTo, 
+                fechaActualizacionFrom, fechaActualizacionTo);
+    }
 
-        // Convertir Tickets a DTOs para el reporte
-        List<Map<String, Object>> reportData = filteredTickets.stream()
+    private List<Map<String, Object>> prepararDatosReporte(List<Ticket> tickets) {
+        return tickets.stream()
                 .map(t -> {
                     Map<String, Object> row = new HashMap<>();
                     row.put("ID_Ticket", t.getIdTicket());
@@ -580,13 +519,80 @@ public class ReporteController {
                     return row;
                 })
                 .collect(Collectors.toList());
+    }
 
-        // Parámetros para el reporte
+    private Map<String, Object> prepararParametrosReporte(String section, Authentication authentication,
+            String search, String fechaAperturaFrom, String fechaAperturaTo,
+            String fechaActualizacionFrom, String fechaActualizacionTo,
+            Map<String, String> columnFilters) {
+        
+        // Determinar título de la sección
+        String tituloSeccion = determinarTituloSeccion(section, authentication);
+
+        // Construir cadena de filtros aplicados
+        StringBuilder filtrosAplicados = new StringBuilder();
+        DateTimeFormatter inputFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+        DateTimeFormatter outputFormatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+
+        if (search != null && !search.isEmpty()) {
+            filtrosAplicados.append("Búsqueda: ").append(search).append(", ");
+        }
+
+        agregarFiltroFecha(filtrosAplicados, "Fecha apertura desde", fechaAperturaFrom, inputFormatter, outputFormatter);
+        agregarFiltroFecha(filtrosAplicados, "Fecha apertura hasta", fechaAperturaTo, inputFormatter, outputFormatter);
+        agregarFiltroFecha(filtrosAplicados, "Fecha actualización desde", fechaActualizacionFrom, inputFormatter, outputFormatter);
+        agregarFiltroFecha(filtrosAplicados, "Fecha actualización hasta", fechaActualizacionTo, inputFormatter, outputFormatter);
+
+        columnFilters.forEach((campo, valor) -> {
+            filtrosAplicados.append(campo).append(": ").append(valor).append(", ");
+        });
+
+        // Preparar parámetros finales
         Map<String, Object> parametros = new HashMap<>();
-        parametros.put("TITULO_REPORTE", "Reporte de Tickets - "
-                + (section != null ? section : "Todos"));
-        parametros.put("TICKETS_DATA_SOURCE", new JRBeanCollectionDataSource(reportData));
+        parametros.put("TITULO_REPORTE", "Reporte de Tickets - " + tituloSeccion);
+        parametros.put("FILTROS_APLICADOS", filtrosAplicados.toString());
+        parametros.put("HAY_FILTROS", !filtrosAplicados.toString().isEmpty());
+        return parametros;
+    }
 
-        return reporteService.generaReporte("ReporteTickets", parametros, tipo);
+    private String determinarTituloSeccion(String section, Authentication authentication) {
+        if ("mis-tickets".equals(section) && authentication != null) {
+            Usuario usuario = usuarioService.getUsuarioPorCorreo(authentication.getName());
+            if (usuario != null) {
+                String codigo = usuario.getCodigo() != null ? " (" + usuario.getCodigo() + ")" : "";
+                return "Mis Tickets" + codigo;
+            }
+        }
+        switch (section) {
+            case "sin-asignar": return "Sin Asignar";
+            case "todos": return "Todos";
+            default: return section != null ? section : "Todos";
+        }
+    }
+
+    private void agregarFiltroFecha(StringBuilder filtros, String etiqueta, String fecha,
+            DateTimeFormatter inputFormatter, DateTimeFormatter outputFormatter) {
+        if (fecha != null && !fecha.isEmpty()) {
+            filtros.append(etiqueta).append(": ")
+                  .append(formatearFecha(fecha, inputFormatter, outputFormatter))
+                  .append(", ");
+        }
+    }
+
+    private String formatearFecha(String fecha, DateTimeFormatter inputFormatter, 
+            DateTimeFormatter outputFormatter) {
+        try {
+            LocalDate localDate = LocalDate.parse(fecha, inputFormatter);
+            return localDate.format(outputFormatter);
+        } catch (Exception e) {
+            System.err.println("Error formateando fecha: " + fecha + " - " + e.getMessage());
+            return fecha;
+        }
+    }
+
+    private String obtenerNombreMes(int mes) {
+        String[] nombresMeses = {"Ene", "Feb", "Mar", "Abr", "May", "Jun", 
+                               "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"};
+        return nombresMeses[mes - 1];
     }
 }

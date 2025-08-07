@@ -13,6 +13,9 @@ import java.util.Map;
 import java.util.stream.Collectors;
 import com.mesadeayudaMPB.service.ArchivoTicketService;
 
+/**
+ * Controlador para manejar operaciones relacionadas con archivos adjuntos a tickets
+ */
 @Controller
 @RequestMapping("/archivos")
 public class ArchivoTicketController {
@@ -20,6 +23,11 @@ public class ArchivoTicketController {
     @Autowired
     private ArchivoTicketService archivoTicketService;
     
+    /**
+     * Obtiene información básica de todos los archivos asociados a un ticket
+     * @param idTicket ID del ticket a consultar
+     * @return Lista con metadatos de los archivos (id, nombre, tipo) o 404 si no hay archivos
+     */
     @GetMapping("/ticket/{idTicket}")
     @ResponseBody
     public ResponseEntity<List<Map<String, Object>>> obtenerArchivosInfo(@PathVariable Long idTicket) {
@@ -39,6 +47,11 @@ public class ArchivoTicketController {
         return ResponseEntity.ok(archivosInfo);
     }
     
+    /**
+     * Devuelve el contenido binario de un archivo específico con las cabeceras adecuadas
+     * @param idArchivo ID del archivo a visualizar
+     * @return Contenido del archivo con las cabeceras HTTP apropiadas o 404 si no existe
+     */
     @GetMapping("/ver/{idArchivo}")
     public ResponseEntity<byte[]> verArchivo(@PathVariable Long idArchivo) {
         ArchivoTicket archivo = archivoTicketService.obtenerArchivoPorId(idArchivo);
@@ -48,25 +61,23 @@ public class ArchivoTicketController {
         
         HttpHeaders headers = new HttpHeaders();
         
-        // Configuración mejorada para PDFs - CLAVE PARA EVITAR DESCARGA
+        // Configuración específica para PDFs (visualización en navegador)
         if (archivo.getTipoArchivo() != null && archivo.getTipoArchivo().equals("application/pdf")) {
             headers.setContentType(MediaType.APPLICATION_PDF);
-            // CAMBIO CRÍTICO: usar "inline" sin filename para evitar descargas
             headers.add("Content-Disposition", "inline");
             headers.setContentLength(archivo.getArchivo().length);
             headers.setCacheControl("no-cache, no-store, must-revalidate");
             headers.add("Pragma", "no-cache");
             headers.add("Expires", "0");
-            // Importantes para compatibilidad con iframe
             headers.add("X-Frame-Options", "SAMEORIGIN");
             headers.add("Content-Security-Policy", "frame-ancestors 'self'");
         } 
-        // Configuración para imágenes
+        // Configuración para imágenes (visualización directa)
         else if (archivo.getTipoArchivo() != null && archivo.getTipoArchivo().startsWith("image/")) {
             headers.setContentType(MediaType.parseMediaType(archivo.getTipoArchivo()));
             headers.add("Content-Disposition", "inline");
         } 
-        // Para otros tipos de archivo
+        // Configuración por defecto para otros tipos (descarga forzada)
         else {
             headers.setContentType(MediaType.APPLICATION_OCTET_STREAM);
             headers.setContentDispositionFormData("attachment", archivo.getNombreArchivo());

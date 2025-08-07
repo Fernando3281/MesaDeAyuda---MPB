@@ -25,9 +25,17 @@ document.addEventListener('DOMContentLoaded', function () {
 
     function handleBackButtonClick(e) {
         e.preventDefault();
+
+        sessionStorage.setItem('fromTicketDetails', 'true');
+
         const previousUrl = sessionStorage.getItem('ticketDetailsPreviousUrl') || '/usuario/historial';
         sessionStorage.removeItem('ticketDetailsPreviousUrl');
-        window.location.href = previousUrl;
+
+        if (previousUrl.includes('/usuario/historial')) {
+            window.location.href = '/usuario/historial';
+        } else {
+            window.location.href = previousUrl;
+        }
     }
 
     if (backButton) {
@@ -65,22 +73,23 @@ document.addEventListener('DOMContentLoaded', function () {
                 modalPdf.src = '';
 
                 fetch(fileSrc)
-                    .then(response => {
-                        if (!response.ok) throw new Error('Network response was not ok');
-                        return response.blob();
-                    })
-                    .then(blob => {
-                        const blobUrl = URL.createObjectURL(blob);
-                        modalPdf.src = blobUrl + '#toolbar=0&navpanes=0&scrollbar=0';
-                        showModal();
+                        .then(response => {
+                            if (!response.ok)
+                                throw new Error('Network response was not ok');
+                            return response.blob();
+                        })
+                        .then(blob => {
+                            const blobUrl = URL.createObjectURL(blob);
+                            modalPdf.src = blobUrl + '#toolbar=0&navpanes=0&scrollbar=0';
+                            showModal();
 
-                        modalPdf.onload = function () {
-                            URL.revokeObjectURL(blobUrl);
-                        };
-                    })
-                    .catch(error => {
-                        alert('No se pudo cargar el PDF. Por favor, inténtelo nuevamente.');
-                    });
+                            modalPdf.onload = function () {
+                                URL.revokeObjectURL(blobUrl);
+                            };
+                        })
+                        .catch(error => {
+                            alert('No se pudo cargar el PDF. Por favor, inténtelo nuevamente.');
+                        });
             }
         });
     });
@@ -124,10 +133,10 @@ document.addEventListener('DOMContentLoaded', function () {
 
     function cancelTicket() {
         const ticketId = window.location.pathname.split('/').pop();
-        
+
         confirmCancel.disabled = true;
         confirmCancel.innerHTML = '<i class="fa fa-spinner fa-spin"></i> Procesando...';
-        
+
         fetch(`/tickets/cancelar/${ticketId}`, {
             method: 'POST',
             headers: {
@@ -137,38 +146,41 @@ document.addEventListener('DOMContentLoaded', function () {
             },
             credentials: 'include'
         })
-        .then(response => {
-            confirmCancel.disabled = false;
-            confirmCancel.textContent = 'Confirmar';
-            
-            if (!response.ok) {
-                return response.json().then(err => {
-                    throw new Error(err.message || 'Error al cancelar el ticket');
+                .then(response => {
+                    confirmCancel.disabled = false;
+                    confirmCancel.textContent = 'Confirmar';
+
+                    if (!response.ok) {
+                        return response.json().then(err => {
+                            throw new Error(err.message || 'Error al cancelar el ticket');
+                        });
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    if (data.success) {
+                        hideCancelModal();
+                        sessionStorage.setItem('fromTicketDetails', 'true');
+                        window.location.reload();
+                    } else {
+                        throw new Error(data.error || 'Error al cancelar el ticket');
+                    }
+                })
+                .catch(error => {
+                    alert('Error al cancelar el ticket: ' + error.message);
+                    confirmCancel.disabled = false;
+                    confirmCancel.textContent = 'Confirmar';
                 });
-            }
-            return response.json();
-        })
-        .then(data => {
-            if (data.success) {
-                hideCancelModal();
-                window.location.reload();
-            } else {
-                throw new Error(data.error || 'Error al cancelar el ticket');
-            }
-        })
-        .catch(error => {
-            alert('Error al cancelar el ticket: ' + error.message);
-            confirmCancel.disabled = false;
-            confirmCancel.textContent = 'Confirmar';
-        });
     }
 
     closeBtn.addEventListener('click', closeModal);
     modal.addEventListener('click', function (e) {
-        if (e.target === modal) closeModal();
+        if (e.target === modal)
+            closeModal();
     });
     document.addEventListener('keydown', function (e) {
-        if (e.key === 'Escape') closeModal();
+        if (e.key === 'Escape')
+            closeModal();
     });
 
     cancelModal.addEventListener('click', function (e) {

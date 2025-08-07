@@ -1,3 +1,63 @@
+function saveFiltersToSessionStorage() {
+    const filters = {
+        search: document.getElementById('searchInput')?.value || '',
+        status: Array.from(document.querySelectorAll('input[name="status"]:checked')).map(cb => cb.value),
+        priority: Array.from(document.querySelectorAll('input[name="priority"]:checked')).map(cb => cb.value),
+        category: Array.from(document.querySelectorAll('input[name="category"]:checked')).map(cb => cb.value),
+        fechaFrom: document.getElementById('fechaFrom')?.value || '',
+        fechaTo: document.getElementById('fechaTo')?.value || ''
+    };
+
+    sessionStorage.setItem('ticketFilters', JSON.stringify(filters));
+}
+
+function loadFiltersFromSessionStorage() {
+    const savedFilters = sessionStorage.getItem('ticketFilters');
+    if (!savedFilters)
+        return;
+
+    try {
+        const filters = JSON.parse(savedFilters);
+
+        if (filters.search && document.getElementById('searchInput')) {
+            document.getElementById('searchInput').value = filters.search;
+        }
+
+        document.querySelectorAll('input[name="status"]').forEach(cb => {
+            cb.checked = filters.status.includes(cb.value);
+        });
+
+        document.querySelectorAll('input[name="priority"]').forEach(cb => {
+            cb.checked = filters.priority.includes(cb.value);
+        });
+
+        document.querySelectorAll('input[name="category"]').forEach(cb => {
+            cb.checked = filters.category.includes(cb.value);
+        });
+
+        if (filters.fechaFrom && document.getElementById('fechaFrom')) {
+            document.getElementById('fechaFrom').value = filters.fechaFrom;
+            if (document.getElementById('fechaFrom')._flatpickr) {
+                document.getElementById('fechaFrom')._flatpickr.setDate(filters.fechaFrom, false, 'd/m/Y');
+            }
+        }
+
+        if (filters.fechaTo && document.getElementById('fechaTo')) {
+            document.getElementById('fechaTo').value = filters.fechaTo;
+            if (document.getElementById('fechaTo')._flatpickr) {
+                document.getElementById('fechaTo')._flatpickr.setDate(filters.fechaTo, false, 'd/m/Y');
+            }
+        }
+
+    } catch (e) {
+
+    }
+}
+
+function clearFiltersFromSessionStorage() {
+    sessionStorage.removeItem('ticketFilters');
+}
+
 document.addEventListener('DOMContentLoaded', function () {
     const filterChips = document.querySelectorAll('.filter-chip');
     const filterDropdowns = document.querySelectorAll('.filter-dropdown');
@@ -21,6 +81,8 @@ document.addEventListener('DOMContentLoaded', function () {
 
     const ticketListContainer = document.querySelector('.ticket-list-container');
     const esSoportistaOAdmin = ticketListContainer ? ticketListContainer.dataset.esSoportistaAdmin === 'true' : false;
+
+    const fromTicketDetails = sessionStorage.getItem('fromTicketDetails') === 'true';
 
     if (fechaFrom && fechaTo) {
         flatpickr("#fechaFrom", {
@@ -51,7 +113,8 @@ document.addEventListener('DOMContentLoaded', function () {
     function hayFiltrosAplicados() {
         const checkboxesMarcados = document.querySelectorAll('input[type="checkbox"]:checked').length > 0;
         const hayFiltroFecha = fechaFrom && fechaTo && (fechaFrom.value || fechaTo.value);
-        return checkboxesMarcados || hayFiltroFecha;
+        const hayBusqueda = searchInput && searchInput.value.trim() !== '';
+        return checkboxesMarcados || hayFiltroFecha || hayBusqueda;
     }
 
     function actualizarVisibilidadBotonLimpiar() {
@@ -81,13 +144,23 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     if (ticketList) {
-        if (activeFilters) activeFilters.style.display = 'none';
-        document.querySelectorAll('input[type="checkbox"]').forEach(cb => {
-            cb.checked = false;
-        });
-        if (fechaFrom) fechaFrom.value = '';
-        if (fechaTo) fechaTo.value = '';
-        if (searchInput) searchInput.value = '';
+        if (!fromTicketDetails) {
+            if (activeFilters)
+                activeFilters.style.display = 'none';
+            document.querySelectorAll('input[type="checkbox"]').forEach(cb => {
+                cb.checked = false;
+            });
+            if (fechaFrom)
+                fechaFrom.value = '';
+            if (fechaTo)
+                fechaTo.value = '';
+            if (searchInput)
+                searchInput.value = '';
+            clearFiltersFromSessionStorage();
+        } else {
+            loadFiltersFromSessionStorage();
+            sessionStorage.removeItem('fromTicketDetails');
+        }
 
         actualizarVisibilidadBotonLimpiar();
 
@@ -129,8 +202,9 @@ document.addEventListener('DOMContentLoaded', function () {
         });
 
         function updateActiveFilters() {
-            if (!activeFilters) return;
-            
+            if (!activeFilters)
+                return;
+
             activeFilters.innerHTML = '';
             let hasActiveFilters = false;
 
@@ -169,17 +243,23 @@ document.addEventListener('DOMContentLoaded', function () {
                     const filterValue = e.target.dataset.value;
 
                     if (filterType === 'date') {
-                        if (fechaFrom) fechaFrom.value = '';
-                        if (fechaTo) fechaTo.value = '';
-                        if (fechaFrom && fechaFrom._flatpickr) fechaFrom._flatpickr.clear();
-                        if (fechaTo && fechaTo._flatpickr) fechaTo._flatpickr.clear();
+                        if (fechaFrom)
+                            fechaFrom.value = '';
+                        if (fechaTo)
+                            fechaTo.value = '';
+                        if (fechaFrom && fechaFrom._flatpickr)
+                            fechaFrom._flatpickr.clear();
+                        if (fechaTo && fechaTo._flatpickr)
+                            fechaTo._flatpickr.clear();
                     } else {
                         const checkbox = document.querySelector(`input[name="${filterType}"][value="${filterValue}"]`);
-                        if (checkbox) checkbox.checked = false;
+                        if (checkbox)
+                            checkbox.checked = false;
                     }
 
                     filterTickets();
                     updateActiveFilters();
+                    saveFiltersToSessionStorage();
                 }
             });
         }
@@ -187,19 +267,26 @@ document.addEventListener('DOMContentLoaded', function () {
         if (clearFilters) {
             clearFilters.addEventListener('click', () => {
                 document.querySelectorAll('input[type="checkbox"]').forEach(cb => cb.checked = false);
-                if (fechaFrom) fechaFrom.value = '';
-                if (fechaTo) fechaTo.value = '';
-                if (fechaFrom && fechaFrom._flatpickr) fechaFrom._flatpickr.clear();
-                if (fechaTo && fechaTo._flatpickr) fechaTo._flatpickr.clear();
-                if (searchInput) searchInput.value = '';
+                if (fechaFrom)
+                    fechaFrom.value = '';
+                if (fechaTo)
+                    fechaTo.value = '';
+                if (fechaFrom && fechaFrom._flatpickr)
+                    fechaFrom._flatpickr.clear();
+                if (fechaTo && fechaTo._flatpickr)
+                    fechaTo._flatpickr.clear();
+                if (searchInput)
+                    searchInput.value = '';
                 filterTickets();
                 updateActiveFilters();
+                clearFiltersFromSessionStorage();
             });
         }
 
         function filterTickets() {
-            if (!ticketList) return;
-            
+            if (!ticketList)
+                return;
+
             const tickets = ticketList.getElementsByClassName('ticket-card');
             const searchText = searchInput ? searchInput.value.toLowerCase() : '';
             const selectedStatuses = Array.from(document.querySelectorAll('input[name="status"]:checked')).map(cb => cb.value.toLowerCase());
@@ -237,7 +324,8 @@ document.addEventListener('DOMContentLoaded', function () {
             });
 
             const ticketCounter = document.getElementById('ticketCounter');
-            if (ticketCounter) ticketCounter.textContent = visibleTickets;
+            if (ticketCounter)
+                ticketCounter.textContent = visibleTickets;
 
             if (noMatchesMessage) {
                 noMatchesMessage.style.display = visibleTickets === 0 && tickets.length > 0 ? 'flex' : 'none';
@@ -246,24 +334,32 @@ document.addEventListener('DOMContentLoaded', function () {
                 noTicketsMessage.style.display = tickets.length === 0 ? 'flex' : 'none';
             }
         }
-        
+
         const clearFiltersFromNoMatches = document.getElementById('clearFiltersFromNoMatches');
         if (clearFiltersFromNoMatches) {
             clearFiltersFromNoMatches.addEventListener('click', () => {
                 document.querySelectorAll('input[type="checkbox"]').forEach(cb => cb.checked = false);
-                if (fechaFrom) fechaFrom.value = '';
-                if (fechaTo) fechaTo.value = '';
-                if (fechaFrom && fechaFrom._flatpickr) fechaFrom._flatpickr.clear();
-                if (fechaTo && fechaTo._flatpickr) fechaTo._flatpickr.clear();
-                if (searchInput) searchInput.value = '';
+                if (fechaFrom)
+                    fechaFrom.value = '';
+                if (fechaTo)
+                    fechaTo.value = '';
+                if (fechaFrom && fechaFrom._flatpickr)
+                    fechaFrom._flatpickr.clear();
+                if (fechaTo && fechaTo._flatpickr)
+                    fechaTo._flatpickr.clear();
+                if (searchInput)
+                    searchInput.value = '';
                 filterTickets();
                 updateActiveFilters();
+                clearFiltersFromSessionStorage();
             });
         }
 
         function checkDateRange(dateText) {
-            if (!dateText || (!fechaFrom && !fechaTo)) return true;
-            if (!fechaFrom.value && !fechaTo.value) return true;
+            if (!dateText || (!fechaFrom && !fechaTo))
+                return true;
+            if (!fechaFrom.value && !fechaTo.value)
+                return true;
 
             try {
                 const [day, month, year] = dateText.split('-');
@@ -287,19 +383,24 @@ document.addEventListener('DOMContentLoaded', function () {
         }
 
         function parseFlatpickrDate(dateStr) {
-            if (!dateStr) return null;
+            if (!dateStr)
+                return null;
             const [day, month, year] = dateStr.split('/');
             return new Date(`${year}-${month}-${day}`);
         }
 
         if (searchInput) {
-            searchInput.addEventListener('input', filterTickets);
+            searchInput.addEventListener('input', () => {
+                filterTickets();
+                saveFiltersToSessionStorage();
+            });
         }
-        
+
         document.querySelectorAll('input[name="status"], input[name="priority"], input[name="category"]').forEach(checkbox => {
             checkbox.addEventListener('change', () => {
                 filterTickets();
                 updateActiveFilters();
+                saveFiltersToSessionStorage();
             });
         });
 
@@ -308,25 +409,36 @@ document.addEventListener('DOMContentLoaded', function () {
             applyDateButton.addEventListener('click', () => {
                 filterTickets();
                 updateActiveFilters();
+                saveFiltersToSessionStorage();
                 const dateFilter = document.getElementById('dateFilter');
-                if (dateFilter) dateFilter.style.display = 'none';
+                if (dateFilter)
+                    dateFilter.style.display = 'none';
             });
         }
 
         if (fechaFrom) {
             fechaFrom.addEventListener('change', () => {
                 updateActiveFilters();
+                saveFiltersToSessionStorage();
             });
         }
-        
+
         if (fechaTo) {
             fechaTo.addEventListener('change', () => {
                 updateActiveFilters();
+                saveFiltersToSessionStorage();
             });
         }
 
         filterTickets();
         updateActiveFilters();
+
+        document.addEventListener('click', function (e) {
+            const detailsButton = e.target.closest('.button-32:not(.cancel-button)');
+            if (detailsButton && detailsButton.textContent.includes('Ver Detalles')) {
+                saveFiltersToSessionStorage();
+            }
+        });
     }
 
     function showCancelModal(ticketId) {
@@ -349,24 +461,30 @@ document.addEventListener('DOMContentLoaded', function () {
         if (ticketCode && ticketTitle) {
             const ticketToCancelCode = document.getElementById('ticketToCancelCode');
             const ticketToCancelTitle = document.getElementById('ticketToCancelTitle');
-            
-            if (ticketToCancelCode) ticketToCancelCode.textContent = ticketCode;
-            if (ticketToCancelTitle) ticketToCancelTitle.textContent = ticketTitle;
-            
+
+            if (ticketToCancelCode)
+                ticketToCancelCode.textContent = ticketCode;
+            if (ticketToCancelTitle)
+                ticketToCancelTitle.textContent = ticketTitle;
+
             currentTicketId = ticketId;
             document.body.classList.add('modal-open');
-            if (cancelModal) cancelModal.style.display = 'flex';
+            if (cancelModal)
+                cancelModal.style.display = 'flex';
         }
     }
 
     function hideCancelModal() {
         document.body.classList.remove('modal-open');
-        if (cancelModal) cancelModal.style.display = 'none';
+        if (cancelModal)
+            cancelModal.style.display = 'none';
         currentTicketId = null;
         const ticketToCancelCode = document.getElementById('ticketToCancelCode');
         const ticketToCancelTitle = document.getElementById('ticketToCancelTitle');
-        if (ticketToCancelCode) ticketToCancelCode.textContent = '';
-        if (ticketToCancelTitle) ticketToCancelTitle.textContent = '';
+        if (ticketToCancelCode)
+            ticketToCancelCode.textContent = '';
+        if (ticketToCancelTitle)
+            ticketToCancelTitle.textContent = '';
     }
 
     function cancelTicket() {
@@ -403,38 +521,38 @@ document.addEventListener('DOMContentLoaded', function () {
             headers: headers,
             credentials: 'include'
         })
-        .then(response => {
-            if (confirmCancel) {
-                confirmCancel.disabled = false;
-                confirmCancel.textContent = 'Confirmar';
-            }
+                .then(response => {
+                    if (confirmCancel) {
+                        confirmCancel.disabled = false;
+                        confirmCancel.textContent = 'Confirmar';
+                    }
 
-            if (!response.ok) {
-                return response.json().then(err => {
-                    throw new Error(err.error || `Error ${response.status}: ${response.statusText}`);
+                    if (!response.ok) {
+                        return response.json().then(err => {
+                            throw new Error(err.error || `Error ${response.status}: ${response.statusText}`);
+                        });
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    if (data.success) {
+                        hideCancelModal();
+                        if (document.querySelector('.ticket-details')) {
+                            window.location.href = '/usuario/historial';
+                        } else {
+                            window.location.reload();
+                        }
+                    } else {
+                        throw new Error(data.error || 'Error al cancelar el ticket');
+                    }
+                })
+                .catch(error => {
+                    alert('Error al cancelar el ticket: ' + error.message);
+                    if (confirmCancel) {
+                        confirmCancel.disabled = false;
+                        confirmCancel.textContent = 'Confirmar';
+                    }
                 });
-            }
-            return response.json();
-        })
-        .then(data => {
-            if (data.success) {
-                hideCancelModal();
-                if (document.querySelector('.ticket-details')) {
-                    window.location.href = '/usuario/historial';
-                } else {
-                    window.location.reload();
-                }
-            } else {
-                throw new Error(data.error || 'Error al cancelar el ticket');
-            }
-        })
-        .catch(error => {
-            alert('Error al cancelar el ticket: ' + error.message);
-            if (confirmCancel) {
-                confirmCancel.disabled = false;
-                confirmCancel.textContent = 'Confirmar';
-            }
-        });
     }
 
     if (confirmCancel) {
@@ -459,7 +577,7 @@ document.addEventListener('DOMContentLoaded', function () {
             e.preventDefault();
             const ticketCard = cancelButton.closest('.ticket-card');
             let ticketId;
-            
+
             if (ticketCard) {
                 ticketId = ticketCard.dataset.id;
             } else {
@@ -469,7 +587,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     ticketId = ticketIdElement ? ticketIdElement.textContent.replace('#', '') : '';
                 }
             }
-            
+
             if (ticketId) {
                 showCancelModal(ticketId);
             }
@@ -481,9 +599,12 @@ document.addEventListener('DOMContentLoaded', function () {
             hideCancelModal();
             if (fileModal) {
                 fileModal.style.display = 'none';
-                if (modalFileImage) modalFileImage.style.display = 'none';
-                if (modalFilePdf) modalFilePdf.style.display = 'none';
-                if (modalFileName) modalFileName.textContent = '';
+                if (modalFileImage)
+                    modalFileImage.style.display = 'none';
+                if (modalFilePdf)
+                    modalFilePdf.style.display = 'none';
+                if (modalFileName)
+                    modalFileName.textContent = '';
             }
         }
     });
@@ -495,28 +616,36 @@ document.addEventListener('DOMContentLoaded', function () {
                 const type = fileItem.dataset.type;
                 const filename = fileItem.dataset.filename;
 
-                if (modalFileName) modalFileName.textContent = filename;
+                if (modalFileName)
+                    modalFileName.textContent = filename;
 
                 if (type === 'image' && modalFileImage) {
                     modalFileImage.src = src;
                     modalFileImage.style.display = 'block';
-                    if (modalFilePdf) modalFilePdf.style.display = 'none';
+                    if (modalFilePdf)
+                        modalFilePdf.style.display = 'none';
                 } else if (type === 'pdf' && modalFilePdf) {
                     modalFilePdf.src = src;
                     modalFilePdf.style.display = 'block';
-                    if (modalFileImage) modalFileImage.style.display = 'none';
+                    if (modalFileImage)
+                        modalFileImage.style.display = 'none';
                 }
 
-                if (fileModal) fileModal.style.display = 'block';
+                if (fileModal)
+                    fileModal.style.display = 'block';
             });
         });
 
         if (closeModal) {
             closeModal.addEventListener('click', () => {
-                if (fileModal) fileModal.style.display = 'none';
-                if (modalFileImage) modalFileImage.style.display = 'none';
-                if (modalFilePdf) modalFilePdf.style.display = 'none';
-                if (modalFileName) modalFileName.textContent = '';
+                if (fileModal)
+                    fileModal.style.display = 'none';
+                if (modalFileImage)
+                    modalFileImage.style.display = 'none';
+                if (modalFilePdf)
+                    modalFilePdf.style.display = 'none';
+                if (modalFileName)
+                    modalFileName.textContent = '';
             });
         }
 
@@ -524,9 +653,12 @@ document.addEventListener('DOMContentLoaded', function () {
             fileModal.addEventListener('click', function (e) {
                 if (e.target === fileModal) {
                     fileModal.style.display = 'none';
-                    if (modalFileImage) modalFileImage.style.display = 'none';
-                    if (modalFilePdf) modalFilePdf.style.display = 'none';
-                    if (modalFileName) modalFileName.textContent = '';
+                    if (modalFileImage)
+                        modalFileImage.style.display = 'none';
+                    if (modalFilePdf)
+                        modalFilePdf.style.display = 'none';
+                    if (modalFileName)
+                        modalFileName.textContent = '';
                 }
             });
         }
