@@ -209,20 +209,40 @@ public class UsuarioController {
         return "redirect:/usuario/perfil";
     }
 
-    // Nuevo método para obtener la imagen desde la base de datos
     @GetMapping("/imagen/{id}")
     public ResponseEntity<byte[]> obtenerImagen(@PathVariable Long id) {
         Usuario usuario = usuarioService.getUsuarioPorId(id);
-        if (usuario != null && usuario.getImagen() != null) {
+
+        if (usuario == null) {
+            return ResponseEntity.notFound().build();
+        }
+
+        // Si el usuario tiene imagen, devolverla
+        if (usuario.getImagen() != null && usuario.getImagen().length > 0) {
             return ResponseEntity.ok()
                     .contentType(MediaType.IMAGE_JPEG)
                     .body(usuario.getImagen());
         }
+
+        // Si no tiene imagen, obtener la imagen por defecto
+        byte[] imagenDefault = ((RegistroServiceImpl) registroService).obtenerImagenDefault();
+
+        if (imagenDefault != null) {
+            // Asignar la imagen por defecto al usuario y guardar en la base de datos
+            usuario.setImagen(imagenDefault);
+            usuarioService.save(usuario, false);
+
+            return ResponseEntity.ok()
+                    .contentType(MediaType.IMAGE_JPEG)
+                    .body(imagenDefault);
+        }
+
         return ResponseEntity.notFound().build();
     }
 
     @GetMapping("/historial")
-    public String historial(Model model, Authentication authentication) {
+    public String historial(Model model, Authentication authentication,
+            @RequestParam(value = "preserveFilters", required = false) String preserveFilters) {
         if (authentication != null) {
             String correoElectronico = authentication.getName();
             Usuario usuario = usuarioService.getUsuarioPorCorreo(correoElectronico);
@@ -256,7 +276,13 @@ public class UsuarioController {
 
                 model.addAttribute("ticketsConEstados", ticketsConEstados);
                 model.addAttribute("usuario", usuario);
-                return "usuario/historial";
+                model.addAttribute("esSoportistaOAdmin", esSoportistaOAdmin);
+                model.addAttribute("categoriasActivas", categoriasActivas);
+
+                // Agregar flag para indicar si se deben preservar los filtros
+                model.addAttribute("preserveFilters", "true".equals(preserveFilters));
+
+                return "/usuario/historial";
             }
         }
         return "redirect:/login";
@@ -277,7 +303,8 @@ public class UsuarioController {
     }
 
     @GetMapping("/detalles/{id}")
-    public String detalle(@PathVariable Long id, Model model, Authentication authentication) {
+    public String detalle(@PathVariable Long id, Model model, Authentication authentication,
+            HttpServletRequest request) {
         if (authentication != null) {
             Ticket ticket = ticketService.getTicketPorId(id);
             if (ticket != null) {
@@ -301,6 +328,18 @@ public class UsuarioController {
                     model.addAttribute("imagenes", archivos);
                     return "usuario/detalles";
                 }
+
+                // Add attributes to the model
+                model.addAttribute("ticket", ticket);
+                model.addAttribute("imagenes", archivos);
+                model.addAttribute("usuario", usuario);
+                model.addAttribute("ticketsAtendidos", ticketsAtendidos);
+
+                // Obtener el referer para saber de dónde viene
+                String referer = request.getHeader("Referer");
+                model.addAttribute("referer", referer);
+
+                return "/usuario/detalles";
             }
         }
         return "redirect:/login";

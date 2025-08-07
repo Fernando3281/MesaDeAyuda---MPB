@@ -4,7 +4,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const uploadBox = document.getElementById('uploadBox');
     const uploadText = document.getElementById('uploadText');
     const maxFiles = 2;
-    const maxSizeMB = 5;
+    const maxSizeMB = 25;
     const maxSizeBytes = maxSizeMB * 1024 * 1024;
 
     function openModal(imgSrc) {

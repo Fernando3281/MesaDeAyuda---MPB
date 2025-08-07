@@ -672,13 +672,75 @@
                 <div class="attachments-header">
                     <label>ARCHIVOS ADJUNTOS</label>
                 </div>
-                <div class="files-grid">
-                    <div th:each="imagen : ${imagenes}" class="file-item" 
-                         th:data-src="@{/archivos/ver/{id}(id=${imagen.idArchivo})}"
-                         th:data-type="${imagen.tipoArchivo.startsWith('image/') ? 'image' : 'pdf'}"
-                         th:data-filename="${imagen.nombreArchivo}">
-                        <i th:class="${imagen.tipoArchivo.startsWith('image/') ? 'far fa-file-image file-icon' : 'far fa-file-pdf file-icon'}"></i>
-                        <span class="file-name" th:text="${imagen.nombreArchivo}">ImagenEjemplo.jpg</span>
+
+                <div class="manager-info">
+                    <h2>Información del Encargado</h2>
+
+                    <div th:if="${ticket.asignadoPara != null}" class="manager-content">
+                        <div class="agent-profile">
+                            <div class="agent-photo">
+                                <img th:if="${ticket.asignadoPara.imagen != null}" 
+                                     th:src="@{/usuario/imagen/{id}(id=${ticket.asignadoPara.idUsuario})}" 
+                                     alt="Foto de perfil">
+                                <i th:unless="${ticket.asignadoPara.imagen != null}" class="fas fa-user-circle"></i>
+                            </div>
+                            <div class="agent-info">
+                                <div class="agent-role">Equipo de Soporte</div>
+                                <div class="agent-name" th:text="${ticket.asignadoPara.nombre + ' ' + ticket.asignadoPara.apellido}">Nombre del Soportista</div>
+                            </div>
+                        </div>
+
+                        <div class="info-field">
+                            <label>Codigo de Identificación</label>
+                            <input class="form-control" type="text" readonly th:value="${ticket.asignadoPara.codigo}" placeholder="ID">
+                        </div>
+
+                        <div class="info-field">
+                            <label>Departamento</label>
+                            <input class="form-control" type="text" readonly th:value="${ticket.asignadoPara.departamento}" placeholder="Departamento">
+                        </div>
+
+                        <div class="info-field">
+                            <label>Numero de Teléfono</label>
+                            <input class="form-control" type="text" readonly th:value="${ticket.asignadoPara.numeroTelefono}" placeholder="Telefono no disponible">
+                        </div>
+
+                        <div class="info-field">
+                            <label>Correo Electrónico</label>
+                            <input class="form-control" type="text" readonly th:value="${ticket.asignadoPara.correoElectronico}" placeholder="Sin correo registrado">
+                        </div>
+
+                        <div class="tickets-counter">
+                            <div class="counter-label">Tickets Atendidos por Soportista</div>
+                            <div class="counter-value">
+                                <i class="fas fa-ticket-alt"></i>
+                                <span th:text="${ticketsAtendidos != null ? ticketsAtendidos : '0'}">0</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div th:unless="${ticket.asignadoPara != null}" class="manager-content">
+                        <div class="manager-icon">
+                            <i th:class="${ticket.estado == 'Cancelado' ? 'fas fa-times-circle' : 
+                               ticket.estado == 'Resuelto' ? 'fas fa-check-circle' : 
+                               ticket.estado == 'Desactivado' ? 'fas fa-ban' : 
+                               ticket.estado == 'Cerrado' ? 'fas fa-lock' : 
+                               'fas fa-headset'}"></i>
+                        </div>
+                        <div class="manager-status">
+                            <strong th:text="${ticket.estado == 'Abierto' ? 'Su ticket está en revisión.' : 
+                                    ticket.estado == 'Pendiente' ? 'Su ticket está en progreso.' : 
+                                    ticket.estado == 'Resuelto' ? 'Su ticket ha sido solucionado.' : 
+                                    ticket.estado == 'Cancelado' ? 'Su ticket ha sido cancelado.' :
+                                    ticket.estado == 'Desactivado' ? 'Su ticket ha sido desactivado.' :
+                                    ticket.estado == 'Cerrado' ? 'Su ticket ha sido cerrado.' :
+                                    'Su ticket ha sido cerrado.'}">Estado del ticket</strong>
+                            <p th:text="${ticket.estado == 'Cancelado' ? 'Su solicitud ha sido cancelada. Si necesita asistencia o tiene alguna consulta, puede crear un nuevo ticket.' : 
+                               ticket.estado == 'Resuelto' ? 'Su solicitud ha sido resuelto exitosamente. Si persiste algún inconveniente, puede crear un nuevo ticket.' :
+                               ticket.estado == 'Desactivado' ? 'Su ticket ha sido desactivado. Para obtener soporte, por favor cree un nuevo ticket.' :
+                               ticket.estado == 'Cerrado' ? 'Su ticket ha sido cerrado. Si necesita asistencia adicional, puede crear un nuevo ticket.' :
+                               'Pronto un soportista se pondrá en contacto con usted.'}">Mensaje del ticket</p>
+                        </div>
                     </div>
                 </div>
             </div>
