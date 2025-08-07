@@ -209,15 +209,34 @@ public class UsuarioController {
         return "redirect:/usuario/perfil";
     }
 
-    // Nuevo método para obtener la imagen desde la base de datos
     @GetMapping("/imagen/{id}")
     public ResponseEntity<byte[]> obtenerImagen(@PathVariable Long id) {
         Usuario usuario = usuarioService.getUsuarioPorId(id);
-        if (usuario != null && usuario.getImagen() != null) {
+
+        if (usuario == null) {
+            return ResponseEntity.notFound().build();
+        }
+
+        // Si el usuario tiene imagen, devolverla
+        if (usuario.getImagen() != null && usuario.getImagen().length > 0) {
             return ResponseEntity.ok()
                     .contentType(MediaType.IMAGE_JPEG)
                     .body(usuario.getImagen());
         }
+
+        // Si no tiene imagen, obtener la imagen por defecto
+        byte[] imagenDefault = ((RegistroServiceImpl) registroService).obtenerImagenDefault();
+
+        if (imagenDefault != null) {
+            // Asignar la imagen por defecto al usuario y guardar en la base de datos
+            usuario.setImagen(imagenDefault);
+            usuarioService.save(usuario, false);
+
+            return ResponseEntity.ok()
+                    .contentType(MediaType.IMAGE_JPEG)
+                    .body(imagenDefault);
+        }
+
         return ResponseEntity.notFound().build();
     }
 

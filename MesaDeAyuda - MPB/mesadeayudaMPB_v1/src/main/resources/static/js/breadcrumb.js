@@ -67,12 +67,16 @@ const excludedRoutes = [
 
 const routeHierarchy = {
     '/tickets/manager': ['/tickets/listado', '/tickets/manager'],
+    '/tickets/perfil-solicitante': ['/tickets/listado', '/tickets/manager', '/tickets/perfil-solicitante'],
     '/tickets/atender': ['/tickets/listado', '/tickets/atender'],
-    '/tickets/perfil-solicitante': ['/tickets/listado', '/tickets/perfil-solicitante'],
     '/usuario/detalles': ['/usuario/historial', '/usuario/detalles'],
     '/usuario/editar': ['/usuario/perfil', '/usuario/editar'],
     '/usuario/crear': ['/usuario/listado', '/usuario/crear'],
     '/reportes/datos': ['/reportes/listado', '/reportes/datos']
+};
+
+const restrictedAccessRoutes = {
+    '/tickets/perfil-solicitante': '/tickets/manager'
 };
 
 function initBreadcrumb() {
@@ -128,16 +132,39 @@ function updateBreadcrumb() {
     let pageTitle = getPageTitle(basePath, pathId);
     let history = getStoredHistory();
     
-    if (mainRoutes.includes(basePath)) {
+    if (restrictedAccessRoutes[basePath]) {
+        history = buildRestrictedAccessHistory(basePath, currentPath, pageTitle, history);
+    }
+    else if (mainRoutes.includes(basePath)) {
         history = buildMainRouteHistory(currentPath, pageTitle);
-    } else if (routeHierarchy[basePath]) {
+    } 
+    else if (routeHierarchy[basePath]) {
         history = buildHierarchicalHistory(basePath, currentPath, pageTitle, pathId);
-    } else {
+    } 
+    else {
         history = buildNavigationalHistory(history, currentPath, pageTitle);
     }
     
     saveHistory(history);
     renderBreadcrumb(history);
+}
+
+function buildRestrictedAccessHistory(basePath, currentPath, pageTitle, currentHistory) {
+    const requiredParent = restrictedAccessRoutes[basePath];
+    
+    const hasValidParent = currentHistory.some(item => item.path === requiredParent);
+    
+    if (hasValidParent) {
+        return buildHierarchicalHistory(basePath, currentPath, pageTitle);
+    } else {
+        const parentTitle = routeMappings[requiredParent] || 'Página Padre';
+        return [
+            { path: '/index', title: 'Inicio' },
+            { path: '/tickets/listado', title: 'Listado de Tickets' },
+            { path: requiredParent, title: parentTitle },
+            { path: currentPath, title: pageTitle }
+        ];
+    }
 }
 
 function getPageTitle(basePath, pathId) {
@@ -206,7 +233,7 @@ function saveHistory(history) {
     try {
         sessionStorage.setItem('breadcrumbHistory', JSON.stringify(history));
     } catch (e) {
-        // Silently handle error
+        
     }
 }
 
@@ -232,14 +259,41 @@ function renderBreadcrumb(history) {
             a.href = item.path;
             a.textContent = item.title;
             a.title = `Ir a ${item.title}`;
-            a.addEventListener('click', function(e) {
-                navigateToBreadcrumb(e, index);
-            });
+            
+            if (isRestrictedRoute(item.path)) {
+                a.addEventListener('click', function(e) {
+                    handleRestrictedNavigation(e, item.path, index);
+                });
+            } else {
+                a.addEventListener('click', function(e) {
+                    navigateToBreadcrumb(e, index);
+                });
+            }
+            
             li.appendChild(a);
         }
         
         breadcrumbContainer.appendChild(li);
     });
+}
+
+function isRestrictedRoute(path) {
+    return Object.values(restrictedAccessRoutes).includes(path);
+}
+
+function handleRestrictedNavigation(event, targetPath, index) {
+    event.preventDefault();
+    
+    const history = getStoredHistory();
+    
+    if (history && history[index]) {
+        const newHistory = history.slice(0, index + 1);
+        
+        newHistory[newHistory.length - 1].fromRestricted = true;
+        
+        saveHistory(newHistory);
+        window.location.href = targetPath;
+    }
 }
 
 function navigateToBreadcrumb(event, index) {
@@ -271,13 +325,22 @@ function setupNavigationListeners() {
                 return;
             }
             
+            if (href === '/tickets/perfil-solicitante') {
+                const currentPath = window.location.pathname;
+                if (currentPath !== '/tickets/manager') {
+                    e.preventDefault();
+                    window.location.href = '/tickets/manager';
+                    return;
+                }
+            }
+            
             if (mainRoutes.includes(href)) {
                 try {
                     sessionStorage.setItem('breadcrumbHistory', JSON.stringify([
                         { path: '/index', title: 'Inicio' }
                     ]));
                 } catch (e) {
-                    // Silently handle error
+                    
                 }
             } else {
                 const currentPath = window.location.pathname;
@@ -316,7 +379,7 @@ function clearBreadcrumbHistory() {
     try {
         sessionStorage.removeItem('breadcrumbHistory');
     } catch (e) {
-        // Silently handle error
+        
     }
     initBreadcrumb();
 }
@@ -399,7 +462,7 @@ function actualizarUltimaConexion() {
             try {
                 JSON.parse(responseText);
             } catch (jsonError) {
-                // Silently handle JSON parse error
+                
             }
         }
     })
