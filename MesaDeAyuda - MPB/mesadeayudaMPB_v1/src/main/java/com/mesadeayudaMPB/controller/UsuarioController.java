@@ -147,7 +147,7 @@ public class UsuarioController {
                 model.addAttribute("usuario", usuario);
                 model.addAttribute("departamentos", departamentos);
 
-                return "usuario/editar";
+                return "/usuario/editar";
             }
         }
         return "redirect:/login";
@@ -308,25 +308,17 @@ public class UsuarioController {
         if (authentication != null) {
             Ticket ticket = ticketService.getTicketPorId(id);
             if (ticket != null) {
+                // Get the logged-in user
                 String correoElectronico = authentication.getName();
                 Usuario usuario = usuarioService.getUsuarioPorCorreo(correoElectronico);
 
-                if (usuario != null) {
-                    // Cargar roles explícitamente
-                    List<Rol> roles = rolService.obtenerRolesPorUsuario(usuario.getIdUsuario());
-                    usuario.setRoles(roles != null ? roles : new ArrayList<>());
+                // Get ticket attachments
+                List<ArchivoTicket> archivos = archivoTicketService.obtenerArchivosPorTicket(id);
 
-                    // Get ticket attachments
-                    List<ArchivoTicket> archivos = archivoTicketService.obtenerArchivosPorTicket(id);
-                    // Contar tickets atendidos por el soportista asignado (si existe)
-                    if (ticket.getAsignadoPara() != null) {
-                        ticketService.countTicketsAtendidosPorSoportista(ticket.getAsignadoPara().getIdUsuario(), usuario.getIdUsuario());
-                    }
-
-                    // Add attributes to the model
-                    model.addAttribute("ticket", ticket);
-                    model.addAttribute("imagenes", archivos);
-                    return "usuario/detalles";
+                // Contar tickets atendidos por el soportista asignado (si existe)
+                Long ticketsAtendidos = 0L;
+                if (ticket.getAsignadoPara() != null) {
+                    ticketsAtendidos = ticketService.countTicketsAtendidosPorSoportista(ticket.getAsignadoPara().getIdUsuario(), usuario.getIdUsuario());
                 }
 
                 // Add attributes to the model
@@ -347,7 +339,7 @@ public class UsuarioController {
 
     @GetMapping("/configuracion")
     public String configuracion(Model model) {
-        return "usuario/configuracion";
+        return "/usuario/configuracion";
     }
 
     @GetMapping("/listado")
@@ -498,7 +490,7 @@ public class UsuarioController {
         model.addAttribute("start", start);
         model.addAttribute("end", end);
 
-        return "usuario/listado";
+        return "/usuario/listado";
     }
 
     @GetMapping("/crear")
@@ -506,7 +498,7 @@ public class UsuarioController {
         List<Departamento> departamentos = departamentoService.obtenerTodosLosDepartamentos();
         model.addAttribute("usuario", new Usuario());
         model.addAttribute("departamentos", departamentos);
-        return "usuario/crear";
+        return "/usuario/crear";
     }
 
     // Métodos para manejar las acciones CRUD a través de modales
@@ -902,16 +894,16 @@ public class UsuarioController {
         // Verificar si el token ha expirado
         if (LocalDateTime.now().isAfter(expiryTime)) {
             passwordResetTokens.remove(token);
-            return "redirect:usuario/perfil?error=token_expirado";
+            return "redirect:/usuario/perfil?error=token_expirado";
         }
 
         // Verificar que es un token de cambio de contraseña
         if (!"CHANGE_PASSWORD".equals(tokenType)) {
-            return "redirect:usuario/perfil?error=token_invalido";
+            return "redirect:/usuario/perfil?error=token_invalido";
         }
 
         model.addAttribute("token", token);
-        return "usuario/cambiar-contrasena";
+        return "/usuario/cambiar-contrasena";
     }
 
 // Método para procesar el cambio de contraseña (usuario logueado)
@@ -923,7 +915,7 @@ public class UsuarioController {
 
         // Verificar si el token existe y es válido
         if (!passwordResetTokens.containsKey(token)) {
-            return "redirect:usuario/perfil?error=token_invalido";
+            return "redirect:/usuario/perfil?error=token_invalido";
         }
 
         Map<String, Object> tokenData = passwordResetTokens.get(token);
@@ -934,17 +926,17 @@ public class UsuarioController {
         // Verificar si el token ha expirado
         if (LocalDateTime.now().isAfter(expiryTime)) {
             passwordResetTokens.remove(token);
-            return "redirect:usuario/perfil?error=token_expirado";
+            return "redirect:/usuario/perfil?error=token_expirado";
         }
 
         // Verificar que es un token de cambio de contraseña
         if (!"CHANGE_PASSWORD".equals(tokenType)) {
-            return "redirect:usuario/perfil?error=token_invalido";
+            return "redirect:/usuario/perfil?error=token_invalido";
         }
 
         // Verificar que las contraseñas coincidan
         if (!password.equals(confirmPassword)) {
-            return "redirect:usuario/cambiar-contrasena?token=" + token + "&error=password_mismatch";
+            return "redirect:/usuario/cambiar-contrasena?token=" + token + "&error=password_mismatch";
         }
 
         try {
@@ -962,7 +954,7 @@ public class UsuarioController {
             return "redirect:/usuario/cambiar-contrasena?token=" + token + "&success=true";
 
         } catch (Exception e) {
-            return "redirect:usuario/cambiar-contrasena?token=" + token + "&error=update_failed";
+            return "redirect:/usuario/cambiar-contrasena?token=" + token + "&error=update_failed";
         }
     }
 
