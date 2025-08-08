@@ -147,7 +147,7 @@ public class UsuarioController {
                 model.addAttribute("usuario", usuario);
                 model.addAttribute("departamentos", departamentos);
 
-                return "/usuario/editar";
+                return "usuario/editar";
             }
         }
         return "redirect:/login";
@@ -206,7 +206,7 @@ public class UsuarioController {
                 return "redirect:/login?logout";
             }
         }
-        return "redirect:/usuario/perfil";
+        return "redirect:usuario/perfil";
     }
 
     @GetMapping("/imagen/{id}")
@@ -282,7 +282,7 @@ public class UsuarioController {
                 // Agregar flag para indicar si se deben preservar los filtros
                 model.addAttribute("preserveFilters", "true".equals(preserveFilters));
 
-                return "/usuario/historial";
+                return "usuario/historial";
             }
         }
         return "redirect:/login";
@@ -331,7 +331,7 @@ public class UsuarioController {
                 String referer = request.getHeader("Referer");
                 model.addAttribute("referer", referer);
 
-                return "/usuario/detalles";
+                return "usuario/detalles";
             }
         }
         return "redirect:/login";
@@ -339,7 +339,7 @@ public class UsuarioController {
 
     @GetMapping("/configuracion")
     public String configuracion(Model model) {
-        return "/usuario/configuracion";
+        return "usuario/configuracion";
     }
 
     @GetMapping("/listado")
@@ -490,7 +490,7 @@ public class UsuarioController {
         model.addAttribute("start", start);
         model.addAttribute("end", end);
 
-        return "/usuario/listado";
+        return "usuario/listado";
     }
 
     @GetMapping("/crear")
@@ -498,7 +498,7 @@ public class UsuarioController {
         List<Departamento> departamentos = departamentoService.obtenerTodosLosDepartamentos();
         model.addAttribute("usuario", new Usuario());
         model.addAttribute("departamentos", departamentos);
-        return "/usuario/crear";
+        return "usuario/crear";
     }
 
     // Métodos para manejar las acciones CRUD a través de modales
@@ -903,7 +903,7 @@ public class UsuarioController {
         }
 
         model.addAttribute("token", token);
-        return "/usuario/cambiar-contrasena";
+        return "usuario/cambiar-contrasena";
     }
 
 // Método para procesar el cambio de contraseña (usuario logueado)
@@ -951,10 +951,10 @@ public class UsuarioController {
             passwordResetTokens.remove(token);
 
             // Redirigir con parámetro de éxito para que el JavaScript pueda detectarlo
-            return "redirect:/usuario/cambiar-contrasena?token=" + token + "&success=true";
+            return "redirect:usuario/cambiar-contrasena?token=" + token + "&success=true";
 
         } catch (Exception e) {
-            return "redirect:/usuario/cambiar-contrasena?token=" + token + "&error=update_failed";
+            return "redirect:usuario/cambiar-contrasena?token=" + token + "&error=update_failed";
         }
     }
 
