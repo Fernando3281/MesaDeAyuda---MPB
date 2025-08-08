@@ -37,6 +37,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import com.mesadeayudaMPB.service.ArchivoTicketService;
+import com.mesadeayudaMPB.service.AuditoriaService;
 import com.mesadeayudaMPB.service.CategoriaService;
 import com.mesadeayudaMPB.service.EmailService;
 import com.mesadeayudaMPB.service.MensajeService;
@@ -49,6 +50,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.security.core.GrantedAuthority;
+import org.springframework.transaction.annotation.Transactional;
 
 @Controller
 @RequestMapping("/usuario")
@@ -77,6 +79,9 @@ public class UsuarioController {
 
     @Autowired
     private DepartamentoService departamentoService;
+    
+    @Autowired
+    private AuditoriaService auditoriaService;
 
     @Autowired
     private TicketService ticketService;
@@ -762,6 +767,7 @@ public class UsuarioController {
     // Método para eliminar usuario
     @PostMapping("/eliminar/{id}")
     @ResponseBody
+    @Transactional
     public ResponseEntity<Map<String, Object>> eliminarUsuario(@PathVariable Long id, Authentication authentication) {
         Map<String, Object> response = new HashMap<>();
 
@@ -802,22 +808,32 @@ public class UsuarioController {
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
             }
 
-            // 1. Eliminar archivos asociados a tickets del usuario
-            List<Ticket> ticketsUsuario = ticketService.getTicketsPorSolicitante(usuario);
-            for (Ticket ticket : ticketsUsuario) {
+            // 1. Eliminar registros de auditoría relacionados con los tickets del usuario
+            // Primero obtener todos los tickets donde el usuario es solicitante o asignado
+            List<Ticket> ticketsRelacionados = new ArrayList<>();
+            ticketsRelacionados.addAll(ticketService.getTicketsPorSolicitante(usuario));
+            ticketsRelacionados.addAll(ticketService.getTicketsPorAsignado(usuario));
+
+            // Eliminar auditorías de estos tickets
+            for (Ticket ticket : ticketsRelacionados) {
+                auditoriaService.eliminarAuditoriasPorTicket(ticket.getIdTicket());
+            }
+
+            // 2. Eliminar archivos asociados a tickets del usuario
+            for (Ticket ticket : ticketsRelacionados) {
                 archivoTicketService.eliminarArchivosPorTicket(ticket.getIdTicket());
             }
 
-            // 2. Eliminar mensajes del usuario
+            // 3. Eliminar mensajes del usuario (como emisor o receptor)
             mensajeService.eliminarMensajesPorUsuario(id);
 
-            // 3. Eliminar tickets del usuario (como solicitante o asignado)
+            // 4. Ahora podemos eliminar los tickets del usuario (como solicitante o asignado)
             ticketService.eliminarTicketsPorUsuario(id);
 
-            // 4. Eliminar roles del usuario
+            // 5. Eliminar roles del usuario
             rolService.eliminarRolesPorUsuario(id);
 
-            // 5. Finalmente eliminar el usuario
+            // 6. Finalmente eliminar el usuario
             usuarioService.delete(usuario);
 
             response.put("success", true);

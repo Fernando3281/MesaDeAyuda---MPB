@@ -111,11 +111,23 @@ public class AuditoriaServiceImpl implements AuditoriaService {
         }
     }
 
+    @Override
+    @Transactional
+    public void eliminarAuditoriasPorTicket(Long idTicket) {
+        try {
+            // Primera opción: Usar el método del repositorio
+            auditoriaDao.deleteByTicketId(idTicket);
 
+        } catch (Exception e) {
+            System.err.println("Error eliminando auditorías del ticket: " + idTicket + " - " + e.getMessage());
+            throw new RuntimeException("Error al eliminar auditorías del ticket", e);
+        }
+    }
 
-@Override
-@Transactional(readOnly = true)
-public List<Auditoria> findTop50RecentAuditActions() {
-    return auditoriaDao.findTop50RecentAuditActions();
-}
+    @Override
+    @Transactional(readOnly = true)
+    public List<Auditoria> findTop50RecentAuditActions() {
+        return auditoriaDao.findTop50RecentAuditActions();
+    }
+
 }

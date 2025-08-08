@@ -220,7 +220,7 @@ public class RegistroController {
         }
 
         model.addAttribute("token", token);
-        return "registrocambiar-contrasena";
+        return "registro/recuperar-contrasena";
     }
 
     // Método para procesar el cambio de contraseña
