@@ -1,4 +1,4 @@
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function () {
     const breadcrumbContainer = document.querySelector('.breadcrumb');
     if (!breadcrumbContainer) {
         return;
@@ -84,12 +84,12 @@ function initBreadcrumb() {
         const storedHistory = sessionStorage.getItem('breadcrumbHistory');
         if (!storedHistory || !isValidJson(storedHistory)) {
             sessionStorage.setItem('breadcrumbHistory', JSON.stringify([
-                { path: '/index', title: 'Inicio' }
+                {path: '/index', title: 'Inicio'}
             ]));
         }
     } catch (e) {
         sessionStorage.setItem('breadcrumbHistory', JSON.stringify([
-            { path: '/index', title: 'Inicio' }
+            {path: '/index', title: 'Inicio'}
         ]));
     }
 }
@@ -118,63 +118,60 @@ function updateBreadcrumb() {
     }
 
     breadcrumbContainer.style.display = 'block';
-    
+
     const currentPath = window.location.pathname;
     let basePath = currentPath;
     let pathId = null;
-    
+
     const idMatch = currentPath.match(/\/(\d+)$/);
     if (idMatch) {
         pathId = idMatch[1];
         basePath = currentPath.substring(0, currentPath.lastIndexOf('/'));
     }
-    
+
     let pageTitle = getPageTitle(basePath, pathId);
     let history = getStoredHistory();
-    
+
     if (restrictedAccessRoutes[basePath]) {
         history = buildRestrictedAccessHistory(basePath, currentPath, pageTitle, history);
-    }
-    else if (mainRoutes.includes(basePath)) {
+    } else if (mainRoutes.includes(basePath)) {
         history = buildMainRouteHistory(currentPath, pageTitle);
-    } 
-    else if (routeHierarchy[basePath]) {
+    } else if (routeHierarchy[basePath]) {
         history = buildHierarchicalHistory(basePath, currentPath, pageTitle, pathId);
-    } 
-    else {
+    } else {
         history = buildNavigationalHistory(history, currentPath, pageTitle);
     }
-    
+
     saveHistory(history);
     renderBreadcrumb(history);
 }
 
 function buildRestrictedAccessHistory(basePath, currentPath, pageTitle, currentHistory) {
     const requiredParent = restrictedAccessRoutes[basePath];
-    
+
     const hasValidParent = currentHistory.some(item => item.path === requiredParent);
-    
+
     if (hasValidParent) {
         return buildHierarchicalHistory(basePath, currentPath, pageTitle);
     } else {
         const parentTitle = routeMappings[requiredParent] || 'Página Padre';
         return [
-            { path: '/index', title: 'Inicio' },
-            { path: '/tickets/listado', title: 'Listado de Tickets' },
-            { path: requiredParent, title: parentTitle },
-            { path: currentPath, title: pageTitle }
+            {path: '/index', title: 'Inicio'},
+            {path: '/tickets/listado', title: 'Listado de Tickets'},
+            {path: requiredParent, title: parentTitle},
+            {path: currentPath, title: pageTitle}
         ];
     }
 }
 
 function getPageTitle(basePath, pathId) {
     let pageTitle = routeMappings[basePath];
-    
+
     if (!pageTitle) {
         const docTitle = document.title.replace(' - Mesa de Ayuda', '').replace(' - Centro de Soporte', '');
         pageTitle = docTitle || 'Página Actual';
     }
-    
+
     return pageTitle;
 }
 
@@ -189,43 +186,43 @@ function getStoredHistory() {
 
 function buildMainRouteHistory(currentPath, pageTitle) {
     return [
-        { path: '/index', title: 'Inicio' },
-        { path: currentPath, title: pageTitle }
+        {path: '/index', title: 'Inicio'},
+        {path: currentPath, title: pageTitle}
     ];
 }
 
 function buildHierarchicalHistory(basePath, currentPath, pageTitle, pathId) {
     const hierarchy = routeHierarchy[basePath];
-    const history = [{ path: '/index', title: 'Inicio' }];
-    
+    const history = [{path: '/index', title: 'Inicio'}];
+
     for (let i = 0; i < hierarchy.length - 1; i++) {
         const parentPath = hierarchy[i];
         const parentTitle = routeMappings[parentPath] || 'Página Padre';
-        history.push({ path: parentPath, title: parentTitle });
+        history.push({path: parentPath, title: parentTitle});
     }
-    
-    history.push({ path: currentPath, title: pageTitle });
-    
+
+    history.push({path: currentPath, title: pageTitle});
+
     return history;
 }
 
 function buildNavigationalHistory(history, currentPath, pageTitle) {
     const existingIndex = history.findIndex(item => item.path === currentPath);
-    
+
     if (existingIndex !== -1) {
         history = history.slice(0, existingIndex + 1);
     } else {
         if (history.length === 0 || history[history.length - 1].path !== currentPath) {
-            history.push({ path: currentPath, title: pageTitle });
+            history.push({path: currentPath, title: pageTitle});
         }
-        
+
         if (history.length > 6) {
             const inicio = history[0];
             const restantes = history.slice(-5);
             history = [inicio, ...restantes];
         }
     }
-    
+
     return history;
 }
 
@@ -233,23 +230,23 @@ function saveHistory(history) {
     try {
         sessionStorage.setItem('breadcrumbHistory', JSON.stringify(history));
     } catch (e) {
-        
+
     }
 }
 
 function renderBreadcrumb(history) {
     const breadcrumbContainer = document.querySelector('.breadcrumb');
-    
+
     if (!breadcrumbContainer) {
         return;
     }
-    
+
     breadcrumbContainer.innerHTML = '';
-    
+
     history.forEach((item, index) => {
         const li = document.createElement('li');
         li.className = 'breadcrumb-item';
-        
+
         if (index === history.length - 1) {
             li.classList.add('active');
             li.setAttribute('aria-current', 'page');
@@ -259,20 +256,20 @@ function renderBreadcrumb(history) {
             a.href = item.path;
             a.textContent = item.title;
             a.title = `Ir a ${item.title}`;
-            
+
             if (isRestrictedRoute(item.path)) {
-                a.addEventListener('click', function(e) {
+                a.addEventListener('click', function (e) {
                     handleRestrictedNavigation(e, item.path, index);
                 });
             } else {
-                a.addEventListener('click', function(e) {
+                a.addEventListener('click', function (e) {
                     navigateToBreadcrumb(e, index);
                 });
             }
-            
+
             li.appendChild(a);
         }
-        
+
         breadcrumbContainer.appendChild(li);
     });
 }
@@ -283,14 +280,14 @@ function isRestrictedRoute(path) {
 
 function handleRestrictedNavigation(event, targetPath, index) {
     event.preventDefault();
-    
+
     const history = getStoredHistory();
-    
+
     if (history && history[index]) {
         const newHistory = history.slice(0, index + 1);
-        
+
         newHistory[newHistory.length - 1].fromRestricted = true;
-        
+
         saveHistory(newHistory);
         window.location.href = targetPath;
     }
@@ -298,15 +295,15 @@ function handleRestrictedNavigation(event, targetPath, index) {
 
 function navigateToBreadcrumb(event, index) {
     event.preventDefault();
-    
+
     const history = getStoredHistory();
-    
+
     if (history && history[index]) {
         const targetPath = history[index].path;
-        
+
         const newHistory = history.slice(0, index + 1);
         saveHistory(newHistory);
-        
+
         window.location.href = targetPath;
     }
 }
@@ -316,15 +313,15 @@ function setupNavigationListeners() {
     if (!sidebar) {
         return;
     }
-    
+
     sidebar.querySelectorAll('a').forEach(link => {
-        link.addEventListener('click', function(e) {
+        link.addEventListener('click', function (e) {
             const href = this.getAttribute('href');
-            
+
             if (!href || href.startsWith('#') || href.startsWith('http')) {
                 return;
             }
-            
+
             if (href === '/tickets/perfil-solicitante') {
                 const currentPath = window.location.pathname;
                 if (currentPath !== '/tickets/manager') {
@@ -333,14 +330,14 @@ function setupNavigationListeners() {
                     return;
                 }
             }
-            
+
             if (mainRoutes.includes(href)) {
                 try {
                     sessionStorage.setItem('breadcrumbHistory', JSON.stringify([
-                        { path: '/index', title: 'Inicio' }
+                        {path: '/index', title: 'Inicio'}
                     ]));
                 } catch (e) {
-                    
+
                 }
             } else {
                 const currentPath = window.location.pathname;
@@ -355,12 +352,12 @@ function setupNavigationListeners() {
 function updateCurrentPageInHistory() {
     const currentPath = window.location.pathname;
     const currentTitle = document.title.replace(' - Mesa de Ayuda', '').replace(' - Centro de Soporte', '');
-    
+
     let history = getStoredHistory();
-    
+
     if (history.length === 0 || history[history.length - 1].path !== currentPath) {
-        history.push({ 
-            path: currentPath, 
+        history.push({
+            path: currentPath,
             title: currentTitle || 'Página Actual'
         });
         saveHistory(history);
@@ -369,7 +366,7 @@ function updateCurrentPageInHistory() {
 
 function setupLogoClickListeners() {
     const logoLinks = document.querySelectorAll('.logo-details a, .sidebar a[href="/index"], .sidebar a[href="/"]');
-    
+
     logoLinks.forEach(link => {
         link.addEventListener('click', clearBreadcrumbHistory);
     });
@@ -379,7 +376,7 @@ function clearBreadcrumbHistory() {
     try {
         sessionStorage.removeItem('breadcrumbHistory');
     } catch (e) {
-        
+
     }
     initBreadcrumb();
 }
@@ -387,7 +384,7 @@ function clearBreadcrumbHistory() {
 function isAuthPage() {
     const currentPath = window.location.pathname;
     const currentSearch = window.location.search;
-    
+
     const authRoutes = [
         '/login',
         '/login.html',
@@ -397,24 +394,24 @@ function isAuthPage() {
         '/usuario/cambiar-contrasena',
         '/registro/cambiar-contrasena'
     ];
-    
+
     if (authRoutes.includes(currentPath)) {
         return true;
     }
-    
+
     if (currentPath === '/registro/verificacion' && currentSearch.includes('email=')) {
         return true;
     }
-    
+
     if (currentPath === '/login' && currentSearch.length > 0) {
         return true;
     }
-    
-    if ((currentPath === '/usuario/cambiar-contrasena' || currentPath === '/registro/cambiar-contrasena') 
-        && currentSearch.includes('token=')) {
+
+    if ((currentPath === '/usuario/cambiar-contrasena' || currentPath === '/registro/cambiar-contrasena')
+            && currentSearch.includes('token=')) {
         return true;
     }
-    
+
     return false;
 }
 
@@ -424,7 +421,7 @@ function refreshBreadcrumb() {
     }
 }
 
-window.addEventListener('popstate', function() {
+window.addEventListener('popstate', function () {
     setTimeout(refreshBreadcrumb, 100);
 });
 
@@ -435,13 +432,18 @@ function actualizarUltimaConexion() {
         return;
     }
 
-    const csrfToken = document.querySelector('input[name="_csrf"]')?.value || 
-                     document.querySelector('meta[name="_csrf"]')?.getAttribute('content');
-    
+    const csrfToken = document.querySelector('input[name="_csrf"]')?.value ||
+            document.querySelector('meta[name="_csrf"]')?.getAttribute('content');
+
     if (!csrfToken) {
         ultimaConexionActiva = false;
         return;
     }
+
+    const ahora = new Date();
+    const payload = {
+        ultimaConexion: ahora.toISOString()
+    };
 
     fetch('/usuario/actualizar-ultima-conexion', {
         method: 'POST',
@@ -449,29 +451,30 @@ function actualizarUltimaConexion() {
             'Content-Type': 'application/json',
             'X-CSRF-TOKEN': csrfToken
         },
-        credentials: 'same-origin'
+        credentials: 'same-origin',
+        body: JSON.stringify(payload)
     })
-    .then(response => {
-        if (!response.ok) {
-            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-        }
-        return response.text();
-    })
-    .then(responseText => {
-        if (responseText && responseText.trim() !== '') {
-            try {
-                JSON.parse(responseText);
-            } catch (jsonError) {
-                
-            }
-        }
-    })
-    .catch(error => {
-        ultimaConexionActiva = false;
-        if (intervaloUltimaConexion) {
-            clearInterval(intervaloUltimaConexion);
-        }
-    });
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                return response.text();
+            })
+            .then(responseText => {
+                if (responseText && responseText.trim() !== '') {
+                    try {
+                        JSON.parse(responseText);
+                    } catch (jsonError) {
+                        // ignorar si no es JSON válido
+                    }
+                }
+            })
+            .catch(error => {
+                ultimaConexionActiva = false;
+                if (intervaloUltimaConexion) {
+                    clearInterval(intervaloUltimaConexion);
+                }
+            });
 }
 
 let intervaloUltimaConexion;
@@ -481,9 +484,9 @@ function iniciarActualizacionConexion() {
         return;
     }
 
-    const csrfToken = document.querySelector('input[name="_csrf"]')?.value || 
-                     document.querySelector('meta[name="_csrf"]')?.getAttribute('content');
-    
+    const csrfToken = document.querySelector('input[name="_csrf"]')?.value ||
+            document.querySelector('meta[name="_csrf"]')?.getAttribute('content');
+
     if (!csrfToken) {
         return;
     }
@@ -497,11 +500,11 @@ function iniciarActualizacionConexion() {
     setTimeout(() => {
         actualizarUltimaConexion();
     }, 1000);
-    
+
     intervaloUltimaConexion = setInterval(actualizarUltimaConexion, 300000);
 }
 
-document.addEventListener('visibilitychange', function() {
+document.addEventListener('visibilitychange', function () {
     if (isAuthPage()) {
         return;
     }
@@ -516,14 +519,14 @@ document.addEventListener('visibilitychange', function() {
     }
 });
 
-window.addEventListener('beforeunload', function() {
+window.addEventListener('beforeunload', function () {
     ultimaConexionActiva = false;
     if (intervaloUltimaConexion) {
         clearInterval(intervaloUltimaConexion);
     }
 });
 
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function () {
     if (!isAuthPage()) {
         setTimeout(() => {
             iniciarActualizacionConexion();
