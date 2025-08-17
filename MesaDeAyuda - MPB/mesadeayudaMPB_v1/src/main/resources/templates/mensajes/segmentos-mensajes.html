@@ -8,7 +8,7 @@
         <section th:fragment="mensajes-section" class="mensajes-section">
             <meta name="_csrf_header" th:content="${_csrf.headerName}"/>
             <meta name="_csrf_token" th:content="${_csrf.token}"/>
-            <input type="hidden" id="usuarioRol" th:value="${#authentication.principal.authorities}"/>
+ 
 
             <div class="mensajes-title">Mis Mensajes</div>
 
