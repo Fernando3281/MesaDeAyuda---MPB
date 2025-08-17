@@ -58,6 +58,30 @@ function clearFiltersFromSessionStorage() {
     sessionStorage.removeItem('ticketFilters');
 }
 
+function clearAllFilters() {
+    document.querySelectorAll('input[type="checkbox"]').forEach(cb => {
+        cb.checked = false;
+    });
+    
+    if (document.getElementById('fechaFrom')) {
+        document.getElementById('fechaFrom').value = '';
+        if (document.getElementById('fechaFrom')._flatpickr) {
+            document.getElementById('fechaFrom')._flatpickr.clear();
+        }
+    }
+    
+    if (document.getElementById('fechaTo')) {
+        document.getElementById('fechaTo').value = '';
+        if (document.getElementById('fechaTo')._flatpickr) {
+            document.getElementById('fechaTo')._flatpickr.clear();
+        }
+    }
+    
+    if (document.getElementById('searchInput')) {
+        document.getElementById('searchInput').value = '';
+    }
+}
+
 document.addEventListener('DOMContentLoaded', function () {
     const filterChips = document.querySelectorAll('.filter-chip');
     const filterDropdowns = document.querySelectorAll('.filter-dropdown');
@@ -83,6 +107,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const esSoportistaOAdmin = ticketListContainer ? ticketListContainer.dataset.esSoportistaAdmin === 'true' : false;
 
     const fromTicketDetails = sessionStorage.getItem('fromTicketDetails') === 'true';
+    const preserveFilters = ticketListContainer ? ticketListContainer.dataset.preserveFilters === 'true' : false;
 
     if (fechaFrom && fechaTo) {
         flatpickr("#fechaFrom", {
@@ -144,22 +169,17 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     if (ticketList) {
-        if (!fromTicketDetails) {
-            if (activeFilters)
-                activeFilters.style.display = 'none';
-            document.querySelectorAll('input[type="checkbox"]').forEach(cb => {
-                cb.checked = false;
-            });
-            if (fechaFrom)
-                fechaFrom.value = '';
-            if (fechaTo)
-                fechaTo.value = '';
-            if (searchInput)
-                searchInput.value = '';
-            clearFiltersFromSessionStorage();
-        } else {
+        if (fromTicketDetails && preserveFilters) {
             loadFiltersFromSessionStorage();
-            sessionStorage.removeItem('fromTicketDetails');
+        } else {
+            clearAllFilters();
+            clearFiltersFromSessionStorage();
+        }
+        
+        sessionStorage.removeItem('fromTicketDetails');
+
+        if (activeFilters) {
+            activeFilters.style.display = 'none';
         }
 
         actualizarVisibilidadBotonLimpiar();
@@ -266,17 +286,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
         if (clearFilters) {
             clearFilters.addEventListener('click', () => {
-                document.querySelectorAll('input[type="checkbox"]').forEach(cb => cb.checked = false);
-                if (fechaFrom)
-                    fechaFrom.value = '';
-                if (fechaTo)
-                    fechaTo.value = '';
-                if (fechaFrom && fechaFrom._flatpickr)
-                    fechaFrom._flatpickr.clear();
-                if (fechaTo && fechaTo._flatpickr)
-                    fechaTo._flatpickr.clear();
-                if (searchInput)
-                    searchInput.value = '';
+                clearAllFilters();
                 filterTickets();
                 updateActiveFilters();
                 clearFiltersFromSessionStorage();
@@ -338,17 +348,7 @@ document.addEventListener('DOMContentLoaded', function () {
         const clearFiltersFromNoMatches = document.getElementById('clearFiltersFromNoMatches');
         if (clearFiltersFromNoMatches) {
             clearFiltersFromNoMatches.addEventListener('click', () => {
-                document.querySelectorAll('input[type="checkbox"]').forEach(cb => cb.checked = false);
-                if (fechaFrom)
-                    fechaFrom.value = '';
-                if (fechaTo)
-                    fechaTo.value = '';
-                if (fechaFrom && fechaFrom._flatpickr)
-                    fechaFrom._flatpickr.clear();
-                if (fechaTo && fechaTo._flatpickr)
-                    fechaTo._flatpickr.clear();
-                if (searchInput)
-                    searchInput.value = '';
+                clearAllFilters();
                 filterTickets();
                 updateActiveFilters();
                 clearFiltersFromSessionStorage();
