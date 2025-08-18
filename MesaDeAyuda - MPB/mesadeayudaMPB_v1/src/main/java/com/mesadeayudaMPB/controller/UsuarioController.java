@@ -1,5 +1,7 @@
 package com.mesadeayudaMPB.controller;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import static com.mesadeayudaMPB.ProjectConfig.passwordEncoder;
 import com.mesadeayudaMPB.dao.MensajeDao;
 import com.mesadeayudaMPB.dao.RolDao;
@@ -42,6 +44,10 @@ import com.mesadeayudaMPB.service.CategoriaService;
 import com.mesadeayudaMPB.service.EmailService;
 import com.mesadeayudaMPB.service.MensajeService;
 import jakarta.servlet.http.HttpServletRequest;
+import java.io.BufferedReader;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -79,7 +85,7 @@ public class UsuarioController {
 
     @Autowired
     private DepartamentoService departamentoService;
-    
+
     @Autowired
     private AuditoriaService auditoriaService;
 
@@ -735,31 +741,88 @@ public class UsuarioController {
 
     @PostMapping("/actualizar-ultima-conexion")
     @ResponseBody
-    public ResponseEntity<Map<String, Object>> actualizarUltimaConexion(Authentication authentication) {
+    public ResponseEntity<Map<String, Object>> actualizarUltimaConexion(
+            Authentication authentication,
+            HttpServletRequest request) {
         Map<String, Object> response = new HashMap<>();
 
         try {
             if (authentication == null) {
                 response.put("success", false);
+                response.put("error", "No autenticado");
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
             }
 
             String correoElectronico = authentication.getName();
             Usuario usuario = usuarioService.getUsuarioPorCorreo(correoElectronico);
 
-            if (usuario != null) {
-                usuario.setUltimaConexion(new Date());
-                usuarioService.save(usuario, false);
-                response.put("success", true);
-                return ResponseEntity.ok(response);
+            if (usuario == null) {
+                response.put("success", false);
+                response.put("error", "Usuario no encontrado");
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
             }
 
-            response.put("success", false);
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
+            // Fecha por defecto (actual del servidor)
+            Date fechaUltimaConexion = new Date();
+            String zonaHoraria = "America/Costa_Rica";
+            Map<String, Object> infoDebug = null;
+
+            try {
+                // Leer el cuerpo de la petición para obtener la fecha de Costa Rica
+                StringBuilder requestBody = new StringBuilder();
+                String line;
+                try (BufferedReader reader = request.getReader()) {
+                    while ((line = reader.readLine()) != null) {
+                        requestBody.append(line);
+                    }
+                }
+
+                if (requestBody.length() > 0) {
+                    ObjectMapper mapper = new ObjectMapper();
+                    JsonNode jsonNode = mapper.readTree(requestBody.toString());
+
+                    // Procesar la fecha ya convertida a Costa Rica que envía el cliente
+                    if (jsonNode.has("ultimaConexion")) {
+                        String fechaISO = jsonNode.get("ultimaConexion").asText();
+                        try {
+                            // La fecha ya viene convertida a hora de Costa Rica desde el JavaScript
+                            // Solo necesitamos parsearla
+                            ZonedDateTime zonedDateTime = ZonedDateTime.parse(fechaISO);
+                            fechaUltimaConexion = Date.from(zonedDateTime.toInstant());
+
+                        } catch (Exception e) {
+                            // Si hay error, usar fecha del servidor
+                            fechaUltimaConexion = new Date();
+                        }
+                    }
+
+                    // Obtener información adicional para debugging
+                    if (jsonNode.has("zonaHoraria")) {
+                        zonaHoraria = jsonNode.get("zonaHoraria").asText();
+                    }
+
+                    if (jsonNode.has("infoDebug")) {
+                        infoDebug = mapper.convertValue(jsonNode.get("infoDebug"), Map.class);
+                    }
+                }
+            } catch (Exception e) {
+                // Si hay cualquier error, usar fecha del servidor
+                fechaUltimaConexion = new Date();
+            }
+
+            // Actualizar la última conexión del usuario
+            usuario.setUltimaConexion(fechaUltimaConexion);
+            usuarioService.save(usuario, false);
+
+            response.put("success", true);
+            response.put("fechaActualizada", fechaUltimaConexion);
+            response.put("zonaHoraria", zonaHoraria);
+
+            return ResponseEntity.ok(response);
 
         } catch (Exception e) {
             response.put("success", false);
-            response.put("error", "Error al actualizar última conexión");
+            response.put("error", "Error interno del servidor");
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
         }
     }
