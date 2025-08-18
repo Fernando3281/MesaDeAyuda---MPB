@@ -681,7 +681,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 bootstrapSuccessModal.hide();
             }
             
-            const previousPage = sessionStorage.getItem('previousPanel') || '/tickets/listado';
+            const previousPage = sessionStorage.getItem('previousPanel') || 'index';
             window.location.href = previousPage;
         });
     }

@@ -1,5 +1,7 @@
 package com.mesadeayudaMPB.controller;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import static com.mesadeayudaMPB.ProjectConfig.passwordEncoder;
 import com.mesadeayudaMPB.dao.MensajeDao;
 import com.mesadeayudaMPB.dao.RolDao;
@@ -37,10 +39,15 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import com.mesadeayudaMPB.service.ArchivoTicketService;
+import com.mesadeayudaMPB.service.AuditoriaService;
 import com.mesadeayudaMPB.service.CategoriaService;
 import com.mesadeayudaMPB.service.EmailService;
 import com.mesadeayudaMPB.service.MensajeService;
 import jakarta.servlet.http.HttpServletRequest;
+import java.io.BufferedReader;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -49,6 +56,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.security.core.GrantedAuthority;
+import org.springframework.transaction.annotation.Transactional;
 
 @Controller
 @RequestMapping("/usuario")
@@ -77,6 +85,9 @@ public class UsuarioController {
 
     @Autowired
     private DepartamentoService departamentoService;
+
+    @Autowired
+    private AuditoriaService auditoriaService;
 
     @Autowired
     private TicketService ticketService;
@@ -147,7 +158,7 @@ public class UsuarioController {
                 model.addAttribute("usuario", usuario);
                 model.addAttribute("departamentos", departamentos);
 
-                return "/usuario/editar";
+                return "usuario/editar";
             }
         }
         return "redirect:/login";
@@ -206,7 +217,7 @@ public class UsuarioController {
                 return "redirect:/login?logout";
             }
         }
-        return "redirect:/usuario/perfil";
+        return "redirect:perfil";
     }
 
     @GetMapping("/imagen/{id}")
@@ -282,7 +293,7 @@ public class UsuarioController {
                 // Agregar flag para indicar si se deben preservar los filtros
                 model.addAttribute("preserveFilters", "true".equals(preserveFilters));
 
-                return "/usuario/historial";
+                return "usuario/historial";
             }
         }
         return "redirect:/login";
@@ -331,7 +342,7 @@ public class UsuarioController {
                 String referer = request.getHeader("Referer");
                 model.addAttribute("referer", referer);
 
-                return "/usuario/detalles";
+                return "usuario/detalles";
             }
         }
         return "redirect:/login";
@@ -339,7 +350,7 @@ public class UsuarioController {
 
     @GetMapping("/configuracion")
     public String configuracion(Model model) {
-        return "/usuario/configuracion";
+        return "usuario/configuracion";
     }
 
     @GetMapping("/listado")
@@ -490,7 +501,7 @@ public class UsuarioController {
         model.addAttribute("start", start);
         model.addAttribute("end", end);
 
-        return "/usuario/listado";
+        return "usuario/listado";
     }
 
     @GetMapping("/crear")
@@ -498,7 +509,7 @@ public class UsuarioController {
         List<Departamento> departamentos = departamentoService.obtenerTodosLosDepartamentos();
         model.addAttribute("usuario", new Usuario());
         model.addAttribute("departamentos", departamentos);
-        return "/usuario/crear";
+        return "usuario/crear";
     }
 
     // Métodos para manejar las acciones CRUD a través de modales
@@ -730,31 +741,88 @@ public class UsuarioController {
 
     @PostMapping("/actualizar-ultima-conexion")
     @ResponseBody
-    public ResponseEntity<Map<String, Object>> actualizarUltimaConexion(Authentication authentication) {
+    public ResponseEntity<Map<String, Object>> actualizarUltimaConexion(
+            Authentication authentication,
+            HttpServletRequest request) {
         Map<String, Object> response = new HashMap<>();
 
         try {
             if (authentication == null) {
                 response.put("success", false);
+                response.put("error", "No autenticado");
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
             }
 
             String correoElectronico = authentication.getName();
             Usuario usuario = usuarioService.getUsuarioPorCorreo(correoElectronico);
 
-            if (usuario != null) {
-                usuario.setUltimaConexion(new Date());
-                usuarioService.save(usuario, false);
-                response.put("success", true);
-                return ResponseEntity.ok(response);
+            if (usuario == null) {
+                response.put("success", false);
+                response.put("error", "Usuario no encontrado");
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
             }
 
-            response.put("success", false);
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
+            // Fecha por defecto (actual del servidor)
+            Date fechaUltimaConexion = new Date();
+            String zonaHoraria = "America/Costa_Rica";
+            Map<String, Object> infoDebug = null;
+
+            try {
+                // Leer el cuerpo de la petición para obtener la fecha de Costa Rica
+                StringBuilder requestBody = new StringBuilder();
+                String line;
+                try (BufferedReader reader = request.getReader()) {
+                    while ((line = reader.readLine()) != null) {
+                        requestBody.append(line);
+                    }
+                }
+
+                if (requestBody.length() > 0) {
+                    ObjectMapper mapper = new ObjectMapper();
+                    JsonNode jsonNode = mapper.readTree(requestBody.toString());
+
+                    // Procesar la fecha ya convertida a Costa Rica que envía el cliente
+                    if (jsonNode.has("ultimaConexion")) {
+                        String fechaISO = jsonNode.get("ultimaConexion").asText();
+                        try {
+                            // La fecha ya viene convertida a hora de Costa Rica desde el JavaScript
+                            // Solo necesitamos parsearla
+                            ZonedDateTime zonedDateTime = ZonedDateTime.parse(fechaISO);
+                            fechaUltimaConexion = Date.from(zonedDateTime.toInstant());
+
+                        } catch (Exception e) {
+                            // Si hay error, usar fecha del servidor
+                            fechaUltimaConexion = new Date();
+                        }
+                    }
+
+                    // Obtener información adicional para debugging
+                    if (jsonNode.has("zonaHoraria")) {
+                        zonaHoraria = jsonNode.get("zonaHoraria").asText();
+                    }
+
+                    if (jsonNode.has("infoDebug")) {
+                        infoDebug = mapper.convertValue(jsonNode.get("infoDebug"), Map.class);
+                    }
+                }
+            } catch (Exception e) {
+                // Si hay cualquier error, usar fecha del servidor
+                fechaUltimaConexion = new Date();
+            }
+
+            // Actualizar la última conexión del usuario
+            usuario.setUltimaConexion(fechaUltimaConexion);
+            usuarioService.save(usuario, false);
+
+            response.put("success", true);
+            response.put("fechaActualizada", fechaUltimaConexion);
+            response.put("zonaHoraria", zonaHoraria);
+
+            return ResponseEntity.ok(response);
 
         } catch (Exception e) {
             response.put("success", false);
-            response.put("error", "Error al actualizar última conexión");
+            response.put("error", "Error interno del servidor");
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
         }
     }
@@ -762,6 +830,7 @@ public class UsuarioController {
     // Método para eliminar usuario
     @PostMapping("/eliminar/{id}")
     @ResponseBody
+    @Transactional
     public ResponseEntity<Map<String, Object>> eliminarUsuario(@PathVariable Long id, Authentication authentication) {
         Map<String, Object> response = new HashMap<>();
 
@@ -802,22 +871,32 @@ public class UsuarioController {
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
             }
 
-            // 1. Eliminar archivos asociados a tickets del usuario
-            List<Ticket> ticketsUsuario = ticketService.getTicketsPorSolicitante(usuario);
-            for (Ticket ticket : ticketsUsuario) {
+            // 1. Eliminar registros de auditoría relacionados con los tickets del usuario
+            // Primero obtener todos los tickets donde el usuario es solicitante o asignado
+            List<Ticket> ticketsRelacionados = new ArrayList<>();
+            ticketsRelacionados.addAll(ticketService.getTicketsPorSolicitante(usuario));
+            ticketsRelacionados.addAll(ticketService.getTicketsPorAsignado(usuario));
+
+            // Eliminar auditorías de estos tickets
+            for (Ticket ticket : ticketsRelacionados) {
+                auditoriaService.eliminarAuditoriasPorTicket(ticket.getIdTicket());
+            }
+
+            // 2. Eliminar archivos asociados a tickets del usuario
+            for (Ticket ticket : ticketsRelacionados) {
                 archivoTicketService.eliminarArchivosPorTicket(ticket.getIdTicket());
             }
 
-            // 2. Eliminar mensajes del usuario
+            // 3. Eliminar mensajes del usuario (como emisor o receptor)
             mensajeService.eliminarMensajesPorUsuario(id);
 
-            // 3. Eliminar tickets del usuario (como solicitante o asignado)
+            // 4. Ahora podemos eliminar los tickets del usuario (como solicitante o asignado)
             ticketService.eliminarTicketsPorUsuario(id);
 
-            // 4. Eliminar roles del usuario
+            // 5. Eliminar roles del usuario
             rolService.eliminarRolesPorUsuario(id);
 
-            // 5. Finalmente eliminar el usuario
+            // 6. Finalmente eliminar el usuario
             usuarioService.delete(usuario);
 
             response.put("success", true);
@@ -903,7 +982,7 @@ public class UsuarioController {
         }
 
         model.addAttribute("token", token);
-        return "/usuario/cambiar-contrasena";
+        return "usuario/cambiar-contrasena";
     }
 
 // Método para procesar el cambio de contraseña (usuario logueado)
@@ -951,10 +1030,10 @@ public class UsuarioController {
             passwordResetTokens.remove(token);
 
             // Redirigir con parámetro de éxito para que el JavaScript pueda detectarlo
-            return "redirect:/usuario/cambiar-contrasena?token=" + token + "&success=true";
+            return "redirect:usuario/cambiar-contrasena?token=" + token + "&success=true";
 
         } catch (Exception e) {
-            return "redirect:/usuario/cambiar-contrasena?token=" + token + "&error=update_failed";
+            return "redirect:usuario/cambiar-contrasena?token=" + token + "&error=update_failed";
         }
     }
 

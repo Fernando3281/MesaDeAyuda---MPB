@@ -14,14 +14,15 @@ public interface AuditoriaService {
     void registrarAccion(Ticket ticket, String accion, String detalle,
             String valorAnterior, String valorNuevo, Usuario usuario);
 
-    // Métodos existentes (para compatibilidad)
+    void eliminarAuditoriasPorTicket(Long idTicket);
+
+    // Métodos existentes
     List<Auditoria> obtenerHistorialPorTicket(Ticket ticket);
 
     List<Auditoria> obtenerHistorialPorTicketId(Long idTicket);
 
     // Nuevo método paginado
     Page<Auditoria> obtenerHistorialPorTicketIdPaginado(Long idTicket, Pageable pageable);
-
 
     @Query(value = "SELECT TOP 50 * FROM Auditoria ORDER BY fecha_accion DESC", nativeQuery = true)
     List<Auditoria> findTop50RecentAuditActions();

@@ -9,7 +9,7 @@
         <section th:fragment="section-bienvenida">
             <!-- Seccion de bienvenida -->
             <div class="welcome-section">
-                <h1>Bienvenido a su Centro de Soporte</h1>
+                <h1>¡Bienvenido, <span class="bienvenidoUsuario" th:text="${session.usuarioNombre}"></span> a su Centro de Soporte!</h1>
                 <p>Gestiona tus solicitudes de soporte de manera eficiente</p>
                 <div class="welcome-actions">
                     <a th:href="@{/tickets/nuevo}" class="btn btn-primary">

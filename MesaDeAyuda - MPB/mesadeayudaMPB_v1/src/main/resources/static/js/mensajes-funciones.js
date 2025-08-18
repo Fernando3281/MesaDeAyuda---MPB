@@ -235,7 +235,6 @@ function actualizarEstadoTicketUI(ticketData) {
                 sendButton.title = '';
             } else {
                 sendButton.disabled = true;
-                sendButton.title = 'Solo administradores o soportistas pueden enviar mensajes en un ticket cerrado';
             }
         } else {
             sendButton.disabled = false;
@@ -286,7 +285,6 @@ function updateSelectionState(hasSelection, ticketData = null) {
                 sendButton.title = '';
             } else {
                 sendButton.disabled = true;
-                sendButton.title = 'Solo administradores o soportistas pueden enviar mensajes en un ticket cerrado';
             }
         } else {
             sendButton.disabled = false;
