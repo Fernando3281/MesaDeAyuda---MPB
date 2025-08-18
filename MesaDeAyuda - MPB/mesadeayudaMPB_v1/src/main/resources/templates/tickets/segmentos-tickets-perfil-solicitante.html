@@ -136,10 +136,10 @@
                                                     <!-- Iconos específicos por estado -->
                                                     <i th:class="${ticketMap.ticket.estado == 'En Revisión'} ? 'far fa-clock' : 
                                                        (${ticketMap.ticket.estado == 'En Progreso'} ? 'fas fa-spinner' :
-                                                       (${ticketMap.ticket.estado == 'Pendiente'} ? 'fas fa-exclamation-circle' : 
+                                                       (${ticketMap.ticket.estado == 'Pendiente'} ? 'fa-solid fa-arrows-rotate' : 
                                                        (${ticketMap.ticket.estado == 'Resuelto'} ? 'fas fa-check-circle' :
                                                        (${ticketMap.ticket.estado == 'Cerrado'} ? 'fas fa-lock' :
-                                                       (${ticketMap.ticket.estado == 'Abierto'} ? 'fas fa-folder-open' :
+                                                       (${ticketMap.ticket.estado == 'Abierto'} ? 'far fa-clock' :
                                                        (${ticketMap.ticket.estado == 'Cancelado'} ? 'fas fa-times-circle' :
                                                        (${ticketMap.ticket.estado == 'Desactivado'} ? 'fas fa-ban' : 'far fa-question-circle')))))))"></i>
 

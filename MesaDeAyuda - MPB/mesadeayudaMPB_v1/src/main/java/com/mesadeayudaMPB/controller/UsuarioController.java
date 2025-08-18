@@ -217,7 +217,7 @@ public class UsuarioController {
                 return "redirect:/login?logout";
             }
         }
-        return "redirect:usuario/perfil";
+        return "redirect:perfil";
     }
 
     @GetMapping("/imagen/{id}")

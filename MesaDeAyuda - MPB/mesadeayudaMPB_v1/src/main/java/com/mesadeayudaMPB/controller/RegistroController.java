@@ -113,28 +113,26 @@ public class RegistroController {
         String storedCode = (String) session.getAttribute("verificationCode");
 
         if (pendingUser == null || storedCode == null) {
-            return "redirect:registro/nuevo";
+            redirectAttrs.addAttribute("error", "session_expired");
+            return "redirect:/registro/nuevo";
         }
 
         if (verificationService.verifyCode(storedCode, code)) {
-            // Verificar si el usuario ya existe
             if (usuarioDao.existsByCorreoElectronico(pendingUser.getCorreoElectronico())) {
                 redirectAttrs.addFlashAttribute("error", "El correo ya está registrado");
-                return "redirect:registro/nuevo";
+                return "redirect:/registro/nuevo";
             }
 
-            // Registrar al nuevo usuario
             registroService.registrarNuevoUsuario(pendingUser);
-
-            // Limpiar sesión
             session.removeAttribute("pendingUser");
             session.removeAttribute("verificationCode");
 
-            return "redirect:login?registroExitoso=true";
+            redirectAttrs.addAttribute("registroExitoso", "true");
+            return "redirect:/login";
         } else {
             redirectAttrs.addFlashAttribute("error", "Código de verificación inválido");
             redirectAttrs.addAttribute("email", pendingUser.getCorreoElectronico());
-            return "redirect:registro/verificacion";
+            return "redirect:/registro/verificacion";
         }
     }
 
@@ -148,36 +146,26 @@ public class RegistroController {
     @PostMapping("/recordar")
     public String procesarRecordarContrasena(@RequestParam String email,
             RedirectAttributes redirectAttrs) {
-
         try {
-            // Verificar si el email existe
             if (!registroService.existeUsuario(email)) {
-                // Redirigir a la misma página con parámetro de error
-                return "redirect:/registro/recordar?error=correo_no_registrado";
+                redirectAttrs.addAttribute("error", "correo_no_registrado");
+                return "redirect:/registro/recordar";
             }
 
-            // Invalidar cualquier token existente para este email
             invalidarTokensExistentesPorEmail(email);
-
-            // Generar token único para restablecimiento
             String token = UUID.randomUUID().toString();
-
-            // Guardar token con tiempo de expiración (10 minutos)
             Map<String, Object> tokenData = new HashMap<>();
             tokenData.put("email", email);
             tokenData.put("expiryTime", LocalDateTime.now().plusMinutes(10));
-
             passwordResetTokens.put(token, tokenData);
 
-            // Enviar correo con enlace para restablecer contraseña
             emailService.sendPasswordResetLink(email, token);
 
-            // Redirigir al login con mensaje de éxito
-            return "redirect:login?correoEnviado=true";
-
+            redirectAttrs.addAttribute("correoEnviado", "true");
+            return "redirect:/login";
         } catch (Exception e) {
-            // En caso de error del servidor
-            return "redirect:registro/recordar?error=server_error";
+            redirectAttrs.addAttribute("error", "server_error");
+            return "redirect:/registro/recordar";
         }
     }
 

@@ -617,7 +617,6 @@ public class TicketsController {
                     }
 
                     redirectAttributes.addFlashAttribute("success", "Ticket creado exitosamente");
-                    return "redirect:listado";
                 }
             }
             return "redirect:/login";
@@ -1212,7 +1211,7 @@ public class TicketsController {
             redirectAttributes.addFlashAttribute("error", "Usuario no autenticado.");
         }
 
-        return "redirect:tickets/manager/" + idTicket;
+        return "redirect:/tickets/manager/" + idTicket;
     }
 
     /**
