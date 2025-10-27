@@ -37,6 +37,10 @@
     text-align: center;
 }
 
+.contenedor-credenciales {
+    text-align: left;
+}
+
 .h1-login {
     color: #333;
     margin-bottom: 1rem;
